@@ -1,4 +1,4 @@
-# t_lib
+# js_runtime
 
 A new Flutter FFI plugin project.
 
@@ -62,8 +62,8 @@ The native build systems that are invoked by FFI (and method channel) plugins ar
 * For Android: Gradle, which invokes the Android NDK for native builds.
   * See the documentation in android/build.gradle.
 * For iOS and MacOS: Xcode, via CocoaPods.
-  * See the documentation in ios/t_lib.podspec.
-  * See the documentation in macos/t_lib.podspec.
+  * See the documentation in ios/js_runtime.podspec.
+  * See the documentation in macos/js_runtime.podspec.
 * For Linux and Windows: CMake.
   * See the documentation in linux/CMakeLists.txt.
   * See the documentation in windows/CMakeLists.txt.
@@ -72,21 +72,20 @@ The native build systems that are invoked by FFI (and method channel) plugins ar
 
 To use the native code, bindings in Dart are needed.
 To avoid writing these by hand, they are generated from the header file
-(`src/t_lib.h`) by `package:ffigen`.
+(`src/js_runtime.h`) by `package:ffigen`.
 Regenerate the bindings by running `dart run ffigen --config ffigen.yaml`.
 
 ## Invoking native code
 
 Very short-running native functions can be directly invoked from any isolate.
-For example, see `sum` in `lib/t_lib.dart`.
+For example, see `sum` in `lib/js_runtime.dart`.
 
 Longer-running functions should be invoked on a helper isolate to avoid
 dropping frames in Flutter applications.
-For example, see `sumAsync` in `lib/t_lib.dart`.
+For example, see `sumAsync` in `lib/js_runtime.dart`.
 
 ## Flutter help
 
 For help getting started with Flutter, view our
 [online documentation](https://docs.flutter.dev), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
-

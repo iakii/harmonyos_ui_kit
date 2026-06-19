@@ -3,7 +3,7 @@
 # Run `pod lib lint test_plugin.podspec` to validate before publishing.
 #
 Pod::Spec.new do |s|
-    s.name             = 't_lib'
+    s.name             = 'js_runtime'
     s.version          = '0.0.1'
     s.summary          = 'A new Flutter FFI plugin project.'
     s.description      = <<-DESC
@@ -20,7 +20,7 @@ Pod::Spec.new do |s|
     s.swift_version = '5.0'
     s.script_phase = {
       :name => 'Build Rust library',
-      :script => 'sh "$PODS_TARGET_SRCROOT/../cargokit/build_pod.sh" ../rust t_lib',
+      :script => 'sh "$PODS_TARGET_SRCROOT/../cargokit/build_pod.sh" ../rust js_runtime',
       :execution_position => :before_compile,
       :input_files => ['${BUILT_PRODUCTS_DIR}/cargokit_phony'],
       # Let XCode know that the static library referenced in -force_load below is

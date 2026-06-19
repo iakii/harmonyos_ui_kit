@@ -11,7 +11,7 @@ HarmonyOS NEXT 风格 UI 组件库 for Flutter。
 ```yaml
 dependencies:
   harmonyos_ui:
-    path: third_library/harmonyos_ui
+    path: packages/harmonyos_ui
 ```
 
 ```dart

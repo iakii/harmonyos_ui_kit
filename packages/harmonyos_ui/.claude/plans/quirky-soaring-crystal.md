@@ -50,7 +50,7 @@
 
 **最实际方案**：
 - 删除 `.light()` 工厂（等于默认，无存在必要）
-- `.dark()` 保留为硬编码暗色预设（不等于默认，不会被覆盖）  
+- `.dark()` 保留为硬编码暗色预设（不等于默认，不会被覆盖）
 - 默认 `const HarmonyGlowPalette()` → widget 自动用 `fromTheme()` 替换
 - 用户想固定暗色 → 用 `HarmonyGlowPalette.dark()`
 - 用户想自定义 → 用 `HarmonyGlowPalette(surfaceTint: ..., ...)`
@@ -80,7 +80,7 @@ factory HarmonyGlowPalette.light() => const HarmonyGlowPalette(
 
 在 `dark()` 工厂后插入，使用 theme 的 accentColor、surfaceColor、textSecondaryColor 派生颜色。
 
-### Step 3: 简化 `HarmonyGlowMaterial.build()` 
+### Step 3: 简化 `HarmonyGlowMaterial.build()`
 
 移除 `isDark` 判断和 hardcoded dark preset，改为：
 ```dart
@@ -100,4 +100,4 @@ final whiteHighlightScale = isDark ? 0.65 : 1.0;
 
 ## 涉及文件
 
-- `third_library/harmonyos_ui/lib/src/widgets/harmony_immersive_glow.dart` — 唯一修改文件
+- `packages/harmonyos_ui/lib/src/widgets/harmony_immersive_glow.dart` — 唯一修改文件

@@ -2,7 +2,7 @@
 
 ## Context
 
-当前 `t_lib` 的 JS 运行时架构过于简单：只有一个 `JsRuntime` 结构体，`eval_js` 返回 `Result<String, String>`（纯字符串结果和错误），缺少结构化的值系统和错误处理。参考 FJS（基于 QuickJS 的 Flutter JS 引擎）的成熟架构设计，对本项目进行分层重构。
+当前 `js_runtime` 的 JS 运行时架构过于简单：只有一个 `JsRuntime` 结构体，`eval_js` 返回 `Result<String, String>`（纯字符串结果和错误），缺少结构化的值系统和错误处理。参考 FJS（基于 QuickJS 的 Flutter JS 引擎）的成熟架构设计，对本项目进行分层重构。
 
 **核心问题**：
 - 无类型化的 JS 值系统，eval 只能返回字符串

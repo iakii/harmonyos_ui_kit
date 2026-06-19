@@ -1,5 +1,5 @@
 {
-  name: "t_lib",
+  name: "js_runtime",
   version: "1.0.0",
   description: "Please describe the basic information.",
   author: "",

@@ -15,7 +15,7 @@ description: |
 ## 文件位置
 
 ```
-third_library/hm_icon/
+packages/hm_icon/
 ├── pubspec.yaml                    # 包配置，注册 HMSymbolVF 字体
 ├── README.md
 ├── fonts/
@@ -33,14 +33,14 @@ third_library/hm_icon/
 ### 重新生成图标代码
 
 ```bash
-cd third_library/hm_icon/tool
+cd packages/hm_icon/tool
 dart run generate_hm_icon.dart
 ```
 
 ### 生成后验证
 
 ```bash
-cd third_library/hm_icon
+cd packages/hm_icon
 flutter pub get
 flutter analyze
 ```

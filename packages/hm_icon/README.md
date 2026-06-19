@@ -10,7 +10,7 @@ HarmonyOS NEXT Symbol Icons for Flutter.
 # pubspec.yaml
 dependencies:
   hm_icon:
-    path: third_library/hm_icon
+    path: packages/hm_icon
 ```
 
 ## 使用

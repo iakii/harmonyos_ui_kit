@@ -2,7 +2,7 @@
 
 ## Context
 
-[harmony_immersive_glow.dart](../../../third_library/harmonyos_ui/lib/src/widgets/harmony_immersive_glow.dart) 当前是一个约 1913 行的单文件，包含了枚举、数据模型、调色板、发光材质组件、导航栏组件及其所有私有辅助类。文件过大，不利于维护和阅读。
+[harmony_immersive_glow.dart](../../../packages/harmonyos_ui/lib/src/widgets/harmony_immersive_glow.dart) 当前是一个约 1913 行的单文件，包含了枚举、数据模型、调色板、发光材质组件、导航栏组件及其所有私有辅助类。文件过大，不利于维护和阅读。
 
 目标：按组件职责拆分为多个文件，同时保持 Dart 库私有（`_` 前缀）规则的约束。
 
@@ -57,8 +57,8 @@ export 'immersive_glow_navigation_bar.dart';
 
 | 文件 | 修改内容 |
 |---|---|
-| [harmonyos_ui.dart](../../../third_library/harmonyos_ui/lib/harmonyos_ui.dart) | 将 `export 'src/widgets/harmony_immersive_glow.dart';` 替换为 `export 'src/widgets/glow/glow.dart';` |
-| [harmony_immersive_glow.dart](../../../third_library/harmonyos_ui/lib/src/widgets/harmony_immersive_glow.dart) | **删除** — 所有内容已迁移到新文件 |
+| [harmonyos_ui.dart](../../../packages/harmonyos_ui/lib/harmonyos_ui.dart) | 将 `export 'src/widgets/harmony_immersive_glow.dart';` 替换为 `export 'src/widgets/glow/glow.dart';` |
+| [harmony_immersive_glow.dart](../../../packages/harmonyos_ui/lib/src/widgets/harmony_immersive_glow.dart) | **删除** — 所有内容已迁移到新文件 |
 
 ### 关键原则
 
@@ -70,7 +70,7 @@ export 'immersive_glow_navigation_bar.dart';
 ## 验证
 
 ```bash
-cd third_library/harmonyos_ui && flutter analyze
+cd packages/harmonyos_ui && flutter analyze
 ```
 
 预期 0 errors、0 warnings。公开 API 完全兼容，所有现有引用无需改动。

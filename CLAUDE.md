@@ -18,30 +18,30 @@ flutter analyze
 # 运行测试（目前无测试文件）
 flutter test
 
-# 构建 Rust 库（在 t_lib 目录下）
-cd third_library/t_lib/rust && cargo build --release --target aarch64-unknown-linux-ohos
+# 构建 Rust 库（在 js_runtime 目录下）
+cd packages/js_runtime/rust && cargo build --release --target aarch64-unknown-linux-ohos
 
 # 重新生成 flutter_rust_bridge 绑定代码
-cd third_library/t_lib && flutter_rust_bridge_codegen generate
+cd packages/js_runtime && flutter_rust_bridge_codegen generate
 ```
 
 ## 架构概览
 
 ```
 rohos_app/
-├── lib/main.dart                  # 应用入口，ProviderScope + MyApp；Rust FFI 通过 LibBoa（FRB）桥接
-├── third_library/
+├── lib/main.dart                  # 应用入口，ProviderScope + MyApp；Rust FFI 通过 JsRuntimeLib（FRB）桥接
+├── packages/
 │   ├── harmonyos_ui/              # HarmonyOS NEXT 风格 UI 组件库（详见其 CLAUDE.md）
-│   └── t_lib/                     # Rust FFI 桥接插件（Flutter FFI plugin）
+│   └── js_runtime/                     # Rust FFI 桥接插件（Flutter FFI plugin）
 │       ├── flutter_rust_bridge.yaml  # FRB codegen 配置
 │       ├── lib/
 │       │   ├── lib.dart            # Barrel 导出
 │       │   └── src/frb/            # FRB 生成的 Dart 代码
 │       │       ├── api/hello.dart  # Rust hello() 的 Dart 封装
-│       │       ├── frb_generated.dart  # 入口类 LibBoa
+│       │       ├── frb_generated.dart  # 入口类 JsRuntimeLib
 │       │       └── frb_generated.io.dart / .web.dart
 │       ├── rust/                   # Rust 源码
-│       │   ├── Cargo.toml          # crate: t_lib (cdylib+staticlib), 依赖 boa_engine
+│       │   ├── Cargo.toml          # crate: js_runtime (cdylib+staticlib), 依赖 boa_engine
 │       │   └── src/
 │       │       ├── lib.rs          # mod frb_generated + pub mod api
 │       │       ├── api/            # 手写的公开 Rust API
@@ -75,12 +75,12 @@ rohos_app/
 
 ### 修改 Rust API 后
 
-1. 修改 `third_library/t_lib/rust/src/api/` 下的 `.rs` 文件
+1. 修改 `packages/js_runtime/rust/src/api/` 下的 `.rs` 文件
 2. 如果是新建文件，在 `api/mod.rs` 中声明 `pub mod xxx;`
-3. 在 `t_lib` 目录运行 `flutter_rust_bridge_codegen generate`
-4. 生成的代码位于 `third_library/t_lib/lib/src/frb/`（Dart）和 `third_library/t_lib/rust/src/frb_generated.rs`（Rust）
+3. 在 `js_runtime` 目录运行 `flutter_rust_bridge_codegen generate`
+4. 生成的代码位于 `packages/js_runtime/lib/src/frb/`（Dart）和 `packages/js_runtime/rust/src/frb_generated.rs`（Rust）
 5. 如有新增 Dart 文件，在 `lib/lib.dart` 中添加对应的 `export`
-6. 对 `t_lib` 运行 `flutter pub get` 确认解析正常
+6. 对 `js_runtime` 运行 `flutter pub get` 确认解析正常
 
 ### 构建 HarmonyOS
 
@@ -91,10 +91,10 @@ rohos_app/
 
 ### 组件库开发
 
-`harmonyos_ui` 是一个独立的 Flutter 库 package，有自己独立的 CLAUDE.md（见 `third_library/harmonyos_ui/CLAUDE.md`）。它仿造 `fluent_ui` 的分层架构，所有组件遵循 `WidgetStyle > ThemeStyle > DefaultStyle` 三级样式解析。
+`harmonyos_ui` 是一个独立的 Flutter 库 package，有自己独立的 CLAUDE.md（见 `packages/harmonyos_ui/CLAUDE.md`）。它仿造 `fluent_ui` 的分层架构，所有组件遵循 `WidgetStyle > ThemeStyle > DefaultStyle` 三级样式解析。
 
 ### FFI 调用说明
 
-`t_lib` 使用 **flutter_rust_bridge** 作为唯一的 FFI 通道。入口类 `LibBoa`（定义于 `lib/src/frb/frb_generated.dart`），通过 `LibBoa.init()` 初始化后，调用自动生成的 Wrapper 函数（如 `hello()`）即可执行 Rust 代码。
+`js_runtime` 使用 **flutter_rust_bridge** 作为唯一的 FFI 通道。入口类 `JsRuntimeLib`（定义于 `lib/src/frb/frb_generated.dart`），通过 `JsRuntimeLib.init()` 初始化后，调用自动生成的 Wrapper 函数（如 `hello()`）即可执行 Rust 代码。
 
 不再使用 `dart:ffi` 直接调用或 `ffigen` 生成绑定的旧方案。

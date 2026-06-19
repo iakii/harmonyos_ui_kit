@@ -140,7 +140,7 @@ fn register_fetch(context: &mut Context) -> JsResult<()> {
 ### 4. 运行 codegen
 
 ```bash
-cd third_library/t_lib && flutter_rust_bridge_codegen generate
+cd packages/js_runtime && flutter_rust_bridge_codegen generate
 ```
 
 ### 5. 修改 `lib/lib.dart`

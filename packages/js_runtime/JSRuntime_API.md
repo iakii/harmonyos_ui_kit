@@ -1,6 +1,6 @@
 # JS 运行时 API 文档
 
-`t_lib` 提供嵌入式 JavaScript 运行时，基于 [Boa](https://github.com/boa-dev/boa)（纯 Rust ECMAScript 引擎），通过 `flutter_rust_bridge` 同步调用。参考 [FJS](https://github.com/iakii/harmonyos_ui_kit/blob/master/third_library/fjs/README_zh.md) 架构设计，提供**两层 API** 和类型化的值/错误系统。
+`js_runtime` 提供嵌入式 JavaScript 运行时，基于 [Boa](https://github.com/boa-dev/boa)（纯 Rust ECMAScript 引擎），通过 `flutter_rust_bridge` 同步调用。参考 [FJS](https://github.com/iakii/harmonyos_ui_kit/blob/master/packages/fjs/README_zh.md) 架构设计，提供**两层 API** 和类型化的值/错误系统。
 
 ## 环境
 
@@ -60,7 +60,7 @@ X86_64_UNKNOWN_LINUX_OHOS_OPENSSL_DIR="~/.ohos/ohos-openssl/prelude/x86_64/"
 ### 导入
 
 ```dart
-import 'package:t_lib/lib.dart';
+import 'package:js_runtime/lib.dart';
 ```
 
 ### JsValue —— 类型化的 JS 值

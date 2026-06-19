@@ -16,7 +16,7 @@ flutter pub get
 flutter analyze
 
 # 重新生成 flutter_rust_bridge 绑定（修改 Rust API 后必须执行）
-# 在 t_lib 根目录下运行：
+# 在 js_runtime 根目录下运行：
 flutter_rust_bridge_codegen generate
 
 # 构建 Rust 库（HarmonyOS 目标）
@@ -29,18 +29,18 @@ cd rust && cargo build
 ## 架构
 
 ```
-t_lib/
+js_runtime/
 ├── flutter_rust_bridge.yaml       # FRB codegen 配置（输出路径、入口类名）
 ├── pubspec.yaml                   # Flutter FFI 插件声明（6 平台均为 ffiPlugin: true）
 ├── lib/
 │   ├── lib.dart                   # Barrel 导出：统一导出 src/frb/ 下所有公开 API
 │   └── src/frb/                   # flutter_rust_bridge 自动生成的 Dart 代码
-│       ├── frb_generated.dart     # 入口类 LibBoa + BaseEntrypoint 实现
+│       ├── frb_generated.dart     # 入口类 JsRuntimeLib + BaseEntrypoint 实现
 │       ├── frb_generated.io.dart  # Native（非 Web）平台绑定
 │       ├── frb_generated.web.dart # Web/WASM 平台绑定
 │       └── api/hello.dart         # Rust hello() 的 Dart 封装（自动生成）
 ├── rust/
-│   ├── Cargo.toml                 # crate: t_lib, cdylib+staticlib, 依赖 boa_engine 0.21.1
+│   ├── Cargo.toml                 # crate: js_runtime, cdylib+staticlib, 依赖 boa_engine 0.21.1
 │   └── src/
 │       ├── lib.rs                 # 入口：mod frb_generated + pub mod api
 │       ├── api/
@@ -58,13 +58,13 @@ t_lib/
 `flutter_rust_bridge.yaml`:
 - `rust_input: crate::api,boa_engine` — 将 Rust `api` 模块和 `boa_engine` 的类型暴露给 Dart
 - `dart_output: lib/src/frb` — 生成的 Dart 代码输出到 `lib/src/frb/`
-- `dart_entrypoint_class_name: LibBoa` — Dart 端入口类名（原为 `RustLib`，重构后改为 `LibBoa`）
+- `dart_entrypoint_class_name: JsRuntimeLib` — Dart 端入口类名（原为 `RustLib`，重构后改为 `JsRuntimeLib`）
 
 ## 核心设计
 
-1. **纯 flutter_rust_bridge**: 不再使用 `dart:ffi` 直接调用或 `ffigen` 生成绑定，所有 FFI 调用通过 `LibBoa`（flutter_rust_bridge 生成）完成
+1. **纯 flutter_rust_bridge**: 不再使用 `dart:ffi` 直接调用或 `ffigen` 生成绑定，所有 FFI 调用通过 `JsRuntimeLib`（flutter_rust_bridge 生成）完成
 2. **Boa 集成**: Rust 端依赖 `boa_engine`，rust_input 中包含 `boa_engine`，允许 Dart 通过 FRB 调用 JS 执行相关功能
-3. **入口类 `LibBoa`**: 取代旧的 `RustLib`，通过 `LibBoa.init()` 初始化，通过自动生成的 Wrapper 函数（如 `hello()`）调用 Rust
+3. **入口类 `JsRuntimeLib`**: 取代旧的 `RustLib`，通过 `JsRuntimeLib.init()` 初始化，通过自动生成的 Wrapper 函数（如 `hello()`）调用 Rust
 
 ## 修改 Rust API 流程
 
