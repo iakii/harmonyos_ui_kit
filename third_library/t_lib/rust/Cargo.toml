@@ -1,0 +1,23 @@
+[package]
+name = "t_lib"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+boa_engine = "0.21.1"
+boa_runtime = { version = "0.21.1", features = ["reqwest-blocking"] }
+flutter_rust_bridge = "=2.13.0-beta.1"
+scraper = "0.22"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# kossjs = { git = "https://github.com/KossJS/KossJS.git", version = "0.1.0-dev.6" }
+
+[profile.release]
+opt-level = 'z'
+lto = true
+strip = true
+codegen-units = 1
+panic = 'abort'

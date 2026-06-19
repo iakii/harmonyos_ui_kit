@@ -1,0 +1,23 @@
+name: hm_icon
+description: "HarmonyOS NEXT Symbol Icons for Flutter. Provides the HMSymbolVF variable font as a Flutter icon package."
+version: 0.0.1
+homepage: https://github.com/your-org/hm_icon
+
+environment:
+  sdk: ^3.9.2
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  fonts:
+    - family: HMSymbolVF
+      fonts:
+        - asset: fonts/HMSymbolVF.ttf
