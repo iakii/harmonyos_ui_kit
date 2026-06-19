@@ -87,7 +87,7 @@ rohos_app/
 - 使用 **DevEco Studio** 打开 `ohos/` 目录
 - 签名证书位于 `~/.ohos/config/`
 - 当前目标：SDK 5.1.0（兼容）→ 6.0.2（目标），`arm64-v8a`
-- Rust 构建产物 `libt_lib.so` 通过 `cargokit.cmake` 自动集成到原生构建
+- Rust 构建产物 `libjs_runtime.so` 通过 `cargokit.cmake` 自动集成到原生构建
 
 ### 组件库开发
 

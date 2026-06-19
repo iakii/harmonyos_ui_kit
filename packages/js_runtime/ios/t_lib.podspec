@@ -25,11 +25,11 @@ Pod::Spec.new do |s|
       :input_files => ['${BUILT_PRODUCTS_DIR}/cargokit_phony'],
       # Let XCode know that the static library referenced in -force_load below is
       # created by this build step.
-      :output_files => ["${BUILT_PRODUCTS_DIR}/libt_lib.a"],
+      :output_files => ["${BUILT_PRODUCTS_DIR}/libjs_runtime.a"],
     }
     s.pod_target_xcconfig = {
       'DEFINES_MODULE' => 'YES',
       'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
-      'OTHER_LDFLAGS' => '-force_load ${BUILT_PRODUCTS_DIR}/libt_lib.a',
+      'OTHER_LDFLAGS' => '-force_load ${BUILT_PRODUCTS_DIR}/libjs_runtime.a',
     }
   end

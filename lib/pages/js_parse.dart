@@ -82,7 +82,7 @@ export function multiply(a, b) {
 }
 ''',
           );
-          version.value = 'Boa (built-in)';
+          version.value = 'JsRuntime (built-in)';
         } catch (e) {
           Logger().e('Failed to initialize JS runtime', error: e);
           error.value = '初始化 JS 运行时失败: $e';
@@ -113,7 +113,25 @@ export function multiply(a, b) {
 
       try {
         final output = runtime.value!.eval(code: code);
-        result.value = output.asStringSync!;
+
+        /// 递归格式化 [JsValue] 为可读字符串。
+        String fmtVal(JsValue v) => v.when(
+          none: () => 'null',
+          boolean: (b) => b.toString(),
+          integer: (i) => i.toString(),
+          float: (f) => f.toString(),
+          bigInt: (s) => s,
+          string: (s) => s,
+          bytes: (b) => '<bytes: ${b.length} bytes>',
+          array: (arr) => '[${arr.map(fmtVal).join(', ')}]',
+          object: (obj) =>
+              '{${obj.map((e) => '${e.$1}: ${fmtVal(e.$2)}').join(', ')}}',
+          date: (d) =>
+              DateTime.fromMillisecondsSinceEpoch(d.toInt()).toIso8601String(),
+          symbol: (s) => 'Symbol($s)',
+        );
+
+        result.value = fmtVal(output);
 
         // 更新内存信息
         final used = runtime.value!.memoryUsage();

@@ -17,7 +17,7 @@ apply_cargokit(${PROJECT_NAME} ../../rust js_runtime "")
 # List of absolute paths to libraries that should be bundled with the plugin.
 # This list could contain prebuilt libraries, or libraries created by an
 # external build triggered from this build file.
-# set(t_lib_bundled_libraries
+# set(js_runtime_bundled_libraries
 #   "${${PROJECT_NAME}_cargokit_lib}"
 #   PARENT_SCOPE
 # )
