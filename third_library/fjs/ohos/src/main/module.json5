@@ -1,7 +1,0 @@
-{
-  module: {
-    name: "fjs",
-    type: "har",
-    deviceTypes: ["default", "tablet"],
-  },
-}
