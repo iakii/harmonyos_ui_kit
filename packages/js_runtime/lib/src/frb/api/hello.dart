@@ -6,10 +6,5 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-
-            
-
-            Future<String>  hello({required String hello }) => JsRuntimeLib.instance.api.crateApiHelloHello(hello: hello);
-
-            
-            
+Future<String> hello({required String hello}) =>
+    JsRuntimeLib.instance.api.crateApiHelloHello(hello: hello);

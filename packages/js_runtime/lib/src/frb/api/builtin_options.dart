@@ -6,56 +6,49 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-
-            
-
-            
-
-            /// 内置模块配置。
+/// 内置模块配置。
 ///
 /// 控制创建运行时向 JS 上下文注册哪些 Web API 扩展。
 /// Boa 通过 `boa_runtime` 原生支持 Console 和 Fetch。
-class JsBuiltinOptions  {
-                /// 注册 Console API（`console.log` 等）
-final bool console;
-/// 注册 Fetch API（`fetch()` 函数，使用 reqwest 阻塞后端）
-final bool fetch;
+class JsBuiltinOptions {
+  /// 注册 Console API（`console.log` 等）
+  final bool console;
 
-                const JsBuiltinOptions({required this.console ,required this.fetch ,});
+  /// 注册 Fetch API（`fetch()` 函数，使用 reqwest 阻塞后端）
+  final bool fetch;
 
-                /// 全部内置模块。
-static Future<JsBuiltinOptions>  all()=>JsRuntimeLib.instance.api.crateApiBuiltinOptionsJsBuiltinOptionsAll();
+  const JsBuiltinOptions({
+    required this.console,
+    required this.fetch,
+  });
 
+  /// 全部内置模块。
+  static Future<JsBuiltinOptions> all() =>
+      JsRuntimeLib.instance.api.crateApiBuiltinOptionsJsBuiltinOptionsAll();
 
-static Future<JsBuiltinOptions>  default_()=>JsRuntimeLib.instance.api.crateApiBuiltinOptionsJsBuiltinOptionsDefault();
+  static Future<JsBuiltinOptions> default_() =>
+      JsRuntimeLib.instance.api.crateApiBuiltinOptionsJsBuiltinOptionsDefault();
 
+  /// 基础组合：仅 Console。
+  static Future<JsBuiltinOptions> essential() => JsRuntimeLib.instance.api
+      .crateApiBuiltinOptionsJsBuiltinOptionsEssential();
 
-/// 基础组合：仅 Console。
-static Future<JsBuiltinOptions>  essential()=>JsRuntimeLib.instance.api.crateApiBuiltinOptionsJsBuiltinOptionsEssential();
+  /// 不注册任何内置模块。
+  static Future<JsBuiltinOptions> none() =>
+      JsRuntimeLib.instance.api.crateApiBuiltinOptionsJsBuiltinOptionsNone();
 
+  /// Web 兼容组合：Console + Fetch。
+  static Future<JsBuiltinOptions> web() =>
+      JsRuntimeLib.instance.api.crateApiBuiltinOptionsJsBuiltinOptionsWeb();
 
-/// 不注册任何内置模块。
-static Future<JsBuiltinOptions>  none()=>JsRuntimeLib.instance.api.crateApiBuiltinOptionsJsBuiltinOptionsNone();
+  @override
+  int get hashCode => console.hashCode ^ fetch.hashCode;
 
-
-/// Web 兼容组合：Console + Fetch。
-static Future<JsBuiltinOptions>  web()=>JsRuntimeLib.instance.api.crateApiBuiltinOptionsJsBuiltinOptionsWeb();
-
-
-
-
-
-        @override
-        int get hashCode => console.hashCode^fetch.hashCode;
-
-
-
-        @override
-        bool operator ==(Object other) =>
-            identical(this, other) ||
-            other is JsBuiltinOptions &&
-                runtimeType == other.runtimeType
-                && console == other.console&& fetch == other.fetch;
-
-            }
-            
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is JsBuiltinOptions &&
+          runtimeType == other.runtimeType &&
+          console == other.console &&
+          fetch == other.fetch;
+}

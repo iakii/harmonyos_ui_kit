@@ -12,85 +12,91 @@ import 'module.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'runtime.dart';
 
+// These functions are ignored because they are not marked as `pub`: `runtime`
 
-            // These functions are ignored because they are not marked as `pub`: `runtime`
-
-
-            
-
-            /// 高层 JS 引擎。
+/// 高层 JS 引擎。
 ///
 /// 内部持有一个 [JsRuntime]，自动管理生命周期。
 /// 方法失败时返回 [JsError]。
-class JsEngine  {
-                final BigInt runtimeId;
+class JsEngine {
+  final BigInt runtimeId;
 
-                const JsEngine({required this.runtimeId ,});
+  const JsEngine({
+    required this.runtimeId,
+  });
 
-                /// 调用已注册模块的导出函数。
-///
-/// # 参数
-/// - `module`: 模块名称（已通过 [declare_module](Self::declare_module) 注册）
-/// - `method`: 导出函数名
-/// - `params`: 参数列表
- JsValue  call({required String module , required String method , required List<JsValue> params })=>JsRuntimeLib.instance.api.crateApiEngineJsEngineCall(that: this, module: module, method: method, params: params);
+  /// 调用已注册模块的导出函数。
+  ///
+  /// # 参数
+  /// - `module`: 模块名称（已通过 [declare_module](Self::declare_module) 注册）
+  /// - `method`: 导出函数名
+  /// - `params`: 参数列表
+  JsValue call(
+          {required String module,
+          required String method,
+          required List<JsValue> params}) =>
+      JsRuntimeLib.instance.api.crateApiEngineJsEngineCall(
+          that: this, module: module, method: method, params: params);
 
+  /// 关闭引擎，释放所有资源。
+  void close() => JsRuntimeLib.instance.api.crateApiEngineJsEngineClose(
+        that: this,
+      );
 
-/// 关闭引擎，释放所有资源。
- void  close()=>JsRuntimeLib.instance.api.crateApiEngineJsEngineClose(that: this, );
+  /// 创建 JS 引擎。
+  ///
+  /// # 参数
+  /// - `builtins`: 内置模块配置，默认 [JsBuiltinOptions::essential]
+  /// - `modules`: 创建后立即注册的模块列表
+  /// - `runtime_options`: 底层运行时选项（内存上限等）
+  static JsEngine create(
+          {JsBuiltinOptions? builtins,
+          List<JsModule>? modules,
+          JsRuntimeOptions? runtimeOptions}) =>
+      JsRuntimeLib.instance.api.crateApiEngineJsEngineCreate(
+          builtins: builtins, modules: modules, runtimeOptions: runtimeOptions);
 
+  /// 注册一个 ES 模块。
+  void declareModule({required JsModule module}) => JsRuntimeLib.instance.api
+      .crateApiEngineJsEngineDeclareModule(that: this, module: module);
 
-/// 创建 JS 引擎。
-///
-/// # 参数
-/// - `builtins`: 内置模块配置，默认 [JsBuiltinOptions::essential]
-/// - `modules`: 创建后立即注册的模块列表
-/// - `runtime_options`: 底层运行时选项（内存上限等）
-static JsEngine  create({JsBuiltinOptions? builtins , List<JsModule>? modules , JsRuntimeOptions? runtimeOptions })=>JsRuntimeLib.instance.api.crateApiEngineJsEngineCreate(builtins: builtins, modules: modules, runtimeOptions: runtimeOptions);
+  /// 批量注册 ES 模块。同一批中的模块名不允许重复。
+  void declareModules({required List<JsModule> modules}) =>
+      JsRuntimeLib.instance.api
+          .crateApiEngineJsEngineDeclareModules(that: this, modules: modules);
 
+  /// 执行 JavaScript 代码，返回类型化的 [JsValue]。
+  JsValue eval({required String code}) => JsRuntimeLib.instance.api
+      .crateApiEngineJsEngineEval(that: this, code: code);
 
-/// 注册一个 ES 模块。
- void  declareModule({required JsModule module })=>JsRuntimeLib.instance.api.crateApiEngineJsEngineDeclareModule(that: this, module: module);
+  /// 带选项执行 JavaScript 代码。
+  JsValue evalWithOptions(
+          {required String code, required JsEvalOptions options}) =>
+      JsRuntimeLib.instance.api.crateApiEngineJsEngineEvalWithOptions(
+          that: this, code: code, options: options);
 
+  /// 获取内存估算用量（字节）。
+  BigInt memoryUsage() =>
+      JsRuntimeLib.instance.api.crateApiEngineJsEngineMemoryUsage(
+        that: this,
+      );
 
-/// 批量注册 ES 模块。同一批中的模块名不允许重复。
- void  declareModules({required List<JsModule> modules })=>JsRuntimeLib.instance.api.crateApiEngineJsEngineDeclareModules(that: this, modules: modules);
+  /// 触发垃圾回收。
+  void runGc() => JsRuntimeLib.instance.api.crateApiEngineJsEngineRunGc(
+        that: this,
+      );
 
+  /// 设置内存上限（字节），`0` 表示不限制。
+  void setMemoryLimit({required BigInt limitBytes}) => JsRuntimeLib.instance.api
+      .crateApiEngineJsEngineSetMemoryLimit(that: this, limitBytes: limitBytes);
 
-/// 执行 JavaScript 代码，返回类型化的 [JsValue]。
- JsValue  eval({required String code })=>JsRuntimeLib.instance.api.crateApiEngineJsEngineEval(that: this, code: code);
+  @override
+  int get hashCode => runtimeId.hashCode;
 
-
-/// 带选项执行 JavaScript 代码。
- JsValue  evalWithOptions({required String code , required JsEvalOptions options })=>JsRuntimeLib.instance.api.crateApiEngineJsEngineEvalWithOptions(that: this, code: code, options: options);
-
-
-/// 获取内存估算用量（字节）。
- BigInt  memoryUsage()=>JsRuntimeLib.instance.api.crateApiEngineJsEngineMemoryUsage(that: this, );
-
-
-/// 触发垃圾回收。
- void  runGc()=>JsRuntimeLib.instance.api.crateApiEngineJsEngineRunGc(that: this, );
-
-
-/// 设置内存上限（字节），`0` 表示不限制。
- void  setMemoryLimit({required BigInt limitBytes })=>JsRuntimeLib.instance.api.crateApiEngineJsEngineSetMemoryLimit(that: this, limitBytes: limitBytes);
-
-
-
-
-
-        @override
-        int get hashCode => runtimeId.hashCode;
-
-
-
-        @override
-        bool operator ==(Object other) =>
-            identical(this, other) ||
-            other is JsEngine &&
-                runtimeType == other.runtimeType
-                && runtimeId == other.runtimeId;
-
-            }
-            
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is JsEngine &&
+          runtimeType == other.runtimeType &&
+          runtimeId == other.runtimeId;
+}

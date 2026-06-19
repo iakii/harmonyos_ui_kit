@@ -6,41 +6,36 @@
 import '../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-
-            
-
-            
-
-            /// 一个 ES 模块，可用于注册到 JS 运行时中。
+/// 一个 ES 模块，可用于注册到 JS 运行时中。
 ///
 /// 注册后，JS 端可通过 `import('name')` 动态导入。
-class JsModule  {
-                /// 模块名称（import specifier），如 `"my-lib"` 或 `"@scope/pkg"`
-final String name;
-/// 模块源码（ES module 格式，支持 `import`/`export` 语法）
-final String source;
+class JsModule {
+  /// 模块名称（import specifier），如 `"my-lib"` 或 `"@scope/pkg"`
+  final String name;
 
-                const JsModule({required this.name ,required this.source ,});
+  /// 模块源码（ES module 格式，支持 `import`/`export` 语法）
+  final String source;
 
-                  // HINT: Make it `#[frb(sync)]` to let it become the default constructor of Dart class.
-/// 从名称和源码创建模块。
-static Future<JsModule>  newInstance({required String name , required String source })=>JsRuntimeLib.instance.api.crateApiModuleJsModuleNew(name: name, source: source);
+  const JsModule({
+    required this.name,
+    required this.source,
+  });
 
+  // HINT: Make it `#[frb(sync)]` to let it become the default constructor of Dart class.
+  /// 从名称和源码创建模块。
+  static Future<JsModule> newInstance(
+          {required String name, required String source}) =>
+      JsRuntimeLib.instance.api
+          .crateApiModuleJsModuleNew(name: name, source: source);
 
+  @override
+  int get hashCode => name.hashCode ^ source.hashCode;
 
-
-
-        @override
-        int get hashCode => name.hashCode^source.hashCode;
-
-
-
-        @override
-        bool operator ==(Object other) =>
-            identical(this, other) ||
-            other is JsModule &&
-                runtimeType == other.runtimeType
-                && name == other.name&& source == other.source;
-
-            }
-            
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is JsModule &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          source == other.source;
+}
