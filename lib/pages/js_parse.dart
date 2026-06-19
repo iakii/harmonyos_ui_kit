@@ -65,7 +65,7 @@ class JsParsePage extends HookConsumerWidget {
             options: JsRuntimeOptions(
               builtins: await JsBuiltinOptions.all(),
               info: "parser=esbuild",
-              memoryLimit: BigInt.from(100 * 1024 * 1024),
+              // memoryLimit: BigInt.from(100 * 1024 * 1024),
             ),
           );
 

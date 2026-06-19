@@ -145,15 +145,15 @@ pub(crate) fn eval_and_resolve(
 
 /// 检查并更新内存估算，如超出上限则返回错误。
 pub(crate) fn check_memory_limit(state: &RuntimeState) -> Result<(), String> {
-    if state.max_memory > 0 {
-        let actual = get_process_memory().unwrap_or(state.estimated_memory);
-        if actual >= state.max_memory {
-            return Err(format!(
-                "Memory limit exceeded: used {} bytes, limit {} bytes. \
-                 Call release_memory() or dispose() to free memory.",
-                actual, state.max_memory
-            ));
-        }
-    }
+    // if state.max_memory > 0 {
+    //     let actual = get_process_memory().unwrap_or(state.estimated_memory);
+    //     if actual >= state.max_memory {
+    //         return Err(format!(
+    //             "Memory limit exceeded: used {} bytes, limit {} bytes. \
+    //              Call release_memory() or dispose() to free memory.",
+    //             actual, state.max_memory
+    //         ));
+    //     }
+    // }
     Ok(())
 }
