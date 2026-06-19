@@ -1,6 +1,6 @@
 {
   module: {
-    name: "t_lib",
+    name: "js_runtime",
     type: "har",
     deviceTypes: ["default", "tablet"],
   },

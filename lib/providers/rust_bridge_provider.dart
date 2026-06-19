@@ -9,5 +9,5 @@ import 'package:js_runtime/js_runtime.dart';
 /// if (rustReady.hasValue) { /* 调用 Rust 函数 */ }
 /// ```
 final rustLibInitProvider = FutureProvider<void>((ref) async {
-  await RustLib.init();
+  await JsRuntimeLib.init();
 });

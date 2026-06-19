@@ -4,14 +4,14 @@
 cmake_minimum_required(VERSION 3.10)
 
 # Project-level configuration.
-set(PROJECT_NAME "t_lib")
+set(PROJECT_NAME "js_runtime")
 set(TARGET_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../libs/${OHOS_ARCH})
 project(${PROJECT_NAME} LANGUAGES CXX)
 if (NOT DEFINED FLUTTER_TARGET_PLATFORM)
   set(FLUTTER_TARGET_PLATFORM "ohos-arm64")
 endif()
 include("../../cargokit/cmake/cargokit.cmake")
-apply_cargokit(${PROJECT_NAME} ../../rust t_lib "")
+apply_cargokit(${PROJECT_NAME} ../../rust js_runtime "")
 
 
 # List of absolute paths to libraries that should be bundled with the plugin.
