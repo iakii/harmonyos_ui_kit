@@ -3,7 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:logger/logger.dart' show Logger;
-import 'package:t_lib/lib.dart';
+import 'package:js_runtime/js_runtime.dart';
 // import 'package:fjs/fjs.dart';
 
 /// JS 解析页面 —— 展示 kossjs_flutter 的 JavaScript 执行能力。

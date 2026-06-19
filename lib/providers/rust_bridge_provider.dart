@@ -1,5 +1,5 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:t_lib/lib.dart';
+import 'package:js_runtime/js_runtime.dart';
 
 /// RustLib 初始化 Provider —— 确保 Rust FFI 桥接在应用启动时初始化。
 ///

@@ -29,13 +29,13 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   harmonyos_ui:
-    path: third_library/harmonyos_ui
-  t_lib:
-    path: third_library/t_lib
+    path: packages/harmonyos_ui
+  js_runtime:
+    path: packages/js_runtime
   flutter:
     sdk: flutter
   # fjs:
-  #   path: third_library/fjs
+  #   path: packages/fjs
   # kossjs_flutter:
   #   git:
   #     url: https://github.com/molihuan/kossjs_flutter/
@@ -55,7 +55,7 @@ dependencies:
   # === 工具 ===
   logger: ^2.5.0
   hm_icon:
-    path: third_library/hm_icon
+    path: packages/hm_icon
 
   bootscrap_icons:
     git:
