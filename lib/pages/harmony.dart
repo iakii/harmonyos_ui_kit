@@ -2,12 +2,12 @@
 
 import 'package:bootscrap_icons/bootscrap_icons.dart';
 import 'package:flutter/material.dart' show Icons;
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
+import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:hm_icon/hm_icon.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:harmonyos_ui/harmonyos_ui.dart';
-import 'package:t_lib/lib.dart' show hello;
+
 import '../providers/counter_provider.dart';
 
 /// HarmonyOS UI 组件展示页面。
@@ -67,8 +67,6 @@ class HarmonyOSPage extends HookConsumerWidget {
               child: HosButton(
                 onPressed: () async {
                   counterNotifier.increment();
-                  final result = await hello(hello: 'Flutter');
-                  debugPrint('Result from Rust: $result');
                 },
                 child: const Text('确认'),
               ),

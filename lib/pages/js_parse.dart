@@ -58,11 +58,15 @@ class JsParsePage extends HookConsumerWidget {
 
     // Boa JS 运行时初始化（仅在组件挂载时执行一次）
     useEffect(() {
-      void init() {
+      Future<void> init() async {
         try {
           // 创建 Boa JS 运行时，设置 100MB 内存上限
           runtime.value = JsRuntime.create(
-            // maxMemoryBytes: BigInt.from(100 * 1024 * 1024),
+            options: JsRuntimeOptions(
+              builtins: await JsBuiltinOptions.all(),
+              info: "parser=esbuild",
+              memoryLimit: BigInt.from(100 * 1024 * 1024),
+            ),
           );
 
           // 预加载一个 ES 模块
@@ -108,8 +112,8 @@ export function multiply(a, b) {
       error.value = null;
 
       try {
-        final output = runtime.value!.evalJs(code: code);
-        result.value = output;
+        final output = runtime.value!.eval(code: code);
+        result.value = output.asStringSync!;
 
         // 更新内存信息
         final used = runtime.value!.memoryUsage();

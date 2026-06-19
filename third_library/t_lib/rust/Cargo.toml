@@ -7,13 +7,18 @@ edition = "2021"
 crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
-boa_engine = "0.21.1"
+boa_ast = "0.21.1"
+boa_engine = { version = "0.21.1", features = ["intl_bundled"] }
+boa_gc = "0.21.1"
+boa_interner = "0.21.1"
+boa_macros = "0.21.1"
+boa_parser = "0.21.1"
 boa_runtime = { version = "0.21.1", features = ["reqwest-blocking"] }
+boa_string = "0.21.1"
 flutter_rust_bridge = "=2.13.0-beta.1"
 scraper = "0.22"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-# kossjs = { git = "https://github.com/KossJS/KossJS.git", version = "0.1.0-dev.6" }
 
 [profile.release]
 opt-level = 'z'

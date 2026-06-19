@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:t_lib/lib.dart';
+
 import 'app.dart';
 
 /// 应用入口。
