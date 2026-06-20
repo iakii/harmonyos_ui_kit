@@ -3,7 +3,6 @@ pub mod engine;
 pub mod eval_options;
 pub mod hello;
 pub mod js_error;
-pub mod js_message;
 pub mod js_value;
 pub mod module;
 pub mod repl;

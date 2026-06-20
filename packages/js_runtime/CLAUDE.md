@@ -64,7 +64,8 @@ js_runtime/
 
 1. **纯 flutter_rust_bridge**: 不再使用 `dart:ffi` 直接调用或 `ffigen` 生成绑定，所有 FFI 调用通过 `JsRuntimeLib`（flutter_rust_bridge 生成）完成
 2. **Boa 集成**: Rust 端依赖 `boa_engine`，rust_input 中包含 `boa_engine`，允许 Dart 通过 FRB 调用 JS 执行相关功能
-3. **入口类 `JsRuntimeLib`**: 取代旧的 `RustLib`，通过 `JsRuntimeLib.init()` 初始化，通过自动生成的 Wrapper 函数（如 `hello()`）调用 Rust
+3. **入口类 `JsRuntimeLib`**: 取代旧的 `RustLib`，通过 `JsRuntimeLib.init()` 初始化，通过自动生成的 Wrapper 函数调用 Rust
+4. **JS↔Dart 回调**: 通过 `register_global_callable` / `register_global_function` 注册 Promise-based 回调函数，统一的 `pollCalls()` / `resolveCall()` / `rejectCall()` 处理
 
 ## 修改 Rust API 流程
 

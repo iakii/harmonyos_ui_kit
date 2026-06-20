@@ -5,11 +5,13 @@
 use crate::api::js_error::JsError;
 use boa_engine::{Context, JsValue as BoaValue, Source};
 use boa_string::JsString;
+use serde::{Deserialize, Serialize};
 
 /// JavaScript 值的 FRB 兼容枚举。
 ///
 /// 使用 `Box<JsValue>` 包装递归类型（Array、Object），
 /// 以确保 flutter_rust_bridge 能正确生成 Dart sealed class。
+#[derive(Serialize, Deserialize, Debug)]
 pub enum JsValue {
     /// `null` 或 `undefined`
     None,
@@ -33,6 +35,28 @@ pub enum JsValue {
     Date(i64),
     /// Symbol，描述字符串
     Symbol(String),
+}
+
+// ─── Clone（手动实现，因 Box<JsValue> 递归）────────────
+
+impl Clone for JsValue {
+    fn clone(&self) -> Self {
+        match self {
+            Self::None => Self::None,
+            Self::Boolean(b) => Self::Boolean(*b),
+            Self::Integer(i) => Self::Integer(*i),
+            Self::Float(f) => Self::Float(*f),
+            Self::BigInt(s) => Self::BigInt(s.clone()),
+            Self::String_(s) => Self::String_(s.clone()),
+            Self::Bytes(b) => Self::Bytes(b.clone()),
+            Self::Array(arr) => Self::Array(arr.iter().map(|v| v.clone()).collect()),
+            Self::Object(entries) => {
+                Self::Object(entries.iter().map(|(k, v)| (k.clone(), v.clone())).collect())
+            }
+            Self::Date(ts) => Self::Date(*ts),
+            Self::Symbol(s) => Self::Symbol(s.clone()),
+        }
+    }
 }
 
 // ─── 类型判断 ────────────────────────────────────────────

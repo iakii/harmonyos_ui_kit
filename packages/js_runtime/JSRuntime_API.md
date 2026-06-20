@@ -29,32 +29,41 @@ X86_64_UNKNOWN_LINUX_OHOS_OPENSSL_DIR="~/.ohos/ohos-openssl/prelude/x86_64/"
 │  │  (高层封装)    │  │  (低层 API)           │ │
 │  │  · eval()         │  │  · create(options)   │ │
 │  │  · call()         │  │  · eval() → JsValue  │ │
-│  │  · postMessage()  │  │  · dispose()         │ │
-│  │  · pollMessages() │  │                      │ │
-│  │  · close()        │  │                      │ │
+│  │  · register_      │  │  · dispose()         │ │
+│  │    global_        │  │                      │ │
+│  │    callable/      │  │                      │ │
+│  │    function()     │  │                      │ │
+│  │  · pollCalls()    │  │                      │ │
+│  │  · resolveCall()  │  │                      │ │
+│  │  · rejectCall()   │  │                      │ │
 │  └──────┬───────┘  └──────────┬───────────┘ │
 │         │                     │              │
 │  ┌──────┴─────────────────────┴───────────┐ │
 │  │  JsValue (freezed sealed class)        │ │
 │  │  JsError (freezed sealed class)        │ │
+│  │  CompletedCall (回调请求)               │ │
 │  └────────────────────────────────────────┘ │
 └─────────────────────────────────────────────┘
-                      │ FRB sync
+                    │ FRB sync
 ┌─────────────────────┴───────────────────────┐
 │                 Rust 端                      │
 │  thread_local! { RUNTIMES: HashMap<u64, ..> }│
 │  ┌──────────────┐  ┌──────────────────────┐ │
 │  │  Boa Context  │  │  DOM Module          │ │
 │  │  + Console    │  │  (scraper 解析)      │ │
-│  │  + Fetch      │  │  Message Queue       │ │
-│  │  + __postMsg  │  │  (JsMessage Vec)     │ │
+│  │  + Fetch      │  │                      │ │
+│  │  + register_  │  │  Promise Bridge      │ │
+│  │    global_    │  │  (CompletedCall 队列) │ │
+│  │    callable/  │  │                      │ │
+│  │    function() │  │                      │ │
 │  └──────────────┘  └──────────────────────┘ │
 └─────────────────────────────────────────────┘
 ```
 
 **两层 API 设计**：
-- **JsRuntime**（低层）：灵活控制运行时生命周期，返回 `JsValue`/`JsError`
-- **JsEngine**（高层）：封装运行时管理，提供 `call()`、`declareModules()` 等便利方法
+- **JsRuntime**（低层）：灵活控制运行时生命周期
+- **JsEngine**（高层）：封装运行时管理，提供 `call()`、`register_global_callable()`、`register_global_function()` 等
+- **CompletedCall**（回调请求）：JS→Dart 方法调用的统一请求类型，通过 `pollCalls()`/`resolveCall()`/`rejectCall()` 处理
 
 ---
 
@@ -132,19 +141,6 @@ JsValue.bigInt("9007199254740993n")
 JsValue.array([JsValue.integer(1), JsValue.integer(2)])
 JsValue.object([("key", JsValue.string("value"))])
 ```
-
----
-
-### JsMessage —— 通道消息
-
-```dart
-class JsMessage {
-  final String event;   // 事件名称（如 "log"、"data"）
-  final JsValue data;   // 结构化负载
-}
-```
-
-详见 [Dart↔JS 双向通信通道](#dartjs-双向通信通道)。
 
 ---
 
@@ -332,6 +328,19 @@ JsValue sum = engine.call(
 );
 print(sum.asIntegerSync);  // 7
 
+// JS→Dart 方法调用（注册 + 处理回调）
+engine.registerGlobalFunction(name: 'compute');
+engine.evalRaw(code: 'compute(21).then(r => console.log("结果:", r));');
+final calls = engine.pollCalls();
+for (final c in calls) {
+  final x = c.params[0].asIntegerSync;
+  engine.resolveCall(callId: c.callId, result: JsValue.integer(x * 2));
+}
+engine.runJobs();  // 触发 JS 侧 .then() 回调
+
+// 或注册可构造函数（JS 可使用 new）
+engine.registerGlobalCallable(name: 'Calculator');
+
 // 注册更多模块
 engine.declareModule(JsModule(name: 'utils', source: '...'));
 engine.declareModules([...]);
@@ -355,9 +364,13 @@ engine.close();
 | `call({module, method, params})` | `JsValue` | 调用模块导出函数 |
 | `declareModule({module})` | `void` | 注册单个模块 |
 | `declareModules({modules})` | `void` | 批量注册模块 |
-| `postMessage({event, data})` | `JsValue` | Dart → JS 发送消息 |
-| `pollMessages()` | `List<JsMessage>` | 拉取 JS → Dart 消息（排空队列） |
-| `hasMessages()` | `bool` | 检查是否有待处理消息 |
+| `evalRaw({code})` | `JsValue` | 执行 JS（不自动 resolve 顶层 Promise） |
+| `registerGlobalCallable({name})` | `void` | 注册可构造全局函数（JS 可 `new`） |
+| `registerGlobalFunction({name})` | `void` | 注册纯函数（不可 `new`） |
+| `pollCalls()` | `List<CompletedCall>` | 拉取 JS 发起的回调请求 |
+| `resolveCall({callId, result})` | `void` | 回传成功结果（resolve JS Promise） |
+| `rejectCall({callId, error})` | `void` | 回传错误（reject JS Promise） |
+| `runJobs()` | `void` | 执行微任务（触发 `.then()` 回调） |
 | `memoryUsage()` | `BigInt` | 内存用量 |
 | `runGc()` | `void` | 触发 GC |
 | `setMemoryLimit({limitBytes})` | `void` | 设置内存上限 |
@@ -365,127 +378,147 @@ engine.close();
 
 ---
 
-## Dart↔JS 双向通信通道
+## Dart↔JS 方法调用
 
-`JsEngine` 内置消息队列通道，支持 Dart 与 JS 之间双向发送结构化消息（`JsValue` 负载）。
+`JsEngine` 提供两种 API 实现 JS→Dart 方法调用，均基于 Promise 机制：
 
-### 架构
+1. **`register_global_callable`**：使用 Boa 的 `context.register_global_callable()`，注册的函数既可调用也可构造（`new`）
+2. **`register_global_function`**：使用 `FunctionObjectBuilder` 手动构建不可构造的纯函数
 
-```
-Dart 端                      Rust 端                        JS 端 (Boa)
-────────                     ────────                        ──────────
-postMessage(event, data) ──→ eval(globalThis.__onDartMessage)
-                                                              │
-                                                      用户处理器被调用
-                                                       ───────────────
-                                                              │
-pollMessages() ←─────────── message_queue ←─────── __postMessage(event, data)
-```
+两种 API 共用统一的 poll/resolve/reject 机制。
 
-- **Dart → JS**: 同步 eval，直接调用 `globalThis.__onDartMessage`
-- **JS → Dart**: 消息入队，Dart 轮询拉取（非入侵，不打断 JS 执行）
+---
 
-### JsMessage
+### 基本用法
 
 ```dart
-class JsMessage {
-  final String event;   // 事件名称，如 "log"、"data"、"error"
-  final JsValue data;   // 结构化负载（任意 JsValue 类型）
-}
-```
+import 'package:js_runtime/lib.dart';
 
-### Dart → JS（postMessage）
+final engine = JsEngine.create();
 
-```dart
-// JS 侧先注册处理器
-engine.eval(code: '''
-  globalThis.__onDartMessage = (event, data) => {
-    console.log(`收到 Dart 消息 [${event}]:`, JSON.stringify(data));
-    return { handled: true };
-  };
+// 注册纯函数（不可 new）
+engine.registerGlobalFunction(name: 'sum');
+
+// 注册可构造函数（可 new）
+engine.registerGlobalCallable(name: 'Calculator');
+
+// JS 侧调用
+engine.evalRaw(code: '''
+  sum(3, 4).then(r => console.log("3+4=", r));
+  new Calculator(100);
 ''');
 
-// Dart 侧发送
-final response = engine.postMessage(
-  event: 'greeting',
-  data: JsValue.object([
-    ('text', JsValue.string('Hello from Dart!')),
-    ('count', JsValue.integer(42)),
-  ]),
-);
-print(response.asMapSync?['handled']?.asBooleanSync);  // true
+// 处理回调
+final calls = engine.pollCalls();
+for (final call in calls) {
+  switch (call.name) {
+    case 'sum':
+      final a = call.params[0].asIntegerSync;
+      final b = call.params[1].asIntegerSync;
+      engine.resolveCall(callId: call.callId, result: JsValue.integer(a + b));
+    case 'Calculator':
+      engine.resolveCall(callId: call.callId, result: JsValue.none());
+    default:
+      engine.rejectCall(callId: call.callId, error: 'Unknown method: ${call.name}');
+  }
+}
+engine.runJobs();  // 触发 JS 侧 .then() / .catch() 回调
 ```
 
-- 如 `globalThis.__onDartMessage` 未定义，返回 `JsValue_None`，不抛异常（`typeof` 守卫）
-- 如处理器返回 Promise，`postMessage` 自动 `await` 解析
-- `event` 字符串内部做了安全转义（`\`、`'`、`\n`、`\r`）
+### 工作流程
 
-### JS → Dart（pollMessages / hasMessages）
-
-```js
-// JS 侧发送消息
-__postMessage('log', { level: 'info', text: 'Hello from JS!' });
-__postMessage('data', new Uint8Array([1, 2, 3]));
-__postMessage('result', 42);
 ```
+Dart                              Rust                          JS
+─────                             ────                          ──
+engine.registerGlobalFunction("sum")
+  → internal::create_native_fn()  → NativeFunction 创建
+  → FunctionObjectBuilder          → 构建不可构造的 JsFunction
+  → define_property_or_throw       → 绑定到 globalThis.sum
+                                          ↓
+engine.evalRaw(code)                      sum(3, 4)
+  → ctx.eval(Source)                        → Promise 创建
+                                            → {callId, "sum", [3,4]} 入队
+engine.pollCalls()
+  ← CompletedCall(callId, "sum", [3,4])
+engine.resolveCall(callId, result)  ──→  Promise resolve(value)
+engine.runJobs()                     ──→  .then(r => ...) 执行
+```
+
+> **重要**：JS 使用 `.then()` 模式，**不要**用顶层 `await`。`eval()` 内部会 `await_blocking` 顶层 Promise 导致死锁。
+
+### CompletedCall 类型
 
 ```dart
-// Dart 侧轮询拉取
-if (engine.hasMessages()) {
-  final messages = engine.pollMessages();
-  for (final msg in messages) {
-    switch (msg.event) {
-      case 'log':
-        final map = msg.data.asMapSync;
-        print('[${map?['level']?.asStringSync}] ${map?['text']?.asStringSync}');
-      case 'data':
-        print('收到二进制数据: ${msg.data.asBytesSync?.length} 字节');
-      case 'result':
-        print('结果: ${msg.data.asIntegerSync}');
-      default:
-        print('未知事件: ${msg.event}');
-    }
-  }
+class CompletedCall {
+  final BigInt callId;        // 唯一 ID，用于 resolve / reject
+  final String name;          // 注册的方法名
+  final List<JsValue> params; // 调用参数
 }
 ```
 
-- `pollMessages()` 排空并返回所有积累消息（原子操作，FIFO 顺序）
-- `hasMessages()` 仅检查而不排空，适合定期轮询
-- `__postMessage` 在 Boa 上下文中注册为不可变全局函数（`writable: false`）
-
-### JS 端 API 参考
-
-| 函数 | 说明 |
-|------|------|
-| `__postMessage(event, data)` | 发送消息到 Dart（data 为任意 JS 值，自动转为 JsValue） |
-| `globalThis.__onDartMessage = (event, data) => { ... }` | 注册 Dart→JS 消息处理器（需用户定义） |
-
-### 轮询模式
+### 高级用法：自定义 handler 分发
 
 ```dart
-// 定时轮询
-Timer.periodic(Duration(milliseconds: 100), (_) {
-  if (engine.hasMessages()) {
-    for (final msg in engine.pollMessages()) {
-      _handleMessage(msg);
-    }
+class JsCallbackHandler {
+  final JsEngine _engine;
+  final Map<String, JsValue Function(List<JsValue>)> _handlers = {};
+
+  JsCallbackHandler(this._engine);
+
+  /// 注册一个纯函数回调
+  void register(String name, JsValue Function(List<JsValue>) handler) {
+    _handlers[name] = handler;
+    _engine.registerGlobalFunction(name: name);
   }
-});
 
-// 或在每次 eval 后拉取
-void runJs(String code) {
-  engine.eval(code: code);
-  _drainMessages();
-}
+  /// 注册一个可构造函数回调
+  void registerCallable(String name, JsValue Function(List<JsValue>) handler) {
+    _handlers[name] = handler;
+    _engine.registerGlobalCallable(name: name);
+  }
 
-void _drainMessages() {
-  for (final msg in engine.pollMessages()) {
-    switch (msg.event) {
-      // ... 处理
+  /// 执行 JS 并自动处理所有回调
+  JsValue eval(String code) {
+    final result = _engine.evalRaw(code: code);
+    drain();
+    return result;
+  }
+
+  /// 处理所有待处理回调
+  void drain() {
+    final calls = _engine.pollCalls();
+    for (final call in calls) {
+      final handler = _handlers[call.name];
+      if (handler != null) {
+        try {
+          final result = handler(call.params);
+          _engine.resolveCall(callId: call.callId, result: result);
+        } catch (e) {
+          _engine.rejectCall(callId: call.callId, error: e.toString());
+        }
+      } else {
+        _engine.rejectCall(
+          callId: call.callId,
+          error: 'Unknown method: ${call.name}',
+        );
+      }
+    }
+    if (calls.isNotEmpty) {
+      _engine.runJobs();
     }
   }
 }
 ```
+
+### register_global_callable vs register_global_function
+
+| 特性 | `register_global_callable` | `register_global_function` |
+|------|---------------------------|---------------------------|
+| Boa API | `context.register_global_callable()` | `FunctionObjectBuilder` + 手动绑定 |
+| JS 调用 | `name(args)` ✅ | `name(args)` ✅ |
+| JS 构造 | `new name(args)` ✅ | `new name(args)` ❌ TypeError |
+| Promise 机制 | ✅ 共用 poll/resolve/reject | ✅ 共用 poll/resolve/reject |
+| 适用场景 | 类/构造函数、需要 `new` 的 API | 纯函数、工具方法 |
 
 ---
 
@@ -831,51 +864,46 @@ print(result.asStringSync);  // [{"title":"Hello","html":"Hello"},...]
 rt.dispose();
 ```
 
-### 示例 6：Dart↔JS 双向通信
+### 示例 6：Dart↔JS 方法调用
 
 ```dart
 final engine = JsEngine.create(
-  builtins: JsBuiltinOptions.web(),  // 需要 console API
+  builtins: JsBuiltinOptions.web(),
 );
 
-// 1. JS 侧注册处理器，并发送一条欢迎消息
-engine.eval(code: '''
-  globalThis.__onDartMessage = (event, data) => {
-    console.log('Dart 发来 [' + event + ']:', JSON.stringify(data));
-    __postMessage('response', { echo: event, length: Object.keys(data).length });
-    return { ok: true };
-  };
-  __postMessage('ready', { timestamp: Date.now() });
+// 1. 注册 Dart 方法
+engine.registerGlobalFunction(name: 'sum');
+engine.registerGlobalFunction(name: 'fetchTitle');
+
+// 2. JS 调用
+engine.evalRaw(code: '''
+  sum(3, 4).then(total => {
+    console.log("3 + 4 =", total);
+  });
+
+  fetchTitle("https://example.com").then(title => {
+    console.log("Title:", title);
+  });
 ''');
 
-// 2. Dart 拉取 JS 的 ready 消息
-var messages = engine.pollMessages();
-for (final msg in messages) {
-  if (msg.event == 'ready') {
-    final ts = msg.data.asMapSync?['timestamp']?.asIntegerSync;
-    print('JS 已就绪，时间戳: $ts');
+// 3. 处理回调
+final calls = engine.pollCalls();
+for (final call in calls) {
+  switch (call.name) {
+    case 'sum':
+      final a = call.params[0].asIntegerSync;
+      final b = call.params[1].asIntegerSync;
+      engine.resolveCall(callId: call.callId, result: JsValue.integer(a + b));
+    case 'fetchTitle':
+      // 在 Dart 侧执行 HTTP 请求
+      final url = call.params[0].asStringSync!;
+      // ... 实际 fetch 逻辑
+      engine.resolveCall(callId: call.callId, result: JsValue.string('Example Domain'));
+    default:
+      engine.rejectCall(callId: call.callId, error: 'Unknown: ${call.name}');
   }
 }
-
-// 3. Dart 发送消息，JS 处理器触发后回传 response 消息
-final response = engine.postMessage(
-  event: 'query',
-  data: JsValue.object([
-    ('sql', JsValue.string('SELECT * FROM users')),
-    ('limit', JsValue.integer(10)),
-  ]),
-);
-print('JS 处理完毕: ${response.asMapSync?['ok']?.asBooleanSync}');
-
-// 4. 拉取 JS 的 response 回复
-messages = engine.pollMessages();
-for (final msg in messages) {
-  if (msg.event == 'response') {
-    final echo = msg.data.asMapSync?['echo']?.asStringSync;
-    final length = msg.data.asMapSync?['length']?.asIntegerSync;
-    print('JS 回应: echo=$echo, length=$length');
-  }
-}
+engine.runJobs();
 
 engine.close();
 ```
@@ -921,16 +949,15 @@ rust/src/api/          （FRB 公开 API）
 ├── js_value.rs        JsValue 枚举 + Boa 互转
 ├── js_error.rs        JsError 枚举 + 错误码 + 分类
 ├── runtime.rs         JsRuntime 低层 API + 向后兼容方法
-├── engine.rs          JsEngine 高层封装
+├── engine.rs          JsEngine 高层封装（含 CompletedCall + 回调注册）
 ├── repl.rs            JsRepl 交互式 REPL
 ├── eval_options.rs    JsEvalOptions
 ├── builtin_options.rs JsBuiltinOptions + 预设
 ├── module.rs          JsModule
-├── js_message.rs      JsMessage 消息类型
 └── hello.rs           示例函数
 
 rust/src/js_runtime/   （内部实现，不暴露给 Dart）
-└── internal.rs        RuntimeState, RUNTIMES, init_context
+└── internal.rs        RuntimeState, RUNTIMES, init_context, create_native_fn
 ```
 
 ### 运行时创建流程
@@ -948,8 +975,6 @@ JsRuntime.create(options)
     │   │   ├── querySelector      (html, css) → JSON|null
     │   │   ├── getElementsByTagName (html, tag) → JSON
     │   │   └── getElementById     (html, id)  → JSON|null
-    │   ├── register_message_channel()（始终注册）
-    │   │   └── __postMessage(event, data) — JS→Dart 消息入队
     │   └── boa_icu_provider::buffer()（Intl API 数据）
     │
     └── 存入 thread_local! RUNTIMES

@@ -5,7 +5,6 @@ export 'src/frb/frb_generated.io.dart';
 // 核心类型
 export 'src/frb/api/js_value.dart';
 export 'src/frb/api/js_error.dart';
-export 'src/frb/api/js_message.dart';
 
 // 运行时 API
 export 'src/frb/api/runtime.dart';
@@ -18,3 +17,4 @@ export 'src/frb/api/module.dart';
 
 // Dart 便利扩展
 export 'src/api/js_value_ext.dart';
+export 'src/api/js_callback_handler.dart';
