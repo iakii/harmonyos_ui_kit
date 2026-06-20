@@ -6,7 +6,7 @@
 
 1、添加 ohos-openssl
 ```bash
-# ~/.ohos/
+cd ~/.ohos/
 gh repo clone ohos-rs/ohos-openssl
 ```
 
@@ -15,6 +15,10 @@ gh repo clone ohos-rs/ohos-openssl
 AARCH64_UNKNOWN_LINUX_OHOS_OPENSSL_DIR="~/.ohos/ohos-openssl/prelude/arm64-v8a/"
 ARMV7_UNKNOWN_LINUX_OHOS_OPENSSL_DIR="~/.ohos/ohos-openssl/prelude/armeabi-v7a/"
 X86_64_UNKNOWN_LINUX_OHOS_OPENSSL_DIR="~/.ohos/ohos-openssl/prelude/x86_64/"
+
+# openssl-sys 需要 _LIB_DIR / _INCLUDE_DIR 分开的格式
+AARCH64_UNKNOWN_LINUX_OHOS_OPENSSL_LIB_DIR="~/.ohos/ohos-openssl/prelude/arm64-v8a/lib"
+AARCH64_UNKNOWN_LINUX_OHOS_OPENSSL_INCLUDE_DIR="~/.ohos/ohos-openssl/prelude/arm64-v8a/include"
 ```
 
 ---
