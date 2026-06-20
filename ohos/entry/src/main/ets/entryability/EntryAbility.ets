@@ -1,4 +1,3 @@
-
 import { FlutterAbility, FlutterEngine } from '@ohos/flutter_ohos';
 import { GeneratedPluginRegistrant } from '../plugins/GeneratedPluginRegistrant';
 

@@ -47,25 +47,22 @@ class Client {
 
     try {
       const html = await fetch(url).then((response) => response.text());
-      const dom = await import('dom');
-
-      // 用 DOM 解析替代正则：分别查询 a 标签和内部 img 标签，索引一一对应
-      const links = JSON.parse(dom.querySelectorAll(html, 'a.list-img'));
-      const imgs  = JSON.parse(dom.querySelectorAll(html, 'a.list-img img'));
-
+      // 定义正则
+      var regex =
+        /<a class="list-img" href="(.*?)">.*?<img .*?data-src="(.*?)".*?alt="(.*?)"/g;
+      // 提取数据
       const results = [];
-      for (let i = 0; i < links.length; i++) {
-        const linkEl = links[i];
-        const imgEl  = imgs[i];
-        const href   = linkEl.attrs.find(a => a[0] === 'href')?.[1] || '';
+      var match;
+
+      while ((match = regex.exec(html)) !== null) {
         results.push({
-          link: parsedUrl + href,
-          cover: imgEl?.attrs?.find(a => a[0] === 'data-src')?.[1] || '',
-          title: imgEl?.attrs?.find(a => a[0] === 'alt')?.[1] || '',
+          link: parsedUrl + match[1], // href 链接
+          cover: match[2], // img src 链接
+          title: match[3], // alt 标题
         });
       }
 
-      const totalPages = await this.getPhotosPageSize(html);
+      const totalPages = this.getPhotosPageSize(html);
 
       console.log("获取到的页数：", totalPages);
       // console.log("获取数据：", results);
@@ -95,31 +92,18 @@ class Client {
     const html = await fetch(url).then((response) => response.text());
     // const parsedUrl = getOriginFromUrl( url );
     console.log("是否获取页数：", parsePage);
+    // 提取 div class="content" 下的 a 标签 href 和 title
+    const aTagMatch = html.match(
+      /<div class="content">[\s\S]*?<a [^>]*href="([^"]+)"[^>]*title="([^"]+)"/
+    );
+    const href = aTagMatch ? aTagMatch[1] : null;
+    const title = aTagMatch ? aTagMatch[2] : null;
 
-    const dom = await import('dom');
-
-    // 获取 div.content 容器，再从其 innerHtml 中查询子元素
-    const contentRaw = dom.querySelector(html, 'div.content');
-    const contentDiv = contentRaw !== null ? JSON.parse(contentRaw) : null;
-
-    let href = null;
-    let title = null;
-    let src = null;
-
-    if (contentDiv) {
-      const aRaw = dom.querySelector(contentDiv.innerHtml, 'a[href][title]');
-      const aTag = aRaw !== null ? JSON.parse(aRaw) : null;
-      if (aTag) {
-        href  = aTag.attrs.find(a => a[0] === 'href')?.[1] || null;
-        title = aTag.attrs.find(a => a[0] === 'title')?.[1] || null;
-      }
-
-      const imgRaw = dom.querySelector(contentDiv.innerHtml, 'img[src]');
-      const imgTag = imgRaw !== null ? JSON.parse(imgRaw) : null;
-      if (imgTag) {
-        src = imgTag.attrs.find(a => a[0] === 'src')?.[1] || null;
-      }
-    }
+    // 提取 div class="content" 下的 img 标签 src
+    const imgTagMatch = html.match(
+      /<div class="content">[\s\S]*?<img [^>]*src="([^"]+)"/
+    );
+    const src = imgTagMatch ? imgTagMatch[1] : null;
 
     const items = [
       {
@@ -130,7 +114,7 @@ class Client {
     ];
     // 获取总页数
     if (parsePage) {
-      const totalPages = await this.getPhotosPageSize(html);
+      const totalPages = this.getPhotosPageSize(html);
       for (let index = 2; index < +totalPages; index++) {
         console.log("获取第几页：", index, "总页数：", totalPages);
         const pageUrl = `${url.replace(".html", `_${index}.html`)}`;
@@ -157,21 +141,34 @@ class Client {
 
 
 
-  async getPhotosPageSize(html) {
-    const dom = await import('dom');
+  getPhotosPageSize(html) {
+    let totalPages = 1;
 
-    // 用 DOM 查询分页链接替代正则
-    const pageLinks = JSON.parse(dom.querySelectorAll(html, 'li.page-item a.page-link'));
+    // 正则表达式匹配尾页的 <a> 标签的 href 属性
+    var regex = /<li class="page-item"><a class="page-link" href="([^"]+)"/g;
 
-    const numbers = pageLinks
-      .map(el => {
-        const href = el.attrs.find(a => a[0] === 'href')?.[1] || '';
-        const match = href.match(/_(\d+)\.html/);
-        return match ? parseInt(match[1], 10) : null;
+    // 查找所有匹配项
+    let hrefs = [];
+    var match;
+
+    // 提取所有的 href 链接
+    while ((match = regex.exec(html))) {
+      hrefs.push(match[1]); // 提取 href 的完整值
+    }
+
+    // 正则表达式匹配 href 中的数字
+    const numberRegex = /_(\d+)\.html/;
+    // 从每个 href 中提取数字
+    let numbers = hrefs
+      .map((href) => {
+        const numberMatch = href.match(numberRegex);
+        return numberMatch ? numberMatch[1] : null; // 提取数字部分
       })
-      .filter(n => n !== null);
+      .filter((num) => num !== null); // 过滤掉没有数字的项
 
-    return numbers.length > 0 ? Math.max(...numbers) : 1;
+    totalPages = numbers.length > 0 ? Math.max(...numbers) : 1;
+
+    return totalPages;
   }
 
 }

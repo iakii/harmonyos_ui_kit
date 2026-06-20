@@ -53,17 +53,14 @@ final router = GoRouter(
         GoRoute(
           path: '/js_gallery',
           builder: (context, state) => const GalleryPage(),
-          routes: [
-            GoRoute(
-              path: 'detail',
-              builder: (context, state) =>
-                  DetailPage(url: state.extra as String),
-            ),
-          ],
+          routes: [],
         ),
       ],
     ),
-
+    GoRoute(
+      path: '/js_gallery_detail',
+      builder: (context, state) => DetailPage(url: state.extra as String),
+    ),
     GoRoute(
       path: '/immersive',
       builder: (context, state) => const ImmersivePage(),

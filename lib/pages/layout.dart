@@ -39,7 +39,6 @@ class _AppLayoutState extends State<AppLayout> {
         ),
       ],
       body: widget.child,
-      // backgroundColor: HarmonyTheme.of(context).surfaceColor,
       bottomBar: HosBottomNavigation(
         floating: _isImmersive,
         // immersive: false,
@@ -57,7 +56,13 @@ class _AppLayoutState extends State<AppLayout> {
             _selectedIndex = i;
           });
 
-          final route = ['/', '/js_parse', '/glass_kit', '/glass', '/js_gallery'][i];
+          final route = [
+            '/',
+            '/js_parse',
+            '/glass_kit',
+            '/glass',
+            '/js_gallery',
+          ][i];
           if (ModalRoute.of(context)?.settings.name != route) {
             context.go(route);
           }

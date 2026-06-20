@@ -45,6 +45,7 @@ dependencies:
   # === 状态管理 ===
   hooks_riverpod: ^2.6.1
   signals: ^6.0.0
+  isolate_manager: ^6.3.2
   # === 工具 ===
   logger: ^2.5.0
   hm_icon:

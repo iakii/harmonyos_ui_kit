@@ -24,6 +24,8 @@ class DetailPage extends HookConsumerWidget {
     return HosPage(
       leading: const BackIcon(),
       title: '详情',
+      backgroundColor: HarmonyTheme.of(context).surfaceColor,
+      showAppBar: true,
       body: asyncState.when(
         loading: () => _LoadingWidget(theme: theme),
         error: (err, _) =>
@@ -117,7 +119,7 @@ class _DetailList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.only(left: 12, right: 12, top: 12, bottom: 24),
       itemCount: items.length,
       itemBuilder: (context, index) =>
           _DetailCard(item: items[index], index: index, total: items.length),
@@ -142,8 +144,9 @@ class _DetailCard extends StatelessWidget {
     final theme = HarmonyTheme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 12),
       child: HosCard(
+        padding: EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

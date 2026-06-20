@@ -242,11 +242,11 @@ class _GalleryGrid extends StatelessWidget {
             children: [
               // 网格内容（切换分页时保持不变，不再闪烁）
               GridView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
                   childAspectRatio: 0.72,
                 ),
                 itemCount: items.length,
@@ -324,6 +324,7 @@ class _GalleryGrid extends StatelessWidget {
               ],
             ),
           ),
+        SizedBox(height: 120),
       ],
     );
   }
@@ -340,8 +341,9 @@ class _GridItemCard extends StatelessWidget {
     final theme = HarmonyTheme.of(context);
 
     return GestureDetector(
-      onTap: () => context.push('/js_gallery/detail', extra: item.link),
+      onTap: () => context.push('/js_gallery_detail', extra: item.link),
       child: HosCard(
+        padding: EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

@@ -203,6 +203,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.20.2"
+  isolate_manager:
+    dependency: "direct main"
+    description:
+      name: isolate_manager
+      sha256: "806b6195a60f17bcb23e3c6d2f4da1f29e7376c4295b061d135f59613586ad1d"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.3.2"
   js_runtime:
     dependency: "direct main"
     description:
