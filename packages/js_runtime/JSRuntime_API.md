@@ -365,11 +365,13 @@ engine.close();
 | `declareModule({module})` | `void` | 注册单个模块 |
 | `declareModules({modules})` | `void` | 批量注册模块 |
 | `evalRaw({code})` | `JsValue` | 执行 JS（不自动 resolve 顶层 Promise） |
-| `registerGlobalCallable({name})` | `void` | 注册可构造全局函数（JS 可 `new`） |
-| `registerGlobalFunction({name})` | `void` | 注册纯函数（不可 `new`） |
-| `pollCalls()` | `List<CompletedCall>` | 拉取 JS 发起的回调请求 |
-| `resolveCall({callId, result})` | `void` | 回传成功结果（resolve JS Promise） |
-| `rejectCall({callId, error})` | `void` | 回传错误（reject JS Promise） |
+| `registerGlobalCallable({name})` | `void` | 注册可构造 Promise 函数（JS 可 `new`） |
+| `registerGlobalFunction({name})` | `void` | 注册纯 Promise 函数（不可 `new`） |
+| `registerDartHandler({ptr})` | `void` | （内部）注册 Dart FFI 回调指针 |
+| `registerSyncFunction({name})` | `void` | 注册同步函数（JS 调用立刻响应） |
+| `pollCalls()` | `List<CompletedCall>` | 拉取 Promise 回调请求 |
+| `resolveCall({callId, result})` | `void` | resolve JS Promise |
+| `rejectCall({callId, error})` | `void` | reject JS Promise |
 | `runJobs()` | `void` | 执行微任务（触发 `.then()` 回调） |
 | `memoryUsage()` | `BigInt` | 内存用量 |
 | `runGc()` | `void` | 触发 GC |
@@ -387,43 +389,58 @@ engine.close();
 
 两种 API 共用统一的 poll/resolve/reject 机制。
 
+> **推荐使用 [JsCallbackHandler](#jsCallbackHandler-推荐) 替代**，基于 `registerSyncFunction` + FFI 同步回调，JS 调用立刻响应，和模块函数行为一致。
+
 ---
 
-### 基本用法
+### JsCallbackHandler（推荐）
+
+`JsCallbackHandler` 通过 `dart:ffi` 的 `NativeCallable.isolateLocal` 创建 C 函数指针，Rust NativeFunction 在 JS 调用时**直接同步调用 Dart 闭包并立刻拿到返回值**，无需 Promise、无需 poll loop。
 
 ```dart
 import 'package:js_runtime/lib.dart';
 
 final engine = JsEngine.create();
+final handler = JsCallbackHandler(engine);
 
-// 注册纯函数（不可 new）
-engine.registerGlobalFunction(name: 'sum');
+// 注册 —— JS 调用时立刻响应
+handler.register('sum', (args) {
+  return JsValue.integer(args[0].asIntegerSync + args[1].asIntegerSync);
+});
 
-// 注册可构造函数（可 new）
-engine.registerGlobalCallable(name: 'Calculator');
-
-// JS 侧调用
-engine.evalRaw(code: '''
-  sum(3, 4).then(r => console.log("3+4=", r));
-  new Calculator(100);
-''');
-
-// 处理回调
-final calls = engine.pollCalls();
-for (final call in calls) {
-  switch (call.name) {
-    case 'sum':
-      final a = call.params[0].asIntegerSync;
-      final b = call.params[1].asIntegerSync;
-      engine.resolveCall(callId: call.callId, result: JsValue.integer(a + b));
-    case 'Calculator':
-      engine.resolveCall(callId: call.callId, result: JsValue.none());
-    default:
-      engine.rejectCall(callId: call.callId, error: 'Unknown method: ${call.name}');
-  }
-}
-engine.runJobs();  // 触发 JS 侧 .then() / .catch() 回调
+// JS 端直接拿到结果，无需 await！
+final result = handler.eval('sum(3, 4) + 10');
+print(result.asIntegerSync);  // 17
 ```
+
+#### 工作原理
+
+```
+JS 调用 sum(3, 4)
+  → Boa NativeFunction（同步）
+    → 序列化 args → JSON
+    → FFI 同步调用 Dart _handleCall()
+      → 解析 JSON, 查找 handler
+      → 执行 fn(3,4) → 返回 7
+    → 返回 7 给 JS
+```
+
+注册的同步方法在 JS 执行期间**立刻响应**（和 `console.log` 等内置函数一样同步执行）。
+
+#### JsCallbackHandler API
+
+| 方法 | 说明 |
+|------|------|
+| `register(name, handler)` | 注册同步回调（JS 调用立刻响应，无 Promise） |
+| `unregister(name)` | 注销已注册的回调 |
+| `eval(code)` | 执行 JS 并返回结果 |
+| `registeredMethods` | 已注册的方法名列表 |
+| `isRegistered(name)` | 检查是否已注册 |
+| `engine` | 获取底层 `JsEngine` 实例 |
+
+---
+
+### Promise 回调机制（高级）
 
 ### 工作流程
 
@@ -864,46 +881,30 @@ print(result.asStringSync);  // [{"title":"Hello","html":"Hello"},...]
 rt.dispose();
 ```
 
-### 示例 6：Dart↔JS 方法调用
+### 示例 6：Dart↔JS 方法调用（JsCallbackHandler）
 
 ```dart
 final engine = JsEngine.create(
   builtins: JsBuiltinOptions.web(),
 );
+final handler = JsCallbackHandler(engine);
 
-// 1. 注册 Dart 方法
-engine.registerGlobalFunction(name: 'sum');
-engine.registerGlobalFunction(name: 'fetchTitle');
+// 注册 Dart 方法（同步，立刻响应）
+handler.register('sum', (args) {
+  return JsValue.integer(args[0].asIntegerSync + args[1].asIntegerSync);
+});
 
-// 2. JS 调用
-engine.evalRaw(code: '''
-  sum(3, 4).then(total => {
-    console.log("3 + 4 =", total);
-  });
+handler.register('postMessage', (args) {
+  print('[${args[0].asStringSync}] ${args[1]}');
+  return JsValue.none();
+});
 
-  fetchTitle("https://example.com").then(title => {
-    console.log("Title:", title);
-  });
+// JS 调用 —— sum 立刻返回，无需 await
+handler.eval('''
+  postMessage("info", JSON.stringify({
+    total: sum(10, 20)
+  }));
 ''');
-
-// 3. 处理回调
-final calls = engine.pollCalls();
-for (final call in calls) {
-  switch (call.name) {
-    case 'sum':
-      final a = call.params[0].asIntegerSync;
-      final b = call.params[1].asIntegerSync;
-      engine.resolveCall(callId: call.callId, result: JsValue.integer(a + b));
-    case 'fetchTitle':
-      // 在 Dart 侧执行 HTTP 请求
-      final url = call.params[0].asStringSync!;
-      // ... 实际 fetch 逻辑
-      engine.resolveCall(callId: call.callId, result: JsValue.string('Example Domain'));
-    default:
-      engine.rejectCall(callId: call.callId, error: 'Unknown: ${call.name}');
-  }
-}
-engine.runJobs();
 
 engine.close();
 ```
