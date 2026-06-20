@@ -254,7 +254,7 @@ class _HosTabChip extends StatelessWidget {
         padding: chipPadding,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? theme.accentColor.normal : Colors.transparent,
+          color: isSelected ? theme.accentColor.normal : theme.surfaceColor,
           borderRadius: BorderRadius.circular(borderRadius),
           border: _resolveBorder(),
         ),
@@ -276,7 +276,7 @@ class _HosTabChip extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: (theme.typography.body ?? const TextStyle()).copyWith(
-                  color: isSelected ? Colors.white : theme.textSecondaryColor,
+                  color: isSelected ? Colors.white : theme.textColor,
                   fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
                 ),
               ),
