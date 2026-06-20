@@ -119,9 +119,9 @@ pub(crate) fn create_native_fn(method_name: String) -> NativeFunction {
 /// Dart 侧注册的同步回调函数指针。
 ///
 /// 签名：`char* handler(const char* request_json)`
-/// - 参数：JSON 字符串 `{"n":"method_name","a":"[args_json]"}`
-/// - 返回：JSON 字符串 `{"v": result_json}` 或 `{"e":"error"}`
-/// - 内存：返回的指针由 Rust 侧 `CString::from_raw` 接管释放
+/// - 参数：`{"n":"method_name","a":"[raw_json_args]"}`
+/// - 返回：`{"v":"result_json"}` 或 `{"e":"error_msg"}`
+/// - 内存：返回指针由 Rust 侧 `CString::from_raw` 接管释放
 type DartCallHandler = unsafe extern "C" fn(*const c_char) -> *mut c_char;
 
 thread_local! {
@@ -129,7 +129,6 @@ thread_local! {
     static DART_HANDLERS: RefCell<HashMap<u64, DartCallHandler>> = RefCell::new(HashMap::new());
 }
 
-/// 注册 Dart 回调函数指针（从 `NativeCallable.nativeFunction.address` 传入）。
 pub(crate) fn register_dart_handler(runtime_id: u64, ptr: i64) {
     let handler: DartCallHandler = unsafe { std::mem::transmute(ptr as usize) };
     DART_HANDLERS.with(|map| {
@@ -137,7 +136,13 @@ pub(crate) fn register_dart_handler(runtime_id: u64, ptr: i64) {
     });
 }
 
-/// 同步调用 Dart 回调，返回 JSON 结果字符串。
+pub(crate) fn unregister_dart_handler(runtime_id: u64) {
+    DART_HANDLERS.with(|map| {
+        map.borrow_mut().remove(&runtime_id);
+    });
+}
+
+/// 调用 Dart handler（同步 FFI），返回 Dart 侧的 JSON 响应字符串。
 fn call_dart_handler(runtime_id: u64, method: &str, args_json: &str) -> Result<String, String> {
     DART_HANDLERS.with(|map| {
         let handler = map
@@ -150,48 +155,134 @@ fn call_dart_handler(runtime_id: u64, method: &str, args_json: &str) -> Result<S
         let request_cstr =
             CString::new(request).map_err(|e| format!("CString::new failed: {e}"))?;
 
-        // SAFETY: handler 指向 Dart 侧的 NativeCallable（生命周期由 JsCallbackHandler 保证）
         let result_ptr = unsafe { handler(request_cstr.as_ptr()) };
         if result_ptr.is_null() {
             return Err("Dart handler returned null".to_string());
         }
 
-        // 接管 Dart 侧 `toNativeUtf8()` 分配的内存
         let result = unsafe { CStr::from_ptr(result_ptr) }
             .to_string_lossy()
             .into_owned();
-        // SAFETY: 指针来自 Dart 侧 malloc（通过 toNativeUtf8），用 CString::from_raw 释放
         let _ = unsafe { CString::from_raw(result_ptr) };
 
         Ok(result)
     })
 }
 
+// ─── JsValue ↔ serde_json::Value 转换（FFI 协议用）───────
+
+/// 将 FrbJsValue 转为 serde_json::Value（原始 JSON，与 Dart 侧 _jsValueToJson 对应）。
+fn frb_value_to_json(v: &FrbJsValue) -> serde_json::Value {
+    match v {
+        FrbJsValue::None => serde_json::Value::Null,
+        FrbJsValue::Boolean(b) => serde_json::Value::Bool(*b),
+        FrbJsValue::Integer(i) => serde_json::Value::Number((*i).into()),
+        FrbJsValue::Float(f) => {
+            // 整数形式的 float 序列化为整数 JSON（与 JS 行为一致）
+            let n = serde_json::Number::from_f64(*f).unwrap_or_else(|| 0.into());
+            serde_json::Value::Number(n)
+        }
+        FrbJsValue::BigInt(s) => serde_json::Value::String(s.clone()),
+        FrbJsValue::String_(s) => serde_json::Value::String(s.clone()),
+        FrbJsValue::Bytes(b) => {
+            let arr: Vec<serde_json::Value> =
+                b.iter().map(|&byte| serde_json::Value::Number(byte.into())).collect();
+            serde_json::Value::Array(arr)
+        }
+        FrbJsValue::Array(items) => {
+            let arr: Vec<serde_json::Value> = items.iter().map(|i| frb_value_to_json(i)).collect();
+            serde_json::Value::Array(arr)
+        }
+        FrbJsValue::Object(entries) => {
+            let mut map = serde_json::Map::new();
+            for (k, val) in entries {
+                map.insert(k.clone(), frb_value_to_json(val));
+            }
+            serde_json::Value::Object(map)
+        }
+        FrbJsValue::Date(ts) => serde_json::Value::Number((*ts).into()),
+        FrbJsValue::Symbol(desc) => serde_json::Value::String(desc.clone()),
+    }
+}
+
+/// 将 serde_json::Value 转为 FrbJsValue（与 Dart 侧 _jsonToJsValue 对应）。
+fn json_to_frb_value(v: &serde_json::Value) -> FrbJsValue {
+    match v {
+        serde_json::Value::Null => FrbJsValue::None,
+        serde_json::Value::Bool(b) => FrbJsValue::Boolean(*b),
+        serde_json::Value::Number(n) => {
+            if let Some(i) = n.as_i64() {
+                // 检查是否为整数值（JSON 不区分 int/float）
+                if n.as_f64().map_or(false, |f| f == i as f64) {
+                    FrbJsValue::Integer(i)
+                } else {
+                    FrbJsValue::Float(n.as_f64().unwrap_or(0.0))
+                }
+            } else {
+                FrbJsValue::Float(n.as_f64().unwrap_or(0.0))
+            }
+        }
+        serde_json::Value::String(s) => FrbJsValue::String_(s.clone()),
+        serde_json::Value::Array(arr) => {
+            let items: Vec<Box<FrbJsValue>> = arr
+                .iter()
+                .map(|v| Box::new(json_to_frb_value(v)))
+                .collect();
+            FrbJsValue::Array(items)
+        }
+        serde_json::Value::Object(map) => {
+            let entries: Vec<(String, Box<FrbJsValue>)> = map
+                .iter()
+                .map(|(k, v)| (k.clone(), Box::new(json_to_frb_value(v))))
+                .collect();
+            FrbJsValue::Object(entries)
+        }
+    }
+}
+
 /// 创建同步 NativeFunction（不创建 Promise，直接返回结果）。
 ///
-/// 与 [create_native_fn] 不同，此函数通过 FFI 直接同步调用 Dart handler，
-/// 返回结果给 JS 而非 Promise。JS 侧可 `const x = sum(3,4)` 直接拿到值。
+/// 通过 FFI 同步调用 Dart handler，JSON 协议：
+/// - 请求：`{"n":"method","a":"[raw_json]"}`
+/// - 响应：`{"v":"result_json"}` 或 `{"e":"error"}`
+/// - result_json / args_json 均为 serde_json::Value 格式（原始 JSON）
 pub(crate) fn create_sync_native_fn(method_name: String, runtime_id: u64) -> NativeFunction {
     NativeFunction::from_copy_closure_with_captures(
         move |_this, args, _name, ctx| -> boa_engine::JsResult<boa_engine::JsValue> {
-            // 序列化 JS args → JSON
+            // 序列化 JS args → JSON（原始格式，与 Dart 侧 _jsonToJsValue 兼容）
             let args_frb: Vec<FrbJsValue> = args
                 .iter()
                 .map(|v| FrbJsValue::from_boa(v, ctx))
                 .collect();
-            let args_json = serde_json::to_string(&args_frb).unwrap_or_default();
+            let args_json_vals: Vec<serde_json::Value> =
+                args_frb.iter().map(|v| frb_value_to_json(v)).collect();
+            let args_json = serde_json::to_string(&args_json_vals).unwrap_or_default();
 
-            // 同步调用 Dart handler（_name 是 &String，来自 captures 参数）
+            // 同步调用 Dart handler
             match call_dart_handler(runtime_id, _name, &args_json) {
-                Ok(result_json) => {
-                    let result_frb: FrbJsValue = serde_json::from_str(&result_json)
-                        .unwrap_or(FrbJsValue::None);
-                    result_frb.to_boa(ctx).map_err(|e| {
-                        boa_engine::JsError::from_native(
+                Ok(raw_response) => {
+                    // 解析响应包裹：{"v": result} 或 {"e": error}
+                    let wrapper: serde_json::Value =
+                        serde_json::from_str(&raw_response).unwrap_or_default();
+                    if let Some(err) = wrapper.get("e").and_then(|e| e.as_str()) {
+                        return Err(boa_engine::JsError::from_native(
                             boa_engine::JsNativeError::typ()
-                                .with_message(format!("{e}")),
-                        )
-                    })
+                                .with_message(format!("Dart: {err}")),
+                        ));
+                    }
+                    if let Some(val) = wrapper.get("v") {
+                        let result_frb = json_to_frb_value(val);
+                        return result_frb.to_boa(ctx).map_err(|e| {
+                            boa_engine::JsError::from_native(
+                                boa_engine::JsNativeError::typ()
+                                    .with_message(format!("{e}")),
+                            )
+                        });
+                    }
+                    Err(boa_engine::JsError::from_native(
+                        boa_engine::JsNativeError::typ()
+                            .with_message("Dart handler returned invalid response"),
+                    ))
                 }
                 Err(e) => Err(boa_engine::JsError::from_native(
                     boa_engine::JsNativeError::typ().with_message(e),
@@ -200,13 +291,6 @@ pub(crate) fn create_sync_native_fn(method_name: String, runtime_id: u64) -> Nat
         },
         method_name,
     )
-}
-
-/// 清理指定运行时的 Dart handler。
-pub(crate) fn unregister_dart_handler(runtime_id: u64) {
-    DART_HANDLERS.with(|map| {
-        map.borrow_mut().remove(&runtime_id);
-    });
 }
 
 // ─── 进程内存 ────────────────────────────────────────────

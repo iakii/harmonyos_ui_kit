@@ -5,13 +5,11 @@
 use crate::api::js_error::JsError;
 use boa_engine::{Context, JsValue as BoaValue, Source};
 use boa_string::JsString;
-use serde::{Deserialize, Serialize};
 
 /// JavaScript 值的 FRB 兼容枚举。
 ///
 /// 使用 `Box<JsValue>` 包装递归类型（Array、Object），
 /// 以确保 flutter_rust_bridge 能正确生成 Dart sealed class。
-#[derive(Serialize, Deserialize, Debug)]
 pub enum JsValue {
     /// `null` 或 `undefined`
     None,

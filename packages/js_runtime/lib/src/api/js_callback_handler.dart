@@ -130,7 +130,7 @@ class JsCallbackHandler {
       float: (v) => v.field0,
       bigInt: (v) => v.field0,
       string: (v) => v.field0,
-      bytes: (v) => base64Encode(v.field0),
+      bytes: (v) => v.field0,
       array: (v) => v.field0.map(_jsValueToJson).toList(),
       object: (v) => {
         for (final (k, val) in v.field0) k: _jsValueToJson(val)

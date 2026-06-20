@@ -9,7 +9,7 @@ import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'js_value.freezed.dart';
 
 // These functions are ignored because they are not marked as `pub`: `as_array`, `as_bigint`, `as_bytes`, `as_object`, `as_string`, `as_symbol`, `build_js_array_literal`, `build_js_object_literal`, `from_boa`, `into_boa`, `is_valid_js_identifier`, `js_value_to_literal`, `to_boa`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`
 
 @freezed
 sealed class JsValue with _$JsValue {
