@@ -2,12 +2,10 @@
 
 import 'dart:ui';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
-import 'package:rohos_app/pages/bottom_bar.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 /// 鸿蒙风格胶囊 TabBar。
 class HarmonyTabBar extends StatelessWidget {
@@ -59,8 +57,8 @@ class GlassPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tab = useState(0);
-    final fake = useState(false);
+    // final tab = useState(0);
+    // final fake = useState(false);
 
     return HosPage(
       showAppBar: false,
@@ -72,51 +70,10 @@ class GlassPage extends HookConsumerWidget {
 
           const Text('This is the Glass Page'),
           const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Go Back'),
-          ),
 
           SafeArea(
             bottom: false,
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: LiquidGlassBottomBar(
-                fake: fake.value,
-                extraButton: LiquidGlassBottomBarExtraButton(
-                  icon: CupertinoIcons.add_circled,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      CupertinoPageRoute<void>(
-                        builder: (context) => const CupertinoPageScaffold(
-                          navigationBar: CupertinoNavigationBar.large(),
-                          child: SizedBox(),
-                        ),
-                      ),
-                    );
-                  },
-                  label: '',
-                ),
-                tabs: const [
-                  LiquidGlassBottomBarTab(
-                    label: 'Home',
-                    icon: CupertinoIcons.home,
-                  ),
-                  LiquidGlassBottomBarTab(
-                    label: 'Profile',
-                    icon: CupertinoIcons.person,
-                  ),
-                  LiquidGlassBottomBarTab(
-                    label: 'Settings',
-                    icon: CupertinoIcons.settings,
-                  ),
-                ],
-                selectedIndex: tab.value,
-                onTabSelected: (index) {
-                  tab.value = index;
-                },
-              ),
-            ),
+            child: Align(alignment: Alignment.bottomCenter),
           ),
         ],
       ),

@@ -1,18 +1,4 @@
 
-// import axios from "./axios.min";
-
-// // sendMessage('someChannelName', JSON.stringify([1,2,3])
-
-// function fetch ( url ) {
-//   return axios
-//     .get( url )
-//     .then( ( response ) => {
-//       return response.data;
-//     } )
-//     .catch( ( error ) => console.log( error ) );
-// }
-
-
 function waitTime(duration = 300) {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -21,12 +7,13 @@ function waitTime(duration = 300) {
   });
 }
 
+
 class Client {
 
   _pluginInfo = {
     type: "photo",
     version: "1.0.0",
-    website: "https://www.meitu001.cc/",
+    website: "https://www.meitula.org/",
     name: "美图乐妹子",
     menus: [
       { label: "首页", path: "" },
@@ -59,7 +46,7 @@ class Client {
     const parsedUrl = this._pluginInfo.website;
 
     try {
-      const html = await fetch(url);
+      const html = await fetch(url).then((response) => response.text());
       // 定义正则
       var regex =
         /<a class="list-img" href="(.*?)">.*?<img .*?data-src="(.*?)".*?alt="(.*?)"/g;
@@ -103,8 +90,7 @@ class Client {
 
   async _parse(url, parsePage = true) {
 
-    const html = await fetch(url);
-
+    const html = await fetch(url).then((response) => response.text());
     // const parsedUrl = getOriginFromUrl( url );
     console.log("是否获取页数：", parsePage);
     // 提取 div class="content" 下的 a 标签 href 和 title
@@ -128,8 +114,8 @@ class Client {
       },
     ];
     // 获取总页数
-    const totalPages = this.getPhotosPageSize(html);
     if (parsePage) {
+      const totalPages = this.getPhotosPageSize(html);
       for (let index = 2; index < +totalPages; index++) {
         console.log("获取第几页：", index, "总页数：", totalPages);
         const pageUrl = `${url.replace(".html", `_${index}.html`)}`;
@@ -137,11 +123,19 @@ class Client {
         const result = await this._parse(pageUrl, false);
         items.push(...result);
 
+        console.log("当前获取到的数量：", items.length, "当前页数：", index, "总页数：", totalPages, "当前页url：", pageUrl, items.length % 5 == 0 ? "发送数据" : "不发送数据");
         if (items.length % 5 == 0) {
-          sendMessage('sendChannelDetails', JSON.stringify({ list: items }));
+          console.log("发送数据：", items.length);
+          postMessage('sendChannelDetails', JSON.stringify({
+            list: items,
+            current: index,
+          }));
         }
       }
     }
+
+    console.log("最终获取到的数量：", items.length);
+    // postMessage('stopLoading');
     return items;
   }
 
@@ -180,16 +174,4 @@ class Client {
 
 }
 const client = new Client();
-// export default client;
-
-// console.log( client.pluginInfo )
-
-// const html = await client.getPage( 'https://www.meitule.cc/i/', 2 )
-// const html = await client.getDetails( 'https://www.meitule.cc/photo/73658.html', true )
-
-// console.log( html );
-
-
-// function fetch ( url, page ) {
-//   return url + page;
-// };
+export default client;

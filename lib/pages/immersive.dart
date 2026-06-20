@@ -18,7 +18,10 @@ class _ImmersivePageState extends State<ImmersivePage> {
       appBar: HosAppBar(
         title: ('Immersive Page'),
         immersive: true,
-        leading: Icon(HMIcons.harmonyosNext),
+        leading: IconButton(
+          icon: Icon(HMIcons.arrowLeft),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       // backgroundColor: Colors.yellow,
       // showAppBar: false,

@@ -6,13 +6,15 @@ import 'pages/glass_kit.dart' show GlassKitPage;
 import 'pages/glass_page.dart' show GlassPage;
 import 'pages/immersive.dart' show ImmersivePage;
 import 'pages/icon_preview.dart' show IconPreviewPage;
+import 'pages/js/gallery_page.dart' show GalleryPage;
+import 'pages/js/detail_page.dart' show DetailPage;
 import 'pages/layout.dart' show AppLayout;
 
 /// 全局路由配置。
 ///
 /// 使用 GoRouter ShellRoute，所有页面包裹在 AppLayout 中。
 final router = GoRouter(
-  // initialLocation: '/immersive',
+  initialLocation: '/js_parse',
   errorBuilder: (context, state) => HosPage(
     title: 'Page Not Found',
     body: Column(
@@ -47,6 +49,17 @@ final router = GoRouter(
         GoRoute(
           path: '/icons',
           builder: (context, state) => const IconPreviewPage(),
+        ),
+        GoRoute(
+          path: '/js_gallery',
+          builder: (context, state) => const GalleryPage(),
+          routes: [
+            GoRoute(
+              path: 'detail',
+              builder: (context, state) =>
+                  DetailPage(url: state.extra as String),
+            ),
+          ],
         ),
       ],
     ),

@@ -1,6 +1,5 @@
 // ignore_for_file: avoid_print
 
-import 'package:bootscrap_icons/bootscrap_icons.dart';
 import 'package:flutter/material.dart' show Icons;
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
@@ -41,7 +40,6 @@ class HarmonyOSPage extends HookConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const HosDivider(label: 'OR'),
-            Icon(BTIcons.house),
             Icon(HMIcons.harmonyos),
             Icon(HMIcons.heartFill),
             Icon(HMIcons.starFill),
@@ -207,6 +205,11 @@ class HarmonyOSPage extends HookConsumerWidget {
             HosButton(
               onPressed: () => context.push('/js_parse'),
               child: const Text('JS 解析'),
+            ),
+
+            HosButton(
+              onPressed: () => context.push('/immersive'),
+              child: const Text('ImmersivePage'),
             ),
 
             Image.network(

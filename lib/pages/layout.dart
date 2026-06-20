@@ -49,6 +49,7 @@ class _AppLayoutState extends State<AppLayout> {
           HosBottomNavItem(icon: HMIcons.share, label: '玻璃套件'),
           // HosBottomNavItem(icon: HMIcons.a10kRectangle, label: '沉浸式'),
           HosBottomNavItem(icon: HMIcons.glass, label: '毛玻璃'),
+          HosBottomNavItem(icon: HMIcons.galleryOrg, label: '图集'),
         ],
         selectedIndex: _selectedIndex,
         onChanged: (i) {
@@ -56,79 +57,12 @@ class _AppLayoutState extends State<AppLayout> {
             _selectedIndex = i;
           });
 
-          if (i == 1) {
-            showHosBottomSheet(
-              context: context,
-              builder: (context) => SizedBox(
-                height: 800,
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text('Bottom sheet content'),
-                ),
-              ),
-            );
-          }
-
-          final route = [
-            '/',
-            '/js_parse',
-            '/glass_kit',
-            // '/immersive',
-            '/glass',
-          ][i];
+          final route = ['/', '/js_parse', '/glass_kit', '/glass', '/js_gallery'][i];
           if (ModalRoute.of(context)?.settings.name != route) {
             context.go(route);
           }
         },
       ),
-      // bottomBar: HarmonyImmersiveGlowNavigationBar(
-      //   currentIndex: _selectedIndex,
-      //   height: 56,
-      //   onTap: (value) {
-      //     setState(() => _selectedIndex = value);
-
-      //     final route = [
-      //       '/',
-      //       '/js_parse',
-      //       '/glass_kit',
-      //       '/immersive',
-      //       '/glass',
-      //     ][value];
-      //     if (ModalRoute.of(context)?.settings.name != route) {
-      //       context.go(route);
-      //     }
-      //   },
-      //   materialLevel: HarmonyGlowMaterialLevel.adaptive,
-      //   // effectTuning: const HarmonyGlowEffectTuning(
-      //   //   glowScale: .9,
-      //   //   blurScale: .2,
-      //   //   surfaceScale: .2,
-      //   //   elasticScale: .8,
-      //   //   scatterScale: .35,
-      //   // ),
-      //   items: const <HarmonyGlowNavigationItem>[
-      //     HarmonyGlowNavigationItem(
-      //       icon: Icon(Icons.home_outlined),
-      //       activeIcon: Icon(Icons.home_rounded),
-      //       label: '推荐',
-      //     ),
-      //     HarmonyGlowNavigationItem(
-      //       icon: Icon(Icons.category_outlined),
-      //       activeIcon: Icon(Icons.category_rounded),
-      //       label: '分类',
-      //     ),
-      //     // HarmonyGlowNavigationItem(
-      //     //   icon: Icon(Icons.apps_outlined),
-      //     //   activeIcon: Icon(Icons.apps_rounded),
-      //     //   label: '甄选馆',
-      //     // ),
-      //     // HarmonyGlowNavigationItem(
-      //     //   icon: Icon(Icons.account_circle_outlined),
-      //     //   activeIcon: Icon(Icons.account_circle_rounded),
-      //     //   label: '我的',
-      //     // ),
-      //   ],
-      // ),
     );
   }
 }
