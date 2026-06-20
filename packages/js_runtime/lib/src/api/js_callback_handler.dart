@@ -82,7 +82,9 @@ class JsCallbackHandler {
     final units = <int>[];
     var i = 0;
     while (ptr[i] != 0) {
-      units.add(ptr[i]);
+      // Int8 是有符号的，高位为 1 的字节变成负数。
+      // utf8.decode 期望无符号字节值 (0–255)，所以需要 & 0xFF。
+      units.add(ptr[i] & 0xFF);
       i++;
     }
     return utf8.decode(units);
