@@ -8,6 +8,7 @@
 use crate::api::builtin_options::JsBuiltinOptions;
 use crate::api::eval_options::JsEvalOptions;
 use crate::api::js_error::JsError;
+use crate::api::js_message::JsMessage;
 use crate::api::js_value::{js_value_to_literal, JsValue};
 use crate::api::module::JsModule;
 use crate::api::runtime::{JsRuntime, JsRuntimeOptions};
@@ -142,7 +143,90 @@ impl JsEngine {
         Ok(())
     }
 
-    /// 获取内存估算用量（字节）。
+    // ─── Dart↔JS 通信通道 ────────────────────────────────
+
+    /// 从 Dart 发送消息到 JS。
+    ///
+    /// JS 端需注册处理器：`globalThis.__onDartMessage = (event, data) => { ... }`
+    /// 返回 JS 处理器的返回值（如未注册返回 `undefined`）。
+    #[frb(sync)]
+    pub fn post_message(
+        &self,
+        event: String,
+        data: JsValue,
+    ) -> Result<JsValue, JsError> {
+        internal::RUNTIMES.with(|map| {
+            let mut map = map.borrow_mut();
+            let state = map
+                .get_mut(&self.runtime_id)
+                .ok_or_else(|| JsError::Internal {
+                    message: format!("Engine runtime {} not found", self.runtime_id),
+                })?;
+
+            // 将 data 转为 JS 字面量
+            let data_lit =
+                crate::api::js_value::js_value_to_literal(&data, &mut state.context)?;
+
+            // 安全转义 event 用于单引号 JS 字符串
+            let escaped_event = event
+                .replace('\\', "\\\\")
+                .replace('\'', "\\'")
+                .replace('\n', "\\n")
+                .replace('\r', "\\r");
+
+            // 如果 __onDartMessage 未定义则返回 undefined，不抛异常
+            let code = format!(
+                "typeof globalThis.__onDartMessage === 'function' \
+                 ? globalThis.__onDartMessage('{escaped_event}', {data_lit}) \
+                 : undefined"
+            );
+
+            let result = state
+                .context
+                .eval(boa_engine::Source::from_bytes(code.as_bytes()))
+                .map_err(JsError::from)?;
+
+            // 解析 Promise（如果 handler 返回 Promise）
+            let resolved = if let Some(promise) = result.as_promise() {
+                promise
+                    .await_blocking(&mut state.context)
+                    .map_err(JsError::from)?
+            } else {
+                result
+            };
+
+            Ok(JsValue::from_boa(&resolved, &mut state.context))
+        })
+    }
+
+    /// 拉取 JS 端发送的所有消息（排空队列）。
+    ///
+    /// JS 端通过 `__postMessage(event, data)` 发送消息。
+    /// 调用此方法后队列被清空，返回此前积累的所有消息。
+    #[frb(sync)]
+    pub fn poll_messages(&self) -> Vec<JsMessage> {
+        internal::RUNTIMES.with(|map| {
+            let mut map = map.borrow_mut();
+            if let Some(state) = map.get_mut(&self.runtime_id) {
+                std::mem::take(&mut state.message_queue)
+            } else {
+                Vec::new()
+            }
+        })
+    }
+
+    /// 检查是否有来自 JS 的待处理消息（不排空队列）。
+    #[frb(sync)]
+    pub fn has_messages(&self) -> bool {
+        internal::RUNTIMES.with(|map| {
+            map.borrow()
+                .get(&self.runtime_id)
+                .map(|s| !s.message_queue.is_empty())
+                .unwrap_or(false)
+        })
+    }
+
+    // ─── 内存管理 ────────────────────────────────────────
     #[frb(sync)]
     pub fn memory_usage(&self) -> u64 {
         self.runtime().memory_usage()

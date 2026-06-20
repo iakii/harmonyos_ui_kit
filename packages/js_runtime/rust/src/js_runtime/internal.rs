@@ -9,8 +9,12 @@ use std::rc::Rc;
 
 use boa_engine::{Context, Module, Source};
 use boa_engine::module::MapModuleLoader;
+use boa_engine::NativeFunction;
 use boa_runtime::extensions::{ConsoleExtension, FetchExtension};
 use boa_runtime::fetch::BlockingReqwestFetcher;
+
+use crate::api::js_message::JsMessage;
+use crate::api::js_value::JsValue as FrbJsValue;
 
 /// 单个运行时的内部状态。
 pub(crate) struct RuntimeState {
@@ -23,6 +27,8 @@ pub(crate) struct RuntimeState {
     pub total_code_bytes: u64,
     /// 已加载的模块源码总字节数。
     pub total_module_bytes: u64,
+    /// JS→Dart 消息队列，由 `__postMessage` 写入，由 `poll_messages()` 排空。
+    pub message_queue: Vec<JsMessage>,
 }
 
 thread_local! {
@@ -77,7 +83,7 @@ pub(crate) fn register_web_apis(context: &mut Context) -> Result<(), String> {
 /// 创建并初始化一个新的 Boa 上下文。
 ///
 /// 注册 Web API、DOM 模块，并配置模块加载器。
-pub(crate) fn init_context(max_memory: u64) -> Result<RuntimeState, String> {
+pub(crate) fn init_context(max_memory: u64, runtime_id: u64) -> Result<RuntimeState, String> {
     let loader = Rc::new(MapModuleLoader::new());
     let mut context = Context::builder()
         .module_loader(loader)
@@ -90,6 +96,9 @@ pub(crate) fn init_context(max_memory: u64) -> Result<RuntimeState, String> {
     if let Err(e) = crate::dom::register_dom_module(&mut context) {
         eprintln!("Warning: {e}");
     }
+    if let Err(e) = register_message_channel(&mut context, runtime_id) {
+        eprintln!("Warning: {e}");
+    }
 
     Ok(RuntimeState {
         context,
@@ -97,7 +106,52 @@ pub(crate) fn init_context(max_memory: u64) -> Result<RuntimeState, String> {
         estimated_memory: 0,
         total_code_bytes: 0,
         total_module_bytes: 0,
+        message_queue: Vec::new(),
     })
+}
+
+/// 在 Boa 上下文中注册 `__postMessage(event, data)` 原生函数。
+///
+/// JS 侧调用 `__postMessage(event, data)` 后，消息被推入对应运行时的
+/// `message_queue`，Dart 侧通过 `poll_messages()` 拉取。
+///
+/// 闭包只捕获 `runtime_id: u64`（Copy 类型），使用 `from_copy_closure` 安全创建。
+pub(crate) fn register_message_channel(
+    context: &mut Context,
+    runtime_id: u64,
+) -> Result<(), String> {
+    let post_message_fn = NativeFunction::from_copy_closure(
+        move |_this, args, ctx| -> boa_engine::JsResult<boa_engine::JsValue> {
+            // 提取 event（第一个参数，字符串）
+            let event = args
+                .first()
+                .and_then(|v| v.as_string())
+                .map(|s| s.to_std_string_escaped())
+                .unwrap_or_default();
+
+            // 提取 data（第二个参数，任意 JS 值）
+            let data = args
+                .get(1)
+                .map(|v| FrbJsValue::from_boa(v, ctx))
+                .unwrap_or(FrbJsValue::None);
+
+            RUNTIMES.with(|map| {
+                if let Some(state) = map.borrow_mut().get_mut(&runtime_id) {
+                    state.message_queue.push(JsMessage { event, data });
+                }
+            });
+
+            Ok(boa_engine::JsValue::undefined())
+        },
+    );
+
+    context
+        .register_global_builtin_callable(
+            boa_engine::js_string!("__postMessage"),
+            2, // length: 期望 2 个参数 (event, data)
+            post_message_fn,
+        )
+        .map_err(|e| format!("Failed to register __postMessage: {e}"))
 }
 
 /// 解析并编译 ES 模块。

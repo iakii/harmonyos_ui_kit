@@ -11,6 +11,7 @@ import 'api/engine.dart';
 import 'api/eval_options.dart';
 import 'api/hello.dart';
 import 'api/js_error.dart';
+import 'api/js_message.dart';
 import 'api/js_value.dart';
 import 'api/module.dart';
 import 'api/repl.dart';
@@ -119,6 +120,9 @@ abstract class JsRuntimeLibApiImplPlatform
   JsEvalOptions dco_decode_js_eval_options(dynamic raw);
 
   @protected
+  JsMessage dco_decode_js_message(dynamic raw);
+
+  @protected
   JsModule dco_decode_js_module(dynamic raw);
 
   @protected
@@ -132,6 +136,9 @@ abstract class JsRuntimeLibApiImplPlatform
 
   @protected
   List<JsValue> dco_decode_list_box_js_value(dynamic raw);
+
+  @protected
+  List<JsMessage> dco_decode_list_js_message(dynamic raw);
 
   @protected
   List<JsModule> dco_decode_list_js_module(dynamic raw);
@@ -284,6 +291,9 @@ abstract class JsRuntimeLibApiImplPlatform
   JsEvalOptions sse_decode_js_eval_options(SseDeserializer deserializer);
 
   @protected
+  JsMessage sse_decode_js_message(SseDeserializer deserializer);
+
+  @protected
   JsModule sse_decode_js_module(SseDeserializer deserializer);
 
   @protected
@@ -297,6 +307,9 @@ abstract class JsRuntimeLibApiImplPlatform
 
   @protected
   List<JsValue> sse_decode_list_box_js_value(SseDeserializer deserializer);
+
+  @protected
+  List<JsMessage> sse_decode_list_js_message(SseDeserializer deserializer);
 
   @protected
   List<JsModule> sse_decode_list_js_module(SseDeserializer deserializer);
@@ -460,6 +473,9 @@ abstract class JsRuntimeLibApiImplPlatform
   void sse_encode_js_eval_options(JsEvalOptions self, SseSerializer serializer);
 
   @protected
+  void sse_encode_js_message(JsMessage self, SseSerializer serializer);
+
+  @protected
   void sse_encode_js_module(JsModule self, SseSerializer serializer);
 
   @protected
@@ -475,6 +491,10 @@ abstract class JsRuntimeLibApiImplPlatform
   @protected
   void sse_encode_list_box_js_value(
       List<JsValue> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_js_message(
+      List<JsMessage> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_js_module(List<JsModule> self, SseSerializer serializer);

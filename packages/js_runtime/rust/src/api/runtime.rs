@@ -55,7 +55,7 @@ impl JsRuntime {
         let id = internal::next_id();
         let max_memory = opts.memory_limit.unwrap_or(0);
 
-        let state = internal::init_context(max_memory)
+        let state = internal::init_context(max_memory, id)
             .expect("init_context should succeed");
 
         internal::RUNTIMES.with(|map| {

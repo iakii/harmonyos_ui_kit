@@ -7,6 +7,7 @@ import '../frb_generated.dart';
 import 'builtin_options.dart';
 import 'eval_options.dart';
 import 'js_error.dart';
+import 'js_message.dart';
 import 'js_value.dart';
 import 'module.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
@@ -75,11 +76,33 @@ class JsEngine {
       JsRuntimeLib.instance.api.crateApiEngineJsEngineEvalWithOptions(
           that: this, code: code, options: options);
 
-  /// 获取内存估算用量（字节）。
+  /// 检查是否有来自 JS 的待处理消息（不排空队列）。
+  bool hasMessages() =>
+      JsRuntimeLib.instance.api.crateApiEngineJsEngineHasMessages(
+        that: this,
+      );
+
   BigInt memoryUsage() =>
       JsRuntimeLib.instance.api.crateApiEngineJsEngineMemoryUsage(
         that: this,
       );
+
+  /// 拉取 JS 端发送的所有消息（排空队列）。
+  ///
+  /// JS 端通过 `__postMessage(event, data)` 发送消息。
+  /// 调用此方法后队列被清空，返回此前积累的所有消息。
+  List<JsMessage> pollMessages() =>
+      JsRuntimeLib.instance.api.crateApiEngineJsEnginePollMessages(
+        that: this,
+      );
+
+  /// 从 Dart 发送消息到 JS。
+  ///
+  /// JS 端需注册处理器：`globalThis.__onDartMessage = (event, data) => { ... }`
+  /// 返回 JS 处理器的返回值（如未注册返回 `undefined`）。
+  JsValue postMessage({required String event, required JsValue data}) =>
+      JsRuntimeLib.instance.api.crateApiEngineJsEnginePostMessage(
+          that: this, event: event, data: data);
 
   /// 触发垃圾回收。
   void runGc() => JsRuntimeLib.instance.api.crateApiEngineJsEngineRunGc(

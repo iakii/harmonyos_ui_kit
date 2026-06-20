@@ -5,6 +5,7 @@ export 'src/frb/frb_generated.io.dart';
 // 核心类型
 export 'src/frb/api/js_value.dart';
 export 'src/frb/api/js_error.dart';
+export 'src/frb/api/js_message.dart';
 
 // 运行时 API
 export 'src/frb/api/runtime.dart';

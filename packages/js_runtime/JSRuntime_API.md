@@ -27,9 +27,11 @@ X86_64_UNKNOWN_LINUX_OHOS_OPENSSL_DIR="~/.ohos/ohos-openssl/prelude/x86_64/"
 │  ┌──────────────┐  ┌──────────────────────┐ │
 │  │  JsEngine     │  │  JsRuntime           │ │
 │  │  (高层封装)    │  │  (低层 API)           │ │
-│  │  · eval()     │  │  · create(options)   │ │
-│  │  · call()     │  │  · eval() → JsValue  │ │
-│  │  · close()    │  │  · dispose()         │ │
+│  │  · eval()         │  │  · create(options)   │ │
+│  │  · call()         │  │  · eval() → JsValue  │ │
+│  │  · postMessage()  │  │  · dispose()         │ │
+│  │  · pollMessages() │  │                      │ │
+│  │  · close()        │  │                      │ │
 │  └──────┬───────┘  └──────────┬───────────┘ │
 │         │                     │              │
 │  ┌──────┴─────────────────────┴───────────┐ │
@@ -44,7 +46,8 @@ X86_64_UNKNOWN_LINUX_OHOS_OPENSSL_DIR="~/.ohos/ohos-openssl/prelude/x86_64/"
 │  ┌──────────────┐  ┌──────────────────────┐ │
 │  │  Boa Context  │  │  DOM Module          │ │
 │  │  + Console    │  │  (scraper 解析)      │ │
-│  │  + Fetch      │  │                      │ │
+│  │  + Fetch      │  │  Message Queue       │ │
+│  │  + __postMsg  │  │  (JsMessage Vec)     │ │
 │  └──────────────┘  └──────────────────────┘ │
 └─────────────────────────────────────────────┘
 ```
@@ -129,6 +132,19 @@ JsValue.bigInt("9007199254740993n")
 JsValue.array([JsValue.integer(1), JsValue.integer(2)])
 JsValue.object([("key", JsValue.string("value"))])
 ```
+
+---
+
+### JsMessage —— 通道消息
+
+```dart
+class JsMessage {
+  final String event;   // 事件名称（如 "log"、"data"）
+  final JsValue data;   // 结构化负载
+}
+```
+
+详见 [Dart↔JS 双向通信通道](#dartjs-双向通信通道)。
 
 ---
 
@@ -339,10 +355,137 @@ engine.close();
 | `call({module, method, params})` | `JsValue` | 调用模块导出函数 |
 | `declareModule({module})` | `void` | 注册单个模块 |
 | `declareModules({modules})` | `void` | 批量注册模块 |
+| `postMessage({event, data})` | `JsValue` | Dart → JS 发送消息 |
+| `pollMessages()` | `List<JsMessage>` | 拉取 JS → Dart 消息（排空队列） |
+| `hasMessages()` | `bool` | 检查是否有待处理消息 |
 | `memoryUsage()` | `BigInt` | 内存用量 |
 | `runGc()` | `void` | 触发 GC |
 | `setMemoryLimit({limitBytes})` | `void` | 设置内存上限 |
 | `close()` | `void` | 关闭引擎 |
+
+---
+
+## Dart↔JS 双向通信通道
+
+`JsEngine` 内置消息队列通道，支持 Dart 与 JS 之间双向发送结构化消息（`JsValue` 负载）。
+
+### 架构
+
+```
+Dart 端                      Rust 端                        JS 端 (Boa)
+────────                     ────────                        ──────────
+postMessage(event, data) ──→ eval(globalThis.__onDartMessage)
+                                                              │
+                                                      用户处理器被调用
+                                                       ───────────────
+                                                              │
+pollMessages() ←─────────── message_queue ←─────── __postMessage(event, data)
+```
+
+- **Dart → JS**: 同步 eval，直接调用 `globalThis.__onDartMessage`
+- **JS → Dart**: 消息入队，Dart 轮询拉取（非入侵，不打断 JS 执行）
+
+### JsMessage
+
+```dart
+class JsMessage {
+  final String event;   // 事件名称，如 "log"、"data"、"error"
+  final JsValue data;   // 结构化负载（任意 JsValue 类型）
+}
+```
+
+### Dart → JS（postMessage）
+
+```dart
+// JS 侧先注册处理器
+engine.eval(code: '''
+  globalThis.__onDartMessage = (event, data) => {
+    console.log(`收到 Dart 消息 [${event}]:`, JSON.stringify(data));
+    return { handled: true };
+  };
+''');
+
+// Dart 侧发送
+final response = engine.postMessage(
+  event: 'greeting',
+  data: JsValue.object([
+    ('text', JsValue.string('Hello from Dart!')),
+    ('count', JsValue.integer(42)),
+  ]),
+);
+print(response.asMapSync?['handled']?.asBooleanSync);  // true
+```
+
+- 如 `globalThis.__onDartMessage` 未定义，返回 `JsValue_None`，不抛异常（`typeof` 守卫）
+- 如处理器返回 Promise，`postMessage` 自动 `await` 解析
+- `event` 字符串内部做了安全转义（`\`、`'`、`\n`、`\r`）
+
+### JS → Dart（pollMessages / hasMessages）
+
+```js
+// JS 侧发送消息
+__postMessage('log', { level: 'info', text: 'Hello from JS!' });
+__postMessage('data', new Uint8Array([1, 2, 3]));
+__postMessage('result', 42);
+```
+
+```dart
+// Dart 侧轮询拉取
+if (engine.hasMessages()) {
+  final messages = engine.pollMessages();
+  for (final msg in messages) {
+    switch (msg.event) {
+      case 'log':
+        final map = msg.data.asMapSync;
+        print('[${map?['level']?.asStringSync}] ${map?['text']?.asStringSync}');
+      case 'data':
+        print('收到二进制数据: ${msg.data.asBytesSync?.length} 字节');
+      case 'result':
+        print('结果: ${msg.data.asIntegerSync}');
+      default:
+        print('未知事件: ${msg.event}');
+    }
+  }
+}
+```
+
+- `pollMessages()` 排空并返回所有积累消息（原子操作，FIFO 顺序）
+- `hasMessages()` 仅检查而不排空，适合定期轮询
+- `__postMessage` 在 Boa 上下文中注册为不可变全局函数（`writable: false`）
+
+### JS 端 API 参考
+
+| 函数 | 说明 |
+|------|------|
+| `__postMessage(event, data)` | 发送消息到 Dart（data 为任意 JS 值，自动转为 JsValue） |
+| `globalThis.__onDartMessage = (event, data) => { ... }` | 注册 Dart→JS 消息处理器（需用户定义） |
+
+### 轮询模式
+
+```dart
+// 定时轮询
+Timer.periodic(Duration(milliseconds: 100), (_) {
+  if (engine.hasMessages()) {
+    for (final msg in engine.pollMessages()) {
+      _handleMessage(msg);
+    }
+  }
+});
+
+// 或在每次 eval 后拉取
+void runJs(String code) {
+  engine.eval(code: code);
+  _drainMessages();
+}
+
+void _drainMessages() {
+  for (final msg in engine.pollMessages()) {
+    switch (msg.event) {
+      // ... 处理
+    }
+  }
+}
+```
 
 ---
 
@@ -688,6 +831,55 @@ print(result.asStringSync);  // [{"title":"Hello","html":"Hello"},...]
 rt.dispose();
 ```
 
+### 示例 6：Dart↔JS 双向通信
+
+```dart
+final engine = JsEngine.create(
+  builtins: JsBuiltinOptions.web(),  // 需要 console API
+);
+
+// 1. JS 侧注册处理器，并发送一条欢迎消息
+engine.eval(code: '''
+  globalThis.__onDartMessage = (event, data) => {
+    console.log('Dart 发来 [' + event + ']:', JSON.stringify(data));
+    __postMessage('response', { echo: event, length: Object.keys(data).length });
+    return { ok: true };
+  };
+  __postMessage('ready', { timestamp: Date.now() });
+''');
+
+// 2. Dart 拉取 JS 的 ready 消息
+var messages = engine.pollMessages();
+for (final msg in messages) {
+  if (msg.event == 'ready') {
+    final ts = msg.data.asMapSync?['timestamp']?.asIntegerSync;
+    print('JS 已就绪，时间戳: $ts');
+  }
+}
+
+// 3. Dart 发送消息，JS 处理器触发后回传 response 消息
+final response = engine.postMessage(
+  event: 'query',
+  data: JsValue.object([
+    ('sql', JsValue.string('SELECT * FROM users')),
+    ('limit', JsValue.integer(10)),
+  ]),
+);
+print('JS 处理完毕: ${response.asMapSync?['ok']?.asBooleanSync}');
+
+// 4. 拉取 JS 的 response 回复
+messages = engine.pollMessages();
+for (final msg in messages) {
+  if (msg.event == 'response') {
+    final echo = msg.data.asMapSync?['echo']?.asStringSync;
+    final length = msg.data.asMapSync?['length']?.asIntegerSync;
+    print('JS 回应: echo=$echo, length=$length');
+  }
+}
+
+engine.close();
+```
+
 ---
 
 ## 迁移指南（旧 API → 新 API）
@@ -734,6 +926,7 @@ rust/src/api/          （FRB 公开 API）
 ├── eval_options.rs    JsEvalOptions
 ├── builtin_options.rs JsBuiltinOptions + 预设
 ├── module.rs          JsModule
+├── js_message.rs      JsMessage 消息类型
 └── hello.rs           示例函数
 
 rust/src/js_runtime/   （内部实现，不暴露给 Dart）
@@ -755,6 +948,8 @@ JsRuntime.create(options)
     │   │   ├── querySelector      (html, css) → JSON|null
     │   │   ├── getElementsByTagName (html, tag) → JSON
     │   │   └── getElementById     (html, id)  → JSON|null
+    │   ├── register_message_channel()（始终注册）
+    │   │   └── __postMessage(event, data) — JS→Dart 消息入队
     │   └── boa_icu_provider::buffer()（Intl API 数据）
     │
     └── 存入 thread_local! RUNTIMES
