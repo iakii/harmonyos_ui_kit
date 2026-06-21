@@ -71,19 +71,22 @@ class JsCallbackHandler {
       (_) => _processSyncCalls(),
     );
 
-    // 注册取消监听（在 finally 中统一清理）
-    StreamSubscription<void>? cancelSub;
-    if (cancelSignal != null) {
-      cancelSub = cancelSignal.asStream().listen((_) {
+    // 注册取消监听
+    // 使用 .then() 而非 .asStream().listen() —— 更直接，无 stream 开销
+    cancelSignal?.then((_) {
+      try {
+        // print('[JsCallbackHandler] cancelSignal fired, calling engine.cancelEval()');
         _engine.cancelEval();
-      });
-    }
+        // print('[JsCallbackHandler] engine.cancelEval() returned');
+      } catch (e) {
+        // print('[JsCallbackHandler] engine.cancelEval() failed: $e');
+      }
+    });
 
     try {
       // 执行 JS（eval 会阻塞 worker，但 Dart 主线程的 Timer 持续运行）
       return await _engine.eval(code: code);
     } finally {
-      cancelSub?.cancel();
       timer.cancel();
       // 最后再处理一轮，确保所有回调都已响应
       _processSyncCalls();

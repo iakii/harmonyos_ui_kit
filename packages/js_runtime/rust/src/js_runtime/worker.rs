@@ -183,7 +183,9 @@ fn send_and_wait<T>(
             Ok(Ok(value)) => return Ok(value),
             Ok(Err(e)) => return Err(e),
             Err(mpsc::RecvTimeoutError::Timeout) => {
-                if cancel_gen.load(Ordering::SeqCst) != start_gen {
+                let current_gen = cancel_gen.load(Ordering::SeqCst);
+                if current_gen != start_gen {
+                    eprintln!("[js-runtime-{runtime_id}] send_and_wait: cancelled (gen {start_gen} → {current_gen})");
                     return Err(JsError::Cancelled {
                         message: "eval cancelled".into(),
                     });
@@ -302,8 +304,16 @@ fn send_without_reply(runtime_id: u64, cmd: WorkerCmd) -> Result<(), JsError> {
 pub(crate) fn cancel_eval(runtime_id: u64) {
     if let Ok(map) = WORKERS.lock() {
         if let Some(handle) = map.get(&runtime_id) {
-            handle.cancel_gen.fetch_add(1, Ordering::SeqCst);
+            let old_gen = handle.cancel_gen.fetch_add(1, Ordering::SeqCst);
+            eprintln!(
+                "[js-runtime-{runtime_id}] cancel_eval: gen {old_gen} → {}",
+                old_gen + 1
+            );
+        } else {
+            eprintln!("[js-runtime-{runtime_id}] cancel_eval: runtime not found in WORKERS");
         }
+    } else {
+        eprintln!("[js-runtime-{runtime_id}] cancel_eval: WORKERS lock poisoned");
     }
 }
 
