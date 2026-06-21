@@ -34,11 +34,14 @@ class _JsParsePageState extends State<JsParsePage> {
     mockHtml += '<li class="page-item"><a class="page-link" href="index_3.html"></a></li>';
 
     var totalPages = client.getPhotosPageSize(mockHtml);
+    console.log('step:', 1);
     postMessage('pageSize', JSON.stringify({ totalPages: totalPages }));
-
+ console.log('step:', 2);
     // 3. 在线获取图片列表（需要 JS 运行时支持 fetch）:
     var result = await client.getPage('https://www.meitula.org/', 1);
+     console.log('step:', 3);
     postMessage('pageResult', result);
+     console.log('step:', 4);
 
     // 4. 处理结果并回传给 Dart 端
     // const sumRes= await sum(1,2);
@@ -103,6 +106,8 @@ class _JsParsePageState extends State<JsParsePage> {
     super.dispose();
   }
 
+  late JsCallbackHandler handler;
+
   Future<void> _initRuntime() async {
     try {
       final jsFiles = await DefaultAssetBundle.of(
@@ -117,6 +122,23 @@ class _JsParsePageState extends State<JsParsePage> {
         ),
         modules: [JsModule(name: 'client', source: jsFiles)],
       );
+
+      handler = JsCallbackHandler(_jsRuntime);
+      debugPrint('注册 postMessage 回调');
+      // 直接传入 Dart 函数 —— 看起来就像直接注入
+      handler.register('postMessage', (args) {
+        debugPrint('Received from JS:  data=$args');
+        final type = args[0].asStringSync ?? '';
+        final data = args[1].asStringSync ?? '';
+        if (type == 'sendChannelDetails') {
+          debugPrint('Received from JS: type=$type, data=$data');
+        }
+        if (type == 'stopLoading') {
+          debugPrint('Received stopLoading signal from JS');
+        }
+        return JsValue.none();
+      });
+
       version.value = 'JsRuntime (built-in)';
     } catch (e) {
       Logger().e('Failed to initialize JS runtime', error: e);
@@ -128,29 +150,6 @@ class _JsParsePageState extends State<JsParsePage> {
 
   Future<void> runCode() async {
     final engine = _jsRuntime;
-
-    final handler = JsCallbackHandler(engine);
-    debugPrint('注册 postMessage 回调');
-    // 直接传入 Dart 函数 —— 看起来就像直接注入
-    handler.register('postMessage', (args) {
-      debugPrint('Received from JS:  data=$args');
-      final type = args[0].asStringSync ?? '';
-      final data = args[1].asStringSync ?? '';
-      debugPrint('Received from JS: type=$type, data=$data');
-      if (type == 'sendChannelDetails') {}
-      if (type == 'stopLoading') {
-        debugPrint('Received stopLoading signal from JS');
-      }
-      return JsValue.none();
-    });
-
-    handler.eval('''
-     (async () => {
-
-      postMessage('start', '开始执行 JavaScript 代码');
-
-      })()
-  ''');
 
     final code = codeController.text.trim();
     if (code.isEmpty) {
