@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:js_runtime/js_runtime.dart';
@@ -46,6 +48,9 @@ class _JsParsePageState extends State<JsParsePage> {
     // 4. 处理结果并回传给 Dart 端
     // const sumRes= await sum(1,2);
     // console.log('sum(1,2) =', sumRes);
+setTimeout(()=>{
+console.log(12112222222222222222212)
+},2000)
 
     return JSON.stringify({ name: info.name, totalPages: totalPages });
 })()
@@ -106,8 +111,6 @@ class _JsParsePageState extends State<JsParsePage> {
     super.dispose();
   }
 
-  late JsCallbackHandler handler;
-
   Future<void> _initRuntime() async {
     try {
       final jsFiles = await DefaultAssetBundle.of(
@@ -123,21 +126,22 @@ class _JsParsePageState extends State<JsParsePage> {
         modules: [JsModule(name: 'client', source: jsFiles)],
       );
 
-      handler = JsCallbackHandler(_jsRuntime);
-      debugPrint('注册 postMessage 回调');
-      // 直接传入 Dart 函数 —— 看起来就像直接注入
-      handler.register('postMessage', (args) {
-        debugPrint('Received from JS:  data=$args');
-        final type = args[0].asStringSync ?? '';
-        final data = args[1].asStringSync ?? '';
-        if (type == 'sendChannelDetails') {
-          debugPrint('Received from JS: type=$type, data=$data');
-        }
-        if (type == 'stopLoading') {
-          debugPrint('Received stopLoading signal from JS');
-        }
-        return JsValue.none();
-      });
+      await _jsRuntime.register(
+        name: 'postMessage',
+        func: (String argsJson) async {
+          final args = jsonDecode(argsJson) as List;
+          debugPrint('Received from JS:  data=$args');
+          final type = args[0] as String? ?? '';
+          final data = args[1] as String? ?? '';
+          if (type == 'sendChannelDetails') {
+            debugPrint('Received from JS: type=$type, data=$data');
+          }
+          if (type == 'stopLoading') {
+            debugPrint('Received stopLoading signal from JS');
+          }
+          return jsonEncode(null);
+        },
+      );
 
       version.value = 'JsRuntime (built-in)';
     } catch (e) {
@@ -162,7 +166,7 @@ class _JsParsePageState extends State<JsParsePage> {
     error.value = null;
 
     try {
-      final output = await handler.eval(code);
+      final output = await engine.evalRaw(code: code);
       result.value = fmtVal(output);
       // 更新内存信息
       final used = engine.memoryUsage();
@@ -256,6 +260,13 @@ class _JsParsePageState extends State<JsParsePage> {
                         ],
                       )
                     : const Text('运行'),
+              ),
+
+              HosButton(
+                onPressed: () {
+                  _jsRuntime.cancelEval();
+                },
+                child: const Text('停止'),
               ),
 
               // 错误提示

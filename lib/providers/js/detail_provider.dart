@@ -36,22 +36,21 @@ class DetailLoadState {
   );
 
   factory DetailLoadState.error(String message) => DetailLoadState(
-        items: [],
-        isLoading: false,
-        isComplete: true,
-        error: message,
-      );
+    items: [],
+    isLoading: false,
+    isComplete: true,
+    error: message,
+  );
 
   factory DetailLoadState.done({
     required List<DetailItem> items,
     int batchCount = 0,
-  }) =>
-      DetailLoadState(
-        items: items,
-        isLoading: false,
-        isComplete: true,
-        batchCount: batchCount,
-      );
+  }) => DetailLoadState(
+    items: items,
+    isLoading: false,
+    isComplete: true,
+    batchCount: batchCount,
+  );
 }
 
 // ─── Worker 通信 ────────────────────────────────────────────────
@@ -96,7 +95,9 @@ class DetailLoad extends _$DetailLoad {
       _receivePort?.close();
       _receivePort = null;
 
-      try { _isolate?.kill(priority: Isolate.immediate); } catch (_) {}
+      try {
+        _isolate?.kill(priority: Isolate.immediate);
+      } catch (_) {}
       _isolate = null;
 
       if (!_controller.isClosed) _controller.close();
@@ -117,7 +118,11 @@ class DetailLoad extends _$DetailLoad {
       _receivePort = ReceivePort();
       isolate = await Isolate.spawn(
         _detailWorker,
-        _WorkerInit(jsSource: jsSource, url: url, sendPort: _receivePort!.sendPort),
+        _WorkerInit(
+          jsSource: jsSource,
+          url: url,
+          sendPort: _receivePort!.sendPort,
+        ),
         debugName: 'DetailWorker',
       );
       _isolate = isolate;
@@ -132,7 +137,9 @@ class DetailLoad extends _$DetailLoad {
         _controller.add(DetailLoadState.error(e.toString()));
       }
     } finally {
-      try { isolate?.kill(priority: Isolate.immediate); } catch (_) {}
+      try {
+        isolate?.kill(priority: Isolate.immediate);
+      } catch (_) {}
       _isolate = null;
       _receivePort?.close();
       _receivePort = null;
@@ -182,7 +189,9 @@ class DetailLoad extends _$DetailLoad {
     }
     final parsed = jsonDecode(jsonStr) as Map<String, dynamic>;
     final detail = GalleryDetail.fromJson(parsed);
-    _controller.add(DetailLoadState.done(items: detail.list, batchCount: batch));
+    _controller.add(
+      DetailLoadState.done(items: detail.list, batchCount: batch),
+    );
   }
 }
 
@@ -201,31 +210,37 @@ Future<void> _detailWorker(_WorkerInit init) async {
   );
 
   try {
-    final handler = JsCallbackHandler(engine);
     final progressJsons = <String>[];
     var batch = 0;
 
-    handler.register('postMessage', (args) {
-      final type = args[0].asStringSync ?? '';
-      final data = args[1].asStringSync ?? '';
-      if (type != 'sendChannelDetails') return JsValue.none();
+    await engine.register(
+      name: 'postMessage',
+      func: (String argsJson) async {
+        final args = jsonDecode(argsJson) as List;
+        final type = args[0] as String? ?? '';
+        final data = args[1] as String? ?? '';
+        if (type != 'sendChannelDetails') return jsonEncode(null);
 
-      progressJsons.add(data);
-      batch++;
-      init.sendPort.send({
-        'type': _Msg.progress,
-        'data': List<String>.from(progressJsons),
-        'batch': batch,
-      });
-      return JsValue.none();
-    });
+        progressJsons.add(data);
+        batch++;
+        init.sendPort.send({
+          'type': _Msg.progress,
+          'data': List<String>.from(progressJsons),
+          'batch': batch,
+        });
+        return jsonEncode(null);
+      },
+    );
 
-    final result = await handler.eval('''
+    final result = await engine.eval(
+      code:
+          '''
       (async () => {
         const { default: client } = await import('client');
         return await client.getDetails(${jsonEncode(init.url)}, true);
       })()
-    ''');
+    ''',
+    );
 
     init.sendPort.send({
       'type': _Msg.final_,
