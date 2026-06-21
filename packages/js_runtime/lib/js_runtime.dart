@@ -17,4 +17,3 @@ export 'src/frb/api/module.dart';
 
 // Dart 便利扩展
 export 'src/api/js_value_ext.dart';
-export 'src/api/js_callback_handler.dart';

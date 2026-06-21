@@ -31,6 +31,9 @@ abstract class JsRuntimeLibApiImplPlatform
       ._rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerJsReplPtr;
 
   @protected
+  AnyhowException dco_decode_AnyhowException(dynamic raw);
+
+  @protected
   JsRepl
       dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerJsRepl(
           dynamic raw);
@@ -44,6 +47,14 @@ abstract class JsRuntimeLibApiImplPlatform
   JsRepl
       dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerJsRepl(
           dynamic raw);
+
+  @protected
+  FutureOr<String> Function(String)
+      dco_decode_DartFn_Inputs_String_Output_String_AnyhowException(
+          dynamic raw);
+
+  @protected
+  Object dco_decode_DartOpaque(dynamic raw);
 
   @protected
   JsRepl
@@ -99,13 +110,13 @@ abstract class JsRuntimeLibApiImplPlatform
   JsValue dco_decode_box_js_value(dynamic raw);
 
   @protected
-  CompletedCall dco_decode_completed_call(dynamic raw);
-
-  @protected
   double dco_decode_f_64(dynamic raw);
 
   @protected
   PlatformInt64 dco_decode_i_64(dynamic raw);
+
+  @protected
+  PlatformInt64 dco_decode_isize(dynamic raw);
 
   @protected
   JsBuiltinOptions dco_decode_js_builtin_options(dynamic raw);
@@ -135,9 +146,6 @@ abstract class JsRuntimeLibApiImplPlatform
   List<JsValue> dco_decode_list_box_js_value(dynamic raw);
 
   @protected
-  List<CompletedCall> dco_decode_list_completed_call(dynamic raw);
-
-  @protected
   List<JsModule> dco_decode_list_js_module(dynamic raw);
 
   @protected
@@ -152,9 +160,6 @@ abstract class JsRuntimeLibApiImplPlatform
   @protected
   List<(String, JsValue)> dco_decode_list_record_string_box_js_value(
       dynamic raw);
-
-  @protected
-  List<SyncCall> dco_decode_list_sync_call(dynamic raw);
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
@@ -193,9 +198,6 @@ abstract class JsRuntimeLibApiImplPlatform
   ReplResult dco_decode_repl_result(dynamic raw);
 
   @protected
-  SyncCall dco_decode_sync_call(dynamic raw);
-
-  @protected
   int dco_decode_u_32(dynamic raw);
 
   @protected
@@ -211,6 +213,9 @@ abstract class JsRuntimeLibApiImplPlatform
   BigInt dco_decode_usize(dynamic raw);
 
   @protected
+  AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer);
+
+  @protected
   JsRepl
       sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerJsRepl(
           SseDeserializer deserializer);
@@ -224,6 +229,9 @@ abstract class JsRuntimeLibApiImplPlatform
   JsRepl
       sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerJsRepl(
           SseDeserializer deserializer);
+
+  @protected
+  Object sse_decode_DartOpaque(SseDeserializer deserializer);
 
   @protected
   JsRepl
@@ -282,13 +290,13 @@ abstract class JsRuntimeLibApiImplPlatform
   JsValue sse_decode_box_js_value(SseDeserializer deserializer);
 
   @protected
-  CompletedCall sse_decode_completed_call(SseDeserializer deserializer);
-
-  @protected
   double sse_decode_f_64(SseDeserializer deserializer);
 
   @protected
   PlatformInt64 sse_decode_i_64(SseDeserializer deserializer);
+
+  @protected
+  PlatformInt64 sse_decode_isize(SseDeserializer deserializer);
 
   @protected
   JsBuiltinOptions sse_decode_js_builtin_options(SseDeserializer deserializer);
@@ -318,10 +326,6 @@ abstract class JsRuntimeLibApiImplPlatform
   List<JsValue> sse_decode_list_box_js_value(SseDeserializer deserializer);
 
   @protected
-  List<CompletedCall> sse_decode_list_completed_call(
-      SseDeserializer deserializer);
-
-  @protected
   List<JsModule> sse_decode_list_js_module(SseDeserializer deserializer);
 
   @protected
@@ -336,9 +340,6 @@ abstract class JsRuntimeLibApiImplPlatform
   @protected
   List<(String, JsValue)> sse_decode_list_record_string_box_js_value(
       SseDeserializer deserializer);
-
-  @protected
-  List<SyncCall> sse_decode_list_sync_call(SseDeserializer deserializer);
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
@@ -381,9 +382,6 @@ abstract class JsRuntimeLibApiImplPlatform
   ReplResult sse_decode_repl_result(SseDeserializer deserializer);
 
   @protected
-  SyncCall sse_decode_sync_call(SseDeserializer deserializer);
-
-  @protected
   int sse_decode_u_32(SseDeserializer deserializer);
 
   @protected
@@ -402,6 +400,10 @@ abstract class JsRuntimeLibApiImplPlatform
   int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
+  void sse_encode_AnyhowException(
+      AnyhowException self, SseSerializer serializer);
+
+  @protected
   void
       sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerJsRepl(
           JsRepl self, SseSerializer serializer);
@@ -415,6 +417,13 @@ abstract class JsRuntimeLibApiImplPlatform
   void
       sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerJsRepl(
           JsRepl self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_DartFn_Inputs_String_Output_String_AnyhowException(
+      FutureOr<String> Function(String) self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_DartOpaque(Object self, SseSerializer serializer);
 
   @protected
   void
@@ -477,13 +486,13 @@ abstract class JsRuntimeLibApiImplPlatform
   void sse_encode_box_js_value(JsValue self, SseSerializer serializer);
 
   @protected
-  void sse_encode_completed_call(CompletedCall self, SseSerializer serializer);
-
-  @protected
   void sse_encode_f_64(double self, SseSerializer serializer);
 
   @protected
   void sse_encode_i_64(PlatformInt64 self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_isize(PlatformInt64 self, SseSerializer serializer);
 
   @protected
   void sse_encode_js_builtin_options(
@@ -516,10 +525,6 @@ abstract class JsRuntimeLibApiImplPlatform
       List<JsValue> self, SseSerializer serializer);
 
   @protected
-  void sse_encode_list_completed_call(
-      List<CompletedCall> self, SseSerializer serializer);
-
-  @protected
   void sse_encode_list_js_module(List<JsModule> self, SseSerializer serializer);
 
   @protected
@@ -535,9 +540,6 @@ abstract class JsRuntimeLibApiImplPlatform
   @protected
   void sse_encode_list_record_string_box_js_value(
       List<(String, JsValue)> self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_list_sync_call(List<SyncCall> self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
@@ -580,9 +582,6 @@ abstract class JsRuntimeLibApiImplPlatform
 
   @protected
   void sse_encode_repl_result(ReplResult self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_sync_call(SyncCall self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_32(int self, SseSerializer serializer);

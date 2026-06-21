@@ -12,31 +12,6 @@ import 'module.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'runtime.dart';
 
-/// JS→Dart 方法调用请求。
-class CompletedCall {
-  final BigInt callId;
-  final String name;
-  final List<JsValue> params;
-
-  const CompletedCall({
-    required this.callId,
-    required this.name,
-    required this.params,
-  });
-
-  @override
-  int get hashCode => callId.hashCode ^ name.hashCode ^ params.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is CompletedCall &&
-          runtimeType == other.runtimeType &&
-          callId == other.callId &&
-          name == other.name &&
-          params == other.params;
-}
-
 /// 高层 JS 引擎。
 ///
 /// 内部持有一个 JsRuntime（专用后台工作线程），自动管理生命周期。
@@ -71,7 +46,7 @@ class JsEngine {
         that: this,
       );
 
-  /// 关闭引擎，释放所有资源（含已注册的回调函数和待处理调用）。
+  /// 关闭引擎，释放所有资源（含已注册的 dart_callback 和待处理调用）。
   void close() => JsRuntimeLib.instance.api.crateApiEngineJsEngineClose(
         that: this,
       );
@@ -142,66 +117,25 @@ class JsEngine {
         that: this,
       );
 
-  /// 拉取所有来自 JS 的待处理方法调用（排空队列）。
-  List<CompletedCall> pollCalls() =>
-      JsRuntimeLib.instance.api.crateApiEngineJsEnginePollCalls(
-        that: this,
-      );
-
-  /// 拉取所有来自 JS 的**同步**调用请求（排空队列）。
+  /// 注册一个 Dart 回调作为 JS 全局函数。
   ///
-  /// 返回 `(call_id, method_name, args_json)` 列表。
-  /// 处理完后用 [resolve_sync_call] / [reject_sync_call] 回传结果。
+  /// 使用 FRB 原生 dart_callback 机制：JS 调用 `name(args)` 时，
+  /// Rust 侧通过 tokio block_on 同步等待 Dart handler 返回结果。
+  /// JS 直接拿到返回值，无需 `await` / Promise。
   ///
-  /// 此方法直接访问全局 sync_bridge，不经过 worker channel，
-  /// 因此可在 JS 执行期间**实时**被调用。
-  List<SyncCall> pollSyncCalls() =>
-      JsRuntimeLib.instance.api.crateApiEngineJsEnginePollSyncCalls(
-        that: this,
-      );
-
-  /// （内部）注册 Dart 侧 FFI 回调函数指针。
-  ///
-  /// 直接操作全局 DART_HANDLERS 注册表，无需经过 worker。
-  void registerDartHandler({required PlatformInt64 ptr}) =>
+  /// # Dart 示例
+  /// ```dart
+  /// await engine.register('add', (String argsJson) async {
+  ///   final args = jsonDecode(argsJson) as List;
+  ///   return jsonEncode(args[0] + args[1]);
+  /// });
+  /// final result = await engine.eval(code: 'add(3, 4) + 10'); // 17
+  /// ```
+  Future<void> register(
+          {required String name,
+          required FutureOr<String> Function(String) func}) =>
       JsRuntimeLib.instance.api
-          .crateApiEngineJsEngineRegisterDartHandler(that: this, ptr: ptr);
-
-  /// 注册一个全局可构造函数（JS 端可通过 `await <name>(...args)` 或 `new <name>(...args)` 调用）。
-  void registerGlobalCallable({required String name}) =>
-      JsRuntimeLib.instance.api
-          .crateApiEngineJsEngineRegisterGlobalCallable(that: this, name: name);
-
-  /// 注册一个全局纯函数（不可构造，JS 端通过 `await <name>(...args)` 调用）。
-  void registerGlobalFunction({required String name}) =>
-      JsRuntimeLib.instance.api
-          .crateApiEngineJsEngineRegisterGlobalFunction(that: this, name: name);
-
-  /// 注册一个同步全局函数（JS 调用立刻响应，无 Promise）。
-  void registerSyncFunction({required String name}) => JsRuntimeLib.instance.api
-      .crateApiEngineJsEngineRegisterSyncFunction(that: this, name: name);
-
-  /// 回传错误给 JS 端（reject 对应的 Promise）。
-  void rejectCall({required BigInt callId, required String error}) =>
-      JsRuntimeLib.instance.api.crateApiEngineJsEngineRejectCall(
-          that: this, callId: callId, error: error);
-
-  /// 回传错误给阻塞的 worker 线程（通过 sync_bridge）。
-  void rejectSyncCall({required BigInt callId, required String error}) =>
-      JsRuntimeLib.instance.api.crateApiEngineJsEngineRejectSyncCall(
-          that: this, callId: callId, error: error);
-
-  /// 回传成功结果给 JS 端（resolve 对应的 Promise）。
-  void resolveCall({required BigInt callId, required JsValue result}) =>
-      JsRuntimeLib.instance.api.crateApiEngineJsEngineResolveCall(
-          that: this, callId: callId, result: result);
-
-  /// 回传成功结果给阻塞的 worker 线程（通过 sync_bridge）。
-  ///
-  /// [result_json] 是 Dart handler 返回值的 JSON 序列化字符串。
-  void resolveSyncCall({required BigInt callId, required String resultJson}) =>
-      JsRuntimeLib.instance.api.crateApiEngineJsEngineResolveSyncCall(
-          that: this, callId: callId, resultJson: resultJson);
+          .crateApiEngineJsEngineRegister(that: this, name: name, func: func);
 
   /// 触发垃圾回收。
   void runGc() => JsRuntimeLib.instance.api.crateApiEngineJsEngineRunGc(
@@ -217,6 +151,10 @@ class JsEngine {
   void setMemoryLimit({required BigInt limitBytes}) => JsRuntimeLib.instance.api
       .crateApiEngineJsEngineSetMemoryLimit(that: this, limitBytes: limitBytes);
 
+  /// 注销已注册的 Dart 回调（从 JS global 中删除）。
+  void unregister({required String name}) => JsRuntimeLib.instance.api
+      .crateApiEngineJsEngineUnregister(that: this, name: name);
+
   @override
   int get hashCode => runtimeId.hashCode;
 
@@ -226,33 +164,4 @@ class JsEngine {
       other is JsEngine &&
           runtimeType == other.runtimeType &&
           runtimeId == other.runtimeId;
-}
-
-/// JS→Dart 同步调用请求（sync_bridge 模式）。
-///
-/// 通过 `poll_sync_calls` 获取，处理完后用 `resolve_sync_call` 回传。
-class SyncCall {
-  final BigInt callId;
-  final String name;
-
-  /// JSON 序列化的参数数组
-  final String argsJson;
-
-  const SyncCall({
-    required this.callId,
-    required this.name,
-    required this.argsJson,
-  });
-
-  @override
-  int get hashCode => callId.hashCode ^ name.hashCode ^ argsJson.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SyncCall &&
-          runtimeType == other.runtimeType &&
-          callId == other.callId &&
-          name == other.name &&
-          argsJson == other.argsJson;
 }

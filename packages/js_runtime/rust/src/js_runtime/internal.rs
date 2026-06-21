@@ -3,12 +3,10 @@
 //! 此模块不在 `crate::api` 路径下，因此不会被 flutter_rust_bridge 扫描，
 //! 避免将私有类型暴露给 Dart 端。
 
-use std::collections::HashMap;
 use std::rc::Rc;
 
 use boa_engine::{js_string, Context, Module, NativeFunction, Source};
 use boa_engine::module::MapModuleLoader;
-use boa_engine::object::builtins::JsPromise;
 use boa_engine::JsValue as BoaJsValue;
 use boa_runtime::extensions::{ConsoleExtension, FetchExtension};
 use boa_runtime::fetch::BlockingReqwestFetcher;
@@ -26,18 +24,10 @@ pub(crate) struct RuntimeState {
     pub total_code_bytes: u64,
     /// 已加载的模块源码总字节数。
     pub total_module_bytes: u64,
-}
-
-/// Worker 线程局部：待处理 + 已完成的 JS→Dart 调用队列。
-/// 仅在 worker 线程内访问，因此使用 thread_local + RefCell 即可。
-pub(crate) mod worker_locals {
-    use super::*;
-    use std::cell::RefCell;
-
-    thread_local! {
-        pub(crate) static COMPLETED_CALLS: RefCell<Vec<super::CompletedCall>> = RefCell::new(Vec::new());
-        pub(crate) static PENDING_CALLS: RefCell<HashMap<u64, super::PendingCall>> = RefCell::new(HashMap::new());
-    }
+    /// 运行时 ID（与 JsRuntime.id 相同）。
+    pub runtime_id: u64,
+    /// tokio runtime handle，用于 block_on dart_callback。
+    pub runtime_handle: Option<tokio::runtime::Handle>,
 }
 
 pub(crate) fn next_id() -> u64 {
@@ -46,138 +36,87 @@ pub(crate) fn next_id() -> u64 {
     NEXT_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
 }
 
-// ─── JS↔Dart 方法调用基础设施 ─────────────────────────────
+// ─── FRB dart_callback 原生函数 ─────────────────────────────
 
-/// 来自 JS 的方法调用请求（JS→Dart）。
+/// 创建基于 FRB dart_callback 的同步 NativeFunction。
 ///
-/// 当 JS 侧调用通过 `register_global_callable` 或 `register_global_function`
-/// 注册的函数时，生成此结构并入队 COMPLETED_CALLS。
-pub(crate) struct CompletedCall {
-    pub call_id: u64,
-    pub name: String,
-    pub params: Vec<FrbJsValue>,
-}
-
-/// 待处理的方法调用（含 Promise resolver，用于 Dart 回传结果）。
-pub(crate) struct PendingCall {
-    pub resolvers: boa_engine::builtins::promise::ResolvingFunctions,
-}
-
-pub(crate) fn next_call_id() -> u64 {
-    use std::sync::atomic::AtomicU64;
-    static NEXT_ID: AtomicU64 = AtomicU64::new(0);
-    NEXT_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
-}
-
-/// 创建统一的 NativeFunction 工厂。
+/// JS 调用 `name(args)` 时：
+/// 1. 序列化 JS args → JSON
+/// 2. 通过全局 dart_callbacks 注册表找到对应的 dart_callback
+/// 3. tokio block_on 同步等待 Dart handler 返回
+/// 4. 反序列化 JSON → JsValue 返回给 JS
 ///
-/// 当 JS 调用该函数时，创建一个 Promise 并将调用信息入队，
-/// Dart 通过 `poll_calls` 获取调用，处理完后通过 `resolve_call`/`reject_call` 回传结果。
-///
-/// 此函数由 worker 线程调用，闭包也运行在 worker 线程上，
-/// 因此可通过 `worker_locals` 模块安全访问队列。
-pub(crate) fn create_native_fn(method_name: String) -> NativeFunction {
+/// 与旧的 sync_bridge 方案不同，此函数使用 FRB 原生的 dart_callback 通道，
+/// 无需 dart:ffi NativeCallable 和自定义 Mutex+Condvar。
+pub(crate) fn create_dart_callback_fn(
+    method_name: String,
+    runtime_id: u64,
+) -> NativeFunction {
     NativeFunction::from_copy_closure_with_captures(
-        |_this, args, name, ctx| {
-            let call_id = next_call_id();
-
-            // Boa args → Vec<FrbJsValue>
-            let params: Vec<FrbJsValue> =
-                args.iter().map(|v| FrbJsValue::from_boa(v, ctx)).collect();
-
-            // 创建 Promise + resolving functions
-            let (promise, resolvers) = JsPromise::new_pending(ctx);
-
-            // 登记 pending call（保存 resolvers 以便后续 resolve/reject）
-            worker_locals::PENDING_CALLS.with(|map| {
-                map.borrow_mut().insert(
-                    call_id,
-                    PendingCall { resolvers },
-                );
-            });
-
-            // 将调用信息加入完成列表，供 Dart 轮询
-            worker_locals::COMPLETED_CALLS.with(|list| {
-                list.borrow_mut().push(CompletedCall {
-                    call_id,
-                    name: name.clone(),
-                    params,
-                });
-            });
-
-            Ok(BoaJsValue::from(promise))
-        },
-        method_name,
-    )
-}
-
-// ─── Dart FFI 回调指针（已弃用，保留为 no-op 兼容旧 API）────
-
-/// 注册 Dart 侧 FFI 回调函数指针（已弃用，同步回调改用 sync_bridge）。
-pub(crate) fn register_dart_handler(_runtime_id: u64, _ptr: i64) {
-    // no-op
-}
-
-/// 注销 Dart 侧 FFI 回调函数指针（已弃用，同步回调改用 sync_bridge）。
-pub(crate) fn unregister_dart_handler(_runtime_id: u64) {
-    // no-op
-}
-
-// ─── 同步回调桥（全局 Mutex + Condvar，独立于 worker channel）─────
-
-/// 创建同步 NativeFunction（真正的同步调用，JS 调用立刻响应）。
-///
-/// 通过全局 `sync_bridge` 实现：worker 线程写入请求 → Condvar 阻塞等待，
-/// Dart 主线程通过 `pollSyncCalls` / `resolveSyncCall` 处理。
-///
-/// 与 Promise-based [create_native_fn] 不同，此函数**不创建 Promise**，
-/// JS 端 `name(args)` 直接拿到返回值（无需 `await`）。
-pub(crate) fn create_sync_native_fn(method_name: String, _runtime_id: u64) -> NativeFunction {
-    NativeFunction::from_copy_closure_with_captures(
-        move |_this, args, _name, ctx| -> boa_engine::JsResult<boa_engine::JsValue> {
-            // 序列化 JS args → JSON
-            let args_frb: Vec<FrbJsValue> = args
+        |_this, args, caps, ctx| -> boa_engine::JsResult<boa_engine::JsValue> {
+            // 1. JS args → JSON
+            let vals: Vec<serde_json::Value> = args
                 .iter()
-                .map(|v| FrbJsValue::from_boa(v, ctx))
+                .map(|v| frb_value_to_json(&FrbJsValue::from_boa(v, ctx)))
                 .collect();
-            let args_json_vals: Vec<serde_json::Value> =
-                args_frb.iter().map(|v| frb_value_to_json(v)).collect();
-            let args_json = serde_json::to_string(&args_json_vals).unwrap_or_default();
+            let args_json = serde_json::to_string(&vals).unwrap_or_default();
 
-            // 通过同步桥发送请求并阻塞等待 Dart 响应
-            let raw_response = crate::js_runtime::sync_bridge::worker_send_and_wait(
-                _name,
+            // 2. 从 thread_local 获取 runtime handle
+            let handle = RUNTIME_HANDLE.with(|h| {
+                h.borrow().clone().expect("RUNTIME_HANDLE not set")
+            });
+
+            // 3. 同步等待 Dart 响应
+            let raw = crate::js_runtime::dart_callbacks::call_blocking(
+                caps.runtime_id,
+                &caps.method_name,
                 &args_json,
+                &handle,
             );
 
-            // 解析响应：{"v": result_json} 或 {"e": error}
-            let wrapper: serde_json::Value =
-                serde_json::from_str(&raw_response).unwrap_or_default();
-            if let Some(err) = wrapper.get("e").and_then(|e| e.as_str()) {
-                return Err(boa_engine::JsError::from_native(
-                    boa_engine::JsNativeError::typ()
-                        .with_message(format!("Dart: {err}")),
-                ));
-            }
-            if let Some(val) = wrapper.get("v") {
-                let result_frb = json_to_frb_value(val);
-                return result_frb.to_boa(ctx).map_err(|e| {
-                    boa_engine::JsError::from_native(
+            // 4. JSON → JsValue
+            match raw {
+                Ok(json) => {
+                    let v: serde_json::Value =
+                        serde_json::from_str(&json).unwrap_or_default();
+                    json_to_frb_value(&v).to_boa(ctx).map_err(|e| {
                         boa_engine::JsNativeError::typ()
-                            .with_message(format!("{e}")),
-                    )
-                });
+                            .with_message(format!("{e}"))
+                            .into()
+                    })
+                }
+                Err(e) => Err(boa_engine::JsNativeError::typ()
+                    .with_message(e)
+                    .into()),
             }
-            Err(boa_engine::JsError::from_native(
-                boa_engine::JsNativeError::typ()
-                    .with_message("Dart handler returned invalid response"),
-            ))
         },
-        method_name,
+        DartCallbackCaps {
+            method_name,
+            runtime_id,
+        },
     )
 }
 
-// ─── JsValue ↔ serde_json::Value 转换（同步桥 JSON 协议用）───────
+/// Captures for create_dart_callback_fn.
+struct DartCallbackCaps {
+    method_name: String,
+    runtime_id: u64,
+}
+
+// Safety: DartCallbackCaps contains no GC-managed objects.
+unsafe impl boa_gc::Trace for DartCallbackCaps {
+    boa_gc::empty_trace!();
+}
+impl boa_gc::Finalize for DartCallbackCaps {}
+
+/// Worker 线程局部的 tokio runtime handle。
+/// 在 worker_loop 启动时设置，供 NativeFunction 闭包使用。
+thread_local! {
+    pub(crate) static RUNTIME_HANDLE: std::cell::RefCell<Option<tokio::runtime::Handle>> =
+        std::cell::RefCell::new(None);
+}
+
+// ─── JsValue ↔ serde_json::Value 转换（dart_callback JSON 协议用）───────
 
 /// 将 FrbJsValue 转为 serde_json::Value。
 fn frb_value_to_json(v: &FrbJsValue) -> serde_json::Value {
@@ -290,7 +229,7 @@ pub(crate) fn register_web_apis(context: &mut Context) -> Result<(), String> {
 /// 创建并初始化一个新的 Boa 上下文。
 ///
 /// 注册 Web API、DOM 模块、定时器，并配置模块加载器。
-pub(crate) fn init_context(max_memory: u64, _runtime_id: u64) -> Result<RuntimeState, String> {
+pub(crate) fn init_context(max_memory: u64, runtime_id: u64) -> Result<RuntimeState, String> {
     let loader = Rc::new(MapModuleLoader::new());
     let mut context = Context::builder()
         .module_loader(loader)
@@ -313,6 +252,8 @@ pub(crate) fn init_context(max_memory: u64, _runtime_id: u64) -> Result<RuntimeS
         estimated_memory: 0,
         total_code_bytes: 0,
         total_module_bytes: 0,
+        runtime_id,
+        runtime_handle: None,
     })
 }
 
@@ -325,7 +266,7 @@ fn register_timers(context: &mut Context) -> Result<(), String> {
     use boa_engine::property::PropertyDescriptor;
     use boa_engine::NativeFunction;
 
-    let setTimeout = NativeFunction::from_copy_closure(
+    let set_timeout = NativeFunction::from_copy_closure(
         |_this, args, context| {
             // 读取延迟（毫秒），默认 0
             let delay = args
@@ -350,7 +291,7 @@ fn register_timers(context: &mut Context) -> Result<(), String> {
         },
     );
 
-    let function = FunctionObjectBuilder::new(context.realm(), setTimeout)
+    let function = FunctionObjectBuilder::new(context.realm(), set_timeout)
         .name(js_string!("setTimeout"))
         .length(2)
         .constructor(false)

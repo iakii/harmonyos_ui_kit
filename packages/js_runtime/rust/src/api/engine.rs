@@ -11,9 +11,9 @@ use crate::api::js_error::JsError;
 use crate::api::js_value::JsValue;
 use crate::api::module::JsModule;
 use crate::api::runtime::{JsRuntime, JsRuntimeOptions};
-use crate::js_runtime::internal;
 use crate::js_runtime::worker;
 use flutter_rust_bridge::frb;
+use flutter_rust_bridge::DartFnFuture;
 
 /// 高层 JS 引擎。
 ///
@@ -141,96 +141,42 @@ impl JsEngine {
         worker::declare_modules(self.runtime_id, modules)
     }
 
-    // ─── JS↔Dart 方法调用 ───────────────────────────────
+    // ─── JS↔Dart 回调注册 ───────────────────────────────
 
-    /// 注册一个全局可构造函数（JS 端可通过 `await <name>(...args)` 或 `new <name>(...args)` 调用）。
-    #[frb(sync)]
-    pub fn register_global_callable(&self, name: String) -> Result<(), JsError> {
-        worker::register_global_callable(self.runtime_id, name)
-    }
-
-    /// 注册一个全局纯函数（不可构造，JS 端通过 `await <name>(...args)` 调用）。
-    #[frb(sync)]
-    pub fn register_global_function(&self, name: String) -> Result<(), JsError> {
-        worker::register_global_function(self.runtime_id, name)
-    }
-
-    /// 拉取所有来自 JS 的待处理方法调用（排空队列）。
-    #[frb(sync)]
-    pub fn poll_calls(&self) -> Vec<CompletedCall> {
-        worker::poll_calls(self.runtime_id)
-            .unwrap_or_default()
-            .into_iter()
-            .map(|c| CompletedCall {
-                call_id: c.call_id,
-                name: c.name,
-                params: c.params,
-            })
-            .collect()
-    }
-
-    /// 回传成功结果给 JS 端（resolve 对应的 Promise）。
-    #[frb(sync)]
-    pub fn resolve_call(&self, call_id: u64, result: JsValue) -> Result<(), JsError> {
-        worker::resolve_call(self.runtime_id, call_id, result)
-    }
-
-    /// 回传错误给 JS 端（reject 对应的 Promise）。
-    #[frb(sync)]
-    pub fn reject_call(&self, call_id: u64, error: String) -> Result<(), JsError> {
-        worker::reject_call(self.runtime_id, call_id, error)
-    }
-
-    // ─── 同步回调桥（独立于 worker channel）─────────────
-
-    /// 拉取所有来自 JS 的**同步**调用请求（排空队列）。
+    /// 注册一个 Dart 回调作为 JS 全局函数。
     ///
-    /// 返回 `(call_id, method_name, args_json)` 列表。
-    /// 处理完后用 [resolve_sync_call] / [reject_sync_call] 回传结果。
+    /// 使用 FRB 原生 dart_callback 机制：JS 调用 `name(args)` 时，
+    /// Rust 侧通过 tokio block_on 同步等待 Dart handler 返回结果。
+    /// JS 直接拿到返回值，无需 `await` / Promise。
     ///
-    /// 此方法直接访问全局 sync_bridge，不经过 worker channel，
-    /// 因此可在 JS 执行期间**实时**被调用。
-    #[frb(sync)]
-    pub fn poll_sync_calls(&self) -> Vec<SyncCall> {
-        crate::js_runtime::sync_bridge::poll_pending_calls()
-            .into_iter()
-            .map(|(call_id, name, args_json)| SyncCall {
-                call_id,
-                name,
-                args_json,
-            })
-            .collect()
+    /// # Dart 示例
+    /// ```dart
+    /// await engine.register('add', (String argsJson) async {
+    ///   final args = jsonDecode(argsJson) as List;
+    ///   return jsonEncode(args[0] + args[1]);
+    /// });
+    /// final result = await engine.eval(code: 'add(3, 4) + 10'); // 17
+    /// ```
+    pub async fn register(
+        &self,
+        name: String,
+        func: impl Fn(String) -> DartFnFuture<String> + Send + Sync + 'static,
+    ) -> Result<(), JsError> {
+        // 1. 存入全局注册表（类型擦除为 Arc）
+        crate::js_runtime::dart_callbacks::register(
+            self.runtime_id,
+            name.clone(),
+            std::sync::Arc::new(func),
+        );
+        // 2. 通知 worker 线程创建 NativeFunction
+        worker::register(self.runtime_id, name)
     }
 
-    /// 回传成功结果给阻塞的 worker 线程（通过 sync_bridge）。
-    ///
-    /// [result_json] 是 Dart handler 返回值的 JSON 序列化字符串。
+    /// 注销已注册的 Dart 回调（从 JS global 中删除）。
     #[frb(sync)]
-    pub fn resolve_sync_call(&self, call_id: u64, result_json: String) {
-        crate::js_runtime::sync_bridge::resolve_call(call_id, result_json);
-    }
-
-    /// 回传错误给阻塞的 worker 线程（通过 sync_bridge）。
-    #[frb(sync)]
-    pub fn reject_sync_call(&self, call_id: u64, error: String) {
-        crate::js_runtime::sync_bridge::reject_call(call_id, error);
-    }
-
-    // ─── 同步 FFI 回调（已弃用）──────────────────────────
-
-    /// （内部）注册 Dart 侧 FFI 回调函数指针。
-    ///
-    /// 直接操作全局 DART_HANDLERS 注册表，无需经过 worker。
-    #[frb(sync)]
-    pub fn register_dart_handler(&self, ptr: i64) -> Result<(), JsError> {
-        internal::register_dart_handler(self.runtime_id, ptr);
-        Ok(())
-    }
-
-    /// 注册一个同步全局函数（JS 调用立刻响应，无 Promise）。
-    #[frb(sync)]
-    pub fn register_sync_function(&self, name: String) -> Result<(), JsError> {
-        worker::register_sync_function(self.runtime_id, name)
+    pub fn unregister(&self, name: String) -> Result<(), JsError> {
+        crate::js_runtime::dart_callbacks::unregister(self.runtime_id, &name);
+        worker::unregister(self.runtime_id, name)
     }
 
     // ─── 内存管理 ────────────────────────────────────────
@@ -267,27 +213,10 @@ impl JsEngine {
         worker::cancel_eval(self.runtime_id);
     }
 
-    /// 关闭引擎，释放所有资源（含已注册的回调函数和待处理调用）。
+    /// 关闭引擎，释放所有资源（含已注册的 dart_callback 和待处理调用）。
     #[frb(sync)]
     pub fn close(self) -> Result<(), JsError> {
-        internal::unregister_dart_handler(self.runtime_id);
+        crate::js_runtime::dart_callbacks::unregister_all(self.runtime_id);
         worker::dispose(self.runtime_id)
     }
-}
-
-/// JS→Dart 方法调用请求。
-pub struct CompletedCall {
-    pub call_id: u64,
-    pub name: String,
-    pub params: Vec<JsValue>,
-}
-
-/// JS→Dart 同步调用请求（sync_bridge 模式）。
-///
-/// 通过 `poll_sync_calls` 获取，处理完后用 `resolve_sync_call` 回传。
-pub struct SyncCall {
-    pub call_id: u64,
-    pub name: String,
-    /// JSON 序列化的参数数组
-    pub args_json: String,
 }

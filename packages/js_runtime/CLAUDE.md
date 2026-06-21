@@ -58,7 +58,7 @@ js_runtime/
 │       │   ├── mod.rs
 │       │   ├── internal.rs        # RuntimeState, init_context, NativeFunction 工厂
 │       │   ├── worker.rs          # 工作线程：WorkerCmd + 全局 WORKERS 注册表
-│       │   └── sync_bridge.rs     # 同步回调桥：全局 Mutex+Condvar
+│       │   └── dart_callbacks.rs  # FRB dart_callback 全局注册表 + call_blocking
 │       ├── dom.rs                 # DOM 解析模块（scraper）
 │       └── frb_generated.rs       # FRB 自动生成（勿手动编辑）
 ├── cargokit/                      # 跨平台 Cargo 构建胶水（CMake/Gradle/Pod）
@@ -80,8 +80,8 @@ js_runtime/
 2. **Boa 集成**: Rust 端依赖 `boa_engine`，rust_input 中包含 `boa_engine`，允许 Dart 通过 FRB 调用 JS 执行相关功能
 3. **入口类 `JsRuntimeLib`**: 取代旧的 `RustLib`，通过 `JsRuntimeLib.init()` 初始化，通过自动生成的 Wrapper 函数调用 Rust
 4. **工作线程模型**: 每个 `JsRuntime` 拥有一个专用 OS 线程（worker），Boa Context 在 worker 内运行。`eval`/`eval_file`/`eval_bytes`/`eval_path` 等方法通过 `mpsc` channel 向 worker 发送命令，Dart 端返回 `Future`（不阻塞主 isolate）。`create()`/`dispose()`/`memory_usage()` 等轻量操作保持 `#[frb(sync)]`
-5. **同步回调桥**: `sync_bridge`（全局 `Mutex + Condvar`）独立于 worker channel，实现真正的同步 JS→Dart 回调——JS 调用后 Dart handler **立刻执行**并返回结果。Dart 端通过 Timer 定时轮询 `pollSyncCalls()` / `resolveSyncCall()` / `rejectSyncCall()`（均为 `#[frb(sync)]`，直接访问全局 Mutex，不排队）
-6. **JS↔Dart 回调**: 推荐 `JsCallbackHandler`（基于 `registerSyncFunction` + `sync_bridge`，JS 调用立刻同步响应）；Promise 模式（`registerGlobalCallable` / `registerGlobalFunction` + `pollCalls` / `resolveCall` / `rejectCall`）作为高级选项
+5. **FRB dart_callback 回调桥**: JS↔Dart 回调使用 FRB 原生 `dart_callback: impl Fn(String) -> DartFnFuture<String>` 机制。worker 线程内创建 tokio runtime，NativeFunction 闭包中通过 `block_on` 同步等待 Dart handler 返回结果。JS 调用 `name(args)` 立刻拿到返回值，无需 Promise / `await`。
+6. **JS↔Dart 回调**: 唯一入口 `JsEngine.register(name, dartCallback)`。Dart 侧传入 `(String argsJson) async => ...` 闭包，FRB 自动处理跨 FFI 通信。回调存储于全局 `dart_callbacks` 注册表（`Arc<dyn Fn(String) -> DartFnFuture<String>>`），按 `(runtime_id, name)` 索引。
 7. **Eval 取消机制**: 每个 worker 持有一个代际计数器 `Arc<AtomicU64>`（`cancel_gen`）。`send_and_wait` 系列函数使用 `recv_timeout(100ms)` 轮询，若检测到代际变化则立即返回 `JsError::Cancelled`。`cancel_eval()` 递增代际计数器。由于 Boa 的 `eval()` 为同步阻塞执行，取消仅在**调用方等待侧**生效 —— worker 线程会继续完成当前 JS 执行并丢弃结果。取消后可立即发起新的 eval 调用，无需等待旧任务完成。
 
 ### Eval 取消机制详解
@@ -92,22 +92,34 @@ js_runtime/
 - `cancel_eval(runtime_id)` — `#[frb(sync)]`，递增代际计数器
 - `JsError::Cancelled { message }` — 取消时返回的错误变体，`code()` 返回 `"CANCELLED"`
 
-**Dart 侧使用模式** — `JsCallbackHandler.eval()` 的 `cancelSignal` 参数:
+**Dart 侧使用模式** — `engine.eval()` + `cancelEval()`:
 ```dart
 final cancelCompleter = Completer<void>();
-final handler = JsCallbackHandler(engine);
 
-// 发起 eval，传入取消信号
-final result = await handler.eval(
-  code,
-  cancelSignal: cancelCompleter.future,  // Future<void>?
-);
-
-// dispose 时触发取消
+// 发起 eval... dispose 时触发取消
 ref.onDispose(() {
-  cancelCompleter.complete();  // 触发 engine.cancelEval()
+  if (!cancelCompleter.isCompleted) cancelCompleter.complete();
+  engine.cancelEval();
   engine.close();
 });
+```
+
+**JS↔Dart 回调模式**:
+```dart
+final engine = JsEngine.create(...);
+
+// 注册 Dart 回调到 JS global（无 Promise，JS 直接拿到返回值）
+await engine.register(
+  name: 'postMessage',
+  dartCallback: (String argsJson) async {
+    final args = jsonDecode(argsJson) as List;
+    // 处理并返回 JSON 字符串
+    return jsonEncode(result);
+  },
+);
+
+// JS 直接调用
+await engine.eval(code: 'postMessage("hello")');
 ```
 
 **错误处理** — 使用 `JsError.whenOrNull` 区分取消与真实错误:
@@ -115,7 +127,7 @@ ref.onDispose(() {
 } on JsError catch (e) {
   final isCancelled = e.whenOrNull(cancelled: (_) => true) ?? false;
   if (isCancelled) return;  // dispose 触发的正常终止，不报错
-  // ... 处理其他错误
+  // ... 处理其他 JsError 变体
 }
 ```
 

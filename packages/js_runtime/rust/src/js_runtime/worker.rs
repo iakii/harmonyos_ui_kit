@@ -66,37 +66,6 @@ pub(crate) enum WorkerCmd {
         params: Vec<JsValue>,
         reply: mpsc::Sender<Result<JsValue, JsError>>,
     },
-    /// 注册全局可构造函数（含 Promise 回调）
-    RegisterGlobalCallable {
-        name: String,
-        reply: mpsc::Sender<Result<(), JsError>>,
-    },
-    /// 注册全局纯函数（含 Promise 回调）
-    RegisterGlobalFunction {
-        name: String,
-        reply: mpsc::Sender<Result<(), JsError>>,
-    },
-    /// 注册同步函数（FFI 直接回调，无 Promise）
-    RegisterSyncFunction {
-        name: String,
-        reply: mpsc::Sender<Result<(), JsError>>,
-    },
-    /// 拉取待处理的 JS→Dart 调用
-    PollCalls {
-        reply: mpsc::Sender<Vec<internal::CompletedCall>>,
-    },
-    /// 回传成功结果给 JS
-    ResolveCall {
-        call_id: u64,
-        result: JsValue,
-        reply: mpsc::Sender<Result<(), JsError>>,
-    },
-    /// 回传错误给 JS
-    RejectCall {
-        call_id: u64,
-        error: String,
-        reply: mpsc::Sender<Result<(), JsError>>,
-    },
     /// 执行微任务队列
     RunJobs,
     /// 触发 GC
@@ -122,6 +91,16 @@ pub(crate) enum WorkerCmd {
     /// 批量注册模块
     DeclareModules {
         modules: Vec<crate::api::module::JsModule>,
+        reply: mpsc::Sender<Result<(), JsError>>,
+    },
+    /// 注册 dart_callback 作为 JS 全局函数（FRB 原生通道）
+    Register {
+        name: String,
+        reply: mpsc::Sender<Result<(), JsError>>,
+    },
+    /// 注销 dart_callback（从 JS global 移除）
+    Unregister {
+        name: String,
         reply: mpsc::Sender<Result<(), JsError>>,
     },
     /// 销毁运行时
@@ -345,30 +324,6 @@ pub(crate) fn call_module(runtime_id: u64, module: String, method: String, param
     send_and_wait(runtime_id, |tx| WorkerCmd::Call { module, method, params, reply: tx })
 }
 
-pub(crate) fn register_global_callable(runtime_id: u64, name: String) -> Result<(), JsError> {
-    send_and_wait(runtime_id, |tx| WorkerCmd::RegisterGlobalCallable { name, reply: tx })
-}
-
-pub(crate) fn register_global_function(runtime_id: u64, name: String) -> Result<(), JsError> {
-    send_and_wait(runtime_id, |tx| WorkerCmd::RegisterGlobalFunction { name, reply: tx })
-}
-
-pub(crate) fn register_sync_function(runtime_id: u64, name: String) -> Result<(), JsError> {
-    send_and_wait(runtime_id, |tx| WorkerCmd::RegisterSyncFunction { name, reply: tx })
-}
-
-pub(crate) fn poll_calls(runtime_id: u64) -> Result<Vec<internal::CompletedCall>, JsError> {
-    send_and_wait_raw(runtime_id, |tx| WorkerCmd::PollCalls { reply: tx })
-}
-
-pub(crate) fn resolve_call(runtime_id: u64, call_id: u64, result: JsValue) -> Result<(), JsError> {
-    send_and_wait(runtime_id, |tx| WorkerCmd::ResolveCall { call_id, result, reply: tx })
-}
-
-pub(crate) fn reject_call(runtime_id: u64, call_id: u64, error: String) -> Result<(), JsError> {
-    send_and_wait(runtime_id, |tx| WorkerCmd::RejectCall { call_id, error, reply: tx })
-}
-
 pub(crate) fn run_jobs(runtime_id: u64) {
     let _ = send_without_reply(runtime_id, WorkerCmd::RunJobs);
 }
@@ -391,6 +346,14 @@ pub(crate) fn eval_js_str(runtime_id: u64, code: String) -> Result<String, Strin
 
 pub(crate) fn declare_modules(runtime_id: u64, modules: Vec<crate::api::module::JsModule>) -> Result<(), JsError> {
     send_and_wait(runtime_id, |tx| WorkerCmd::DeclareModules { modules, reply: tx })
+}
+
+pub(crate) fn register(runtime_id: u64, name: String) -> Result<(), JsError> {
+    send_and_wait(runtime_id, |tx| WorkerCmd::Register { name, reply: tx })
+}
+
+pub(crate) fn unregister(runtime_id: u64, name: String) -> Result<(), JsError> {
+    send_and_wait(runtime_id, |tx| WorkerCmd::Unregister { name, reply: tx })
 }
 
 pub(crate) fn dispose(runtime_id: u64) -> Result<(), JsError> {
@@ -447,6 +410,18 @@ pub(crate) fn spawn_worker(
 // ─── 工作线程主循环 ────────────────────────────────────────
 
 fn worker_loop(rx: mpsc::Receiver<WorkerCmd>, max_memory: u64, runtime_id: u64) {
+    // 创建单线程 tokio runtime，用于 block_on dart_callback
+    let rt = match tokio::runtime::Builder::new_current_thread()
+        .enable_time()
+        .build()
+    {
+        Ok(rt) => rt,
+        Err(e) => {
+            eprintln!("[js-runtime-{runtime_id}] Failed to create tokio runtime: {e}");
+            return;
+        }
+    };
+
     let mut state = match internal::init_context(max_memory, runtime_id) {
         Ok(s) => s,
         Err(e) => {
@@ -454,6 +429,11 @@ fn worker_loop(rx: mpsc::Receiver<WorkerCmd>, max_memory: u64, runtime_id: u64) 
             return;
         }
     };
+
+    // 注入 runtime handle 到 thread_local 供 NativeFunction 闭包使用
+    internal::RUNTIME_HANDLE.with(|h| {
+        *h.borrow_mut() = Some(rt.handle().clone());
+    });
 
     while let Ok(cmd) = rx.recv() {
         match cmd {
@@ -505,69 +485,6 @@ fn worker_loop(rx: mpsc::Receiver<WorkerCmd>, max_memory: u64, runtime_id: u64) 
                 let result = call_module_inner(&mut state, &module, &method, &params);
                 let _ = reply.send(result);
             }
-            WorkerCmd::RegisterGlobalCallable { name, reply } => {
-                let result = register_global_callable_inner(&mut state.context, &name);
-                let _ = reply.send(result);
-            }
-            WorkerCmd::RegisterGlobalFunction { name, reply } => {
-                let result = register_global_function_inner(&mut state.context, &name);
-                let _ = reply.send(result);
-            }
-            WorkerCmd::RegisterSyncFunction { name, reply } => {
-                let result = register_sync_function_inner(&mut state.context, &name, runtime_id);
-                let _ = reply.send(result);
-            }
-            WorkerCmd::PollCalls { reply } => {
-                let calls: Vec<internal::CompletedCall> = internal::worker_locals::COMPLETED_CALLS
-                    .with(|list| std::mem::take(&mut *list.borrow_mut()));
-                let _ = reply.send(calls);
-            }
-            WorkerCmd::ResolveCall { call_id, result, reply } => {
-                let res = internal::worker_locals::PENDING_CALLS.with(|map| {
-                    if let Some(pending) = map.borrow_mut().remove(&call_id) {
-                        let boa_val = result
-                            .to_boa(&mut state.context)
-                            .map_err(|e| JsError::Internal {
-                                message: format!("Failed to convert result: {e}"),
-                            })?;
-                        pending
-                            .resolvers
-                            .resolve
-                            .call(
-                                &boa_engine::JsValue::undefined(),
-                                &[boa_val],
-                                &mut state.context,
-                            )
-                            .map_err(|e| JsError::Internal {
-                                message: format!("Failed to resolve promise: {e}"),
-                            })?;
-                    }
-                    Ok(())
-                });
-                let _ = reply.send(res);
-            }
-            WorkerCmd::RejectCall { call_id, error, reply } => {
-                let res = internal::worker_locals::PENDING_CALLS.with(|map| {
-                    if let Some(pending) = map.borrow_mut().remove(&call_id) {
-                        let err = boa_engine::JsError::from_native(
-                            boa_engine::JsNativeError::typ().with_message(error),
-                        );
-                        pending
-                            .resolvers
-                            .reject
-                            .call(
-                                &boa_engine::JsValue::undefined(),
-                                &[err.to_opaque(&mut state.context)],
-                                &mut state.context,
-                            )
-                            .map_err(|e| JsError::Internal {
-                                message: format!("Failed to reject promise: {e}"),
-                            })?;
-                    }
-                    Ok(())
-                });
-                let _ = reply.send(res);
-            }
             WorkerCmd::RunJobs => {
                 let _ = state.context.run_jobs();
             }
@@ -596,6 +513,14 @@ fn worker_loop(rx: mpsc::Receiver<WorkerCmd>, max_memory: u64, runtime_id: u64) 
                 }
                 let _ = reply.send(result);
             }
+            WorkerCmd::Register { name, reply } => {
+                let result = register_inner(&mut state, &name);
+                let _ = reply.send(result);
+            }
+            WorkerCmd::Unregister { name, reply } => {
+                let result = unregister_inner(&mut state, &name);
+                let _ = reply.send(result);
+            }
             WorkerCmd::DeclareModules { modules, reply } => {
                 let mut result = Ok(());
                 for m in modules {
@@ -613,9 +538,6 @@ fn worker_loop(rx: mpsc::Receiver<WorkerCmd>, max_memory: u64, runtime_id: u64) 
         }
     }
 
-    // 清理线程局部回调队列
-    internal::worker_locals::COMPLETED_CALLS.with(|list| list.borrow_mut().clear());
-    internal::worker_locals::PENDING_CALLS.with(|map| map.borrow_mut().clear());
 }
 
 // ─── 内部实现辅助函数 ──────────────────────────────────────
@@ -719,50 +641,6 @@ fn call_module_inner(
     Ok(JsValue::from_boa(&resolved, &mut state.context))
 }
 
-// ─── 回调注册辅助 ──────────────────────────────────────────
-
-fn register_global_callable_inner(context: &mut Context, name: &str) -> Result<(), JsError> {
-    use boa_engine::js_string;
-
-    let native_fn = internal::create_native_fn(name.to_string());
-
-    context
-        .register_global_callable(js_string!(name), name.len(), native_fn)
-        .map_err(|e| JsError::Internal {
-            message: format!("Failed to register global callable '{name}': {e}"),
-        })
-}
-
-fn register_global_function_inner(context: &mut Context, name: &str) -> Result<(), JsError> {
-    use boa_engine::js_string;
-    use boa_engine::object::FunctionObjectBuilder;
-    use boa_engine::property::PropertyDescriptor;
-
-    let native_fn = internal::create_native_fn(name.to_string());
-
-    let function = FunctionObjectBuilder::new(context.realm(), native_fn)
-        .name(js_string!(name))
-        .length(name.len())
-        .constructor(false)
-        .build();
-
-    context
-        .global_object()
-        .define_property_or_throw(
-            js_string!(name),
-            PropertyDescriptor::builder()
-                .value(function)
-                .writable(true)
-                .enumerable(false)
-                .configurable(true),
-            context,
-        )
-        .map(|_| ())
-        .map_err(|e| JsError::Internal {
-            message: format!("Failed to register global function '{name}': {e}"),
-        })
-}
-
 pub(crate) fn repl_eval(
     runtime_id: u64,
     code: String,
@@ -795,36 +673,33 @@ fn repl_eval_in_context(
     }
 }
 
-fn register_sync_function_inner(
-    context: &mut Context,
-    name: &str,
-    runtime_id: u64,
-) -> Result<(), JsError> {
-    use boa_engine::js_string;
-    use boa_engine::object::FunctionObjectBuilder;
-    use boa_engine::property::PropertyDescriptor;
+// ─── FRB dart_callback 注册 / 注销 ──────────────────────────
 
-    let native_fn = internal::create_sync_native_fn(name.to_string(), runtime_id);
+/// 注册 dart_callback 作为 JS 全局函数（KossJS 三步模式）。
+fn register_inner(state: &mut RuntimeState, name: &str) -> Result<(), JsError> {
+    use boa_engine::{js_string, property::Attribute};
 
-    let function = FunctionObjectBuilder::new(context.realm(), native_fn)
-        .name(js_string!(name))
-        .length(name.len())
-        .constructor(false)
-        .build();
+    let native_fn =
+        internal::create_dart_callback_fn(name.to_string(), state.runtime_id);
 
-    context
-        .global_object()
-        .define_property_or_throw(
+    // KossJS 三步模式: NativeFunction → to_js_function → register_global_property
+    let js_func = native_fn.to_js_function(state.context.realm());
+
+    state
+        .context
+        .register_global_property(
             js_string!(name),
-            PropertyDescriptor::builder()
-                .value(function)
-                .writable(true)
-                .enumerable(false)
-                .configurable(true),
-            context,
+            js_func,
+            Attribute::WRITABLE | Attribute::CONFIGURABLE,
         )
-        .map(|_| ())
         .map_err(|e| JsError::Internal {
-            message: format!("Failed to register sync function '{name}': {e}"),
+            message: format!("Failed to register '{name}': {e}"),
         })
+}
+
+/// 从 JS global 删除已注册的函数。
+fn unregister_inner(state: &mut RuntimeState, name: &str) -> Result<(), JsError> {
+    let code = format!("delete globalThis[\"{name}\"]");
+    let _ = state.context.eval(Source::from_bytes(code.as_bytes()));
+    Ok(())
 }
