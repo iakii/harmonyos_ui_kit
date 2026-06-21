@@ -53,6 +53,7 @@ void _galleryWorker(dynamic params) {
       return result.asStringSync ?? '';
     },
     onDispose: (controller) {
+      engine?.cancelEval();
       engine?.close();
     },
   );

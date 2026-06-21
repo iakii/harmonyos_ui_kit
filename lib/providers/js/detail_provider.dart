@@ -24,13 +24,15 @@ typedef _DetailParams = ({String jsSource, String safeUrl});
 /// - [onEvent] 每次 compute() 调用时执行 JS eval，进度通过 sendResult() 实时回传
 @pragma('vm:entry-point')
 void _detailWorker(dynamic params) {
+  JsEngine? engine;
+
   IsolateManagerFunction.customFunction<Map<String, dynamic>, _DetailParams>(
     params,
     onInit: (controller) async {
       await JsRuntimeLib.init();
     },
     onEvent: (controller, message) async {
-      final engine = JsEngine.create(
+      engine = JsEngine.create(
         runtimeOptions: JsRuntimeOptions(
           builtins: JsBuiltinOptions.web(),
           info: 'meitule-detail',
@@ -39,7 +41,7 @@ void _detailWorker(dynamic params) {
       );
 
       try {
-        final handler = JsCallbackHandler(engine);
+        final handler = JsCallbackHandler(engine!);
 
         handler.register('postMessage', (args) {
           final type = args[0].asStringSync ?? '';
@@ -63,10 +65,15 @@ void _detailWorker(dynamic params) {
       } catch (e) {
         controller.sendResult({'type': 'error', 'data': e.toString()});
       } finally {
-        engine.close();
+        engine?.close();
+        engine = null;
       }
 
       return <String, dynamic>{}; // autoHandleResult=false 时不使用
+    },
+    onDispose: (controller) {
+      engine?.cancelEval();
+      engine?.close();
     },
     autoHandleException: false,
     autoHandleResult: false,
