@@ -354,7 +354,7 @@ class _GridItemCard extends StatelessWidget {
                   top: Radius.circular(12),
                 ),
                 child: Image.network(
-                  item.cover,
+                  'https://cdn.pixabay.com/photo/2016/05/31/11/26/baby-1426651_1280.jpg', // '${item.cover}8888?x-oss-process=image/resize,w_400',
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Container(
                     color: theme.surfaceColor,

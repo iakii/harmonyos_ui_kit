@@ -26,19 +26,19 @@ class _JsParsePageState extends State<JsParsePage> {
     const info = JSON.parse(client.pluginInfo);
     console.log('插件名称:', info.name);
 
-    // 通过 __postMessage 将数据传给 Dart 端的 listData
-    __postMessage('pluginInfo', JSON.stringify(info));
+    // 通过 postMessage 将数据传给 Dart 端的 listData
+    postMessage('pluginInfo', JSON.stringify(info));
 
     // 2. 解析 HTML 获取图片列表（离线测试）
     var mockHtml = '<a class="list-img" href="/photo/123.html"><img data-src="https://example.com/1.jpg" alt="写真集 A"></a>';
     mockHtml += '<li class="page-item"><a class="page-link" href="index_3.html"></a></li>';
 
     var totalPages = client.getPhotosPageSize(mockHtml);
-    __postMessage('pageSize', JSON.stringify({ totalPages: totalPages }));
+    postMessage('pageSize', JSON.stringify({ totalPages: totalPages }));
 
     // 3. 在线获取图片列表（需要 JS 运行时支持 fetch）:
     var result = await client.getPage('https://www.meitula.org/', 1);
-    __postMessage('pageResult', result);
+    postMessage('pageResult', result);
 
     // 4. 处理结果并回传给 Dart 端
     // const sumRes= await sum(1,2);
@@ -152,28 +152,28 @@ class _JsParsePageState extends State<JsParsePage> {
       })()
   ''');
 
-    // final code = codeController.text.trim();
-    // if (code.isEmpty) {
-    //   error.value = '请输入 JavaScript 代码';
-    //   return;
-    // }
+    final code = codeController.text.trim();
+    if (code.isEmpty) {
+      error.value = '请输入 JavaScript 代码';
+      return;
+    }
 
-    // isRunning.value = true;
-    // result.value = null;
-    // error.value = null;
+    isRunning.value = true;
+    result.value = null;
+    error.value = null;
 
-    // try {
-    //   final output = engine.eval(code: code);
-    //   result.value = fmtVal(output);
-    //   // 更新内存信息
-    //   final used = engine.memoryUsage();
-    //   final total = JsRuntime.totalMemoryUsage();
-    //   memInfo.value = '估算: ${fmtBytes(used)} | 进程: ${fmtBytes(total)}';
-    // } catch (e) {
-    //   error.value = e.toString();
-    // } finally {
-    //   isRunning.value = false;
-    // }
+    try {
+      final output = handler.eval(code);
+      result.value = fmtVal(output);
+      // 更新内存信息
+      final used = engine.memoryUsage();
+      final total = JsRuntime.totalMemoryUsage();
+      memInfo.value = '估算: ${fmtBytes(used)} | 进程: ${fmtBytes(total)}';
+    } catch (e) {
+      error.value = e.toString();
+    } finally {
+      isRunning.value = false;
+    }
   }
 
   void _releaseMemory() {

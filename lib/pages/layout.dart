@@ -45,9 +45,9 @@ class _AppLayoutState extends State<AppLayout> {
         items: [
           HosBottomNavItem(icon: HMIcons.harmonyos, label: '鸿蒙'),
           HosBottomNavItem(icon: HMIcons.house, label: 'JS脚本'),
-          HosBottomNavItem(icon: HMIcons.share, label: '玻璃套件'),
+          // HosBottomNavItem(icon: HMIcons.share, label: '玻璃套件'),
           // HosBottomNavItem(icon: HMIcons.a10kRectangle, label: '沉浸式'),
-          HosBottomNavItem(icon: HMIcons.glass, label: '毛玻璃'),
+          // HosBottomNavItem(icon: HMIcons.glass, label: '毛玻璃'),
           HosBottomNavItem(icon: HMIcons.galleryOrg, label: '图集'),
         ],
         selectedIndex: _selectedIndex,
@@ -59,8 +59,8 @@ class _AppLayoutState extends State<AppLayout> {
           final route = [
             '/',
             '/js_parse',
-            '/glass_kit',
-            '/glass',
+            // '/glass_kit',
+            // '/glass',
             '/js_gallery',
           ][i];
           if (ModalRoute.of(context)?.settings.name != route) {
