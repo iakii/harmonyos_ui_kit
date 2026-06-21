@@ -21,6 +21,16 @@ class JsRuntime {
     required this.id,
   });
 
+  /// 取消当前正在等待的 eval（或其他长时间操作）。
+  ///
+  /// 等待中的调用方会立刻收到 [JsError::Cancelled]。
+  /// 工作线程中的 JS 执行会继续在后台完成（结果被丢弃），
+  /// 取消后可以立即发起新的 eval 调用。
+  void cancelEval() =>
+      JsRuntimeLib.instance.api.crateApiRuntimeJsRuntimeCancelEval(
+        that: this,
+      );
+
   /// 创建一个新的 JS 运行时。
   ///
   /// 内部启动一个专用 OS 线程来运行 Boa Context，

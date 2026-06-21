@@ -52,6 +52,11 @@ sealed class JsError with _$JsError implements FrbException {
     required String message,
   }) = JsError_Internal;
 
+  /// 任务被取消（调用方主动取消等待）。
+  const factory JsError.cancelled({
+    required String message,
+  }) = JsError_Cancelled;
+
   /// 通用错误（兜底）。
   const factory JsError.generic({
     required String message,
@@ -66,6 +71,7 @@ sealed class JsError with _$JsError implements FrbException {
   /// - `Runtime` → `"RUNTIME"`
   /// - `MemoryLimit` → `"MEMORY_LIMIT"`
   /// - `StackOverflow` → `"STACK_OVERFLOW"`
+  /// - `Cancelled` → `"CANCELLED"`
   /// - `Internal` → `"INTERNAL"`
   /// - `Generic` → `"GENERIC"`
   Future<String> code() => JsRuntimeLib.instance.api.crateApiJsErrorJsErrorCode(

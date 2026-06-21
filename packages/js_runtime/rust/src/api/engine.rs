@@ -257,6 +257,16 @@ impl JsEngine {
         worker::set_memory_limit(self.runtime_id, limit_bytes);
     }
 
+    /// 取消当前正在等待的 eval（或其他长时间操作）。
+    ///
+    /// 等待中的调用方会立刻收到 [JsError::Cancelled]。
+    /// 工作线程中的 JS 执行会继续在后台完成（结果被丢弃），
+    /// 取消后可以立即发起新的 eval 调用。
+    #[frb(sync)]
+    pub fn cancel_eval(&self) {
+        worker::cancel_eval(self.runtime_id);
+    }
+
     /// 关闭引擎，释放所有资源（含已注册的回调函数和待处理调用）。
     #[frb(sync)]
     pub fn close(self) -> Result<(), JsError> {

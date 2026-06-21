@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0-beta.2";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 100982180;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 982425927;
 
 // Section: executor
 
@@ -617,6 +617,38 @@ fn wire__crate__api__engine__js_engine_call_impl(
                     Ok(output_ok)
                 })())
             }
+        },
+    )
+}
+fn wire__crate__api__engine__js_engine_cancel_eval_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "js_engine_cancel_eval",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <crate::api::engine::JsEngine>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Result::<_, ()>::Ok({
+                    crate::api::engine::JsEngine::cancel_eval(&api_that);
+                })?;
+                Ok(output_ok)
+            })())
         },
     )
 }
@@ -1631,6 +1663,38 @@ fn wire__crate__api__module__js_module_new_impl(
                     Ok(output_ok)
                 })())
             }
+        },
+    )
+}
+fn wire__crate__api__runtime__js_runtime_cancel_eval_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "js_runtime_cancel_eval",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <crate::api::runtime::JsRuntime>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, ()>((move || {
+                let output_ok = Result::<_, ()>::Ok({
+                    crate::api::runtime::JsRuntime::cancel_eval(&api_that);
+                })?;
+                Ok(output_ok)
+            })())
         },
     )
 }
@@ -3177,6 +3241,12 @@ impl SseDecode for crate::api::js_error::JsError {
             }
             7 => {
                 let mut var_message = <String>::sse_decode(deserializer);
+                return crate::api::js_error::JsError::Cancelled {
+                    message: var_message,
+                };
+            }
+            8 => {
+                let mut var_message = <String>::sse_decode(deserializer);
                 return crate::api::js_error::JsError::Generic {
                     message: var_message,
                 };
@@ -3590,113 +3660,113 @@ fn pde_ffi_dispatcher_primary_impl(
         8 => wire__crate__api__repl__JsRepl_runtime_impl(port, ptr, rust_vec_len, data_len),
         9 => wire__crate__api__hello__hello_impl(port, ptr, rust_vec_len, data_len),
         15 => wire__crate__api__engine__js_engine_call_impl(port, ptr, rust_vec_len, data_len),
-        20 => wire__crate__api__engine__js_engine_eval_impl(port, ptr, rust_vec_len, data_len),
-        21 => {
+        21 => wire__crate__api__engine__js_engine_eval_impl(port, ptr, rust_vec_len, data_len),
+        22 => {
             wire__crate__api__engine__js_engine_eval_bytes_impl(port, ptr, rust_vec_len, data_len)
         }
-        22 => wire__crate__api__engine__js_engine_eval_file_impl(port, ptr, rust_vec_len, data_len),
-        23 => wire__crate__api__engine__js_engine_eval_path_impl(port, ptr, rust_vec_len, data_len),
-        24 => wire__crate__api__engine__js_engine_eval_raw_impl(port, ptr, rust_vec_len, data_len),
-        25 => wire__crate__api__engine__js_engine_eval_with_options_impl(
+        23 => wire__crate__api__engine__js_engine_eval_file_impl(port, ptr, rust_vec_len, data_len),
+        24 => wire__crate__api__engine__js_engine_eval_path_impl(port, ptr, rust_vec_len, data_len),
+        25 => wire__crate__api__engine__js_engine_eval_raw_impl(port, ptr, rust_vec_len, data_len),
+        26 => wire__crate__api__engine__js_engine_eval_with_options_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        40 => wire__crate__api__js_error__js_error_code_impl(port, ptr, rust_vec_len, data_len),
-        41 => wire__crate__api__js_error__js_error_is_recoverable_impl(
+        41 => wire__crate__api__js_error__js_error_code_impl(port, ptr, rust_vec_len, data_len),
+        42 => wire__crate__api__js_error__js_error_is_recoverable_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        42 => wire__crate__api__eval_options__js_eval_options_default_impl(
+        43 => wire__crate__api__eval_options__js_eval_options_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        45 => wire__crate__api__module__js_module_new_impl(port, ptr, rust_vec_len, data_len),
-        49 => wire__crate__api__runtime__js_runtime_eval_impl(port, ptr, rust_vec_len, data_len),
-        50 => {
+        46 => wire__crate__api__module__js_module_new_impl(port, ptr, rust_vec_len, data_len),
+        51 => wire__crate__api__runtime__js_runtime_eval_impl(port, ptr, rust_vec_len, data_len),
+        52 => {
             wire__crate__api__runtime__js_runtime_eval_bytes_impl(port, ptr, rust_vec_len, data_len)
         }
-        51 => {
+        53 => {
             wire__crate__api__runtime__js_runtime_eval_file_impl(port, ptr, rust_vec_len, data_len)
         }
-        52 => wire__crate__api__runtime__js_runtime_eval_js_str_impl(
+        54 => wire__crate__api__runtime__js_runtime_eval_js_str_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        53 => {
+        55 => {
             wire__crate__api__runtime__js_runtime_eval_path_impl(port, ptr, rust_vec_len, data_len)
         }
-        54 => wire__crate__api__runtime__js_runtime_eval_with_options_impl(
+        56 => wire__crate__api__runtime__js_runtime_eval_with_options_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        56 => wire__crate__api__runtime__js_runtime_options_default_impl(
+        58 => wire__crate__api__runtime__js_runtime_options_default_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        64 => {
+        66 => {
             wire__crate__api__js_value__js_value_as_boolean_impl(port, ptr, rust_vec_len, data_len)
         }
-        65 => wire__crate__api__js_value__js_value_as_date_impl(port, ptr, rust_vec_len, data_len),
-        66 => wire__crate__api__js_value__js_value_as_float_impl(port, ptr, rust_vec_len, data_len),
-        67 => {
+        67 => wire__crate__api__js_value__js_value_as_date_impl(port, ptr, rust_vec_len, data_len),
+        68 => wire__crate__api__js_value__js_value_as_float_impl(port, ptr, rust_vec_len, data_len),
+        69 => {
             wire__crate__api__js_value__js_value_as_integer_impl(port, ptr, rust_vec_len, data_len)
         }
-        68 => {
+        70 => {
             wire__crate__api__js_value__js_value_as_number_impl(port, ptr, rust_vec_len, data_len)
         }
-        69 => {
+        71 => {
             wire__crate__api__js_value__js_value_from_bool_impl(port, ptr, rust_vec_len, data_len)
         }
-        70 => {
+        72 => {
             wire__crate__api__js_value__js_value_from_float_impl(port, ptr, rust_vec_len, data_len)
         }
-        71 => wire__crate__api__js_value__js_value_from_int_impl(port, ptr, rust_vec_len, data_len),
-        72 => wire__crate__api__js_value__js_value_from_str_impl(port, ptr, rust_vec_len, data_len),
-        73 => {
+        73 => wire__crate__api__js_value__js_value_from_int_impl(port, ptr, rust_vec_len, data_len),
+        74 => wire__crate__api__js_value__js_value_from_str_impl(port, ptr, rust_vec_len, data_len),
+        75 => {
             wire__crate__api__js_value__js_value_from_string_impl(port, ptr, rust_vec_len, data_len)
         }
-        74 => wire__crate__api__js_value__js_value_is_array_impl(port, ptr, rust_vec_len, data_len),
-        75 => {
+        76 => wire__crate__api__js_value__js_value_is_array_impl(port, ptr, rust_vec_len, data_len),
+        77 => {
             wire__crate__api__js_value__js_value_is_bigint_impl(port, ptr, rust_vec_len, data_len)
         }
-        76 => {
+        78 => {
             wire__crate__api__js_value__js_value_is_boolean_impl(port, ptr, rust_vec_len, data_len)
         }
-        77 => wire__crate__api__js_value__js_value_is_bytes_impl(port, ptr, rust_vec_len, data_len),
-        78 => wire__crate__api__js_value__js_value_is_date_impl(port, ptr, rust_vec_len, data_len),
-        79 => wire__crate__api__js_value__js_value_is_none_impl(port, ptr, rust_vec_len, data_len),
-        80 => {
+        79 => wire__crate__api__js_value__js_value_is_bytes_impl(port, ptr, rust_vec_len, data_len),
+        80 => wire__crate__api__js_value__js_value_is_date_impl(port, ptr, rust_vec_len, data_len),
+        81 => wire__crate__api__js_value__js_value_is_none_impl(port, ptr, rust_vec_len, data_len),
+        82 => {
             wire__crate__api__js_value__js_value_is_number_impl(port, ptr, rust_vec_len, data_len)
         }
-        81 => {
+        83 => {
             wire__crate__api__js_value__js_value_is_object_impl(port, ptr, rust_vec_len, data_len)
         }
-        82 => wire__crate__api__js_value__js_value_is_primitive_impl(
+        84 => wire__crate__api__js_value__js_value_is_primitive_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        83 => {
+        85 => {
             wire__crate__api__js_value__js_value_is_string_impl(port, ptr, rust_vec_len, data_len)
         }
-        84 => {
+        86 => {
             wire__crate__api__js_value__js_value_is_symbol_impl(port, ptr, rust_vec_len, data_len)
         }
-        85 => wire__crate__api__js_value__js_value_null_impl(port, ptr, rust_vec_len, data_len),
-        86 => {
+        87 => wire__crate__api__js_value__js_value_null_impl(port, ptr, rust_vec_len, data_len),
+        88 => {
             wire__crate__api__js_value__js_value_type_name_impl(port, ptr, rust_vec_len, data_len)
         }
         _ => unreachable!(),
@@ -3742,77 +3812,79 @@ fn pde_ffi_dispatcher_sync_impl(
             rust_vec_len,
             data_len,
         ),
-        16 => wire__crate__api__engine__js_engine_close_impl(ptr, rust_vec_len, data_len),
-        17 => wire__crate__api__engine__js_engine_create_impl(ptr, rust_vec_len, data_len),
-        18 => wire__crate__api__engine__js_engine_declare_module_impl(ptr, rust_vec_len, data_len),
-        19 => wire__crate__api__engine__js_engine_declare_modules_impl(ptr, rust_vec_len, data_len),
-        26 => wire__crate__api__engine__js_engine_memory_usage_impl(ptr, rust_vec_len, data_len),
-        27 => wire__crate__api__engine__js_engine_poll_calls_impl(ptr, rust_vec_len, data_len),
-        28 => wire__crate__api__engine__js_engine_poll_sync_calls_impl(ptr, rust_vec_len, data_len),
-        29 => wire__crate__api__engine__js_engine_register_dart_handler_impl(
+        16 => wire__crate__api__engine__js_engine_cancel_eval_impl(ptr, rust_vec_len, data_len),
+        17 => wire__crate__api__engine__js_engine_close_impl(ptr, rust_vec_len, data_len),
+        18 => wire__crate__api__engine__js_engine_create_impl(ptr, rust_vec_len, data_len),
+        19 => wire__crate__api__engine__js_engine_declare_module_impl(ptr, rust_vec_len, data_len),
+        20 => wire__crate__api__engine__js_engine_declare_modules_impl(ptr, rust_vec_len, data_len),
+        27 => wire__crate__api__engine__js_engine_memory_usage_impl(ptr, rust_vec_len, data_len),
+        28 => wire__crate__api__engine__js_engine_poll_calls_impl(ptr, rust_vec_len, data_len),
+        29 => wire__crate__api__engine__js_engine_poll_sync_calls_impl(ptr, rust_vec_len, data_len),
+        30 => wire__crate__api__engine__js_engine_register_dart_handler_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        30 => wire__crate__api__engine__js_engine_register_global_callable_impl(
+        31 => wire__crate__api__engine__js_engine_register_global_callable_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        31 => wire__crate__api__engine__js_engine_register_global_function_impl(
+        32 => wire__crate__api__engine__js_engine_register_global_function_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        32 => wire__crate__api__engine__js_engine_register_sync_function_impl(
+        33 => wire__crate__api__engine__js_engine_register_sync_function_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        33 => wire__crate__api__engine__js_engine_reject_call_impl(ptr, rust_vec_len, data_len),
-        34 => {
+        34 => wire__crate__api__engine__js_engine_reject_call_impl(ptr, rust_vec_len, data_len),
+        35 => {
             wire__crate__api__engine__js_engine_reject_sync_call_impl(ptr, rust_vec_len, data_len)
         }
-        35 => wire__crate__api__engine__js_engine_resolve_call_impl(ptr, rust_vec_len, data_len),
-        36 => {
+        36 => wire__crate__api__engine__js_engine_resolve_call_impl(ptr, rust_vec_len, data_len),
+        37 => {
             wire__crate__api__engine__js_engine_resolve_sync_call_impl(ptr, rust_vec_len, data_len)
         }
-        37 => wire__crate__api__engine__js_engine_run_gc_impl(ptr, rust_vec_len, data_len),
-        38 => wire__crate__api__engine__js_engine_run_jobs_impl(ptr, rust_vec_len, data_len),
-        39 => {
+        38 => wire__crate__api__engine__js_engine_run_gc_impl(ptr, rust_vec_len, data_len),
+        39 => wire__crate__api__engine__js_engine_run_jobs_impl(ptr, rust_vec_len, data_len),
+        40 => {
             wire__crate__api__engine__js_engine_set_memory_limit_impl(ptr, rust_vec_len, data_len)
         }
-        43 => wire__crate__api__eval_options__js_eval_options_defaults_impl(
+        44 => wire__crate__api__eval_options__js_eval_options_defaults_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        44 => wire__crate__api__eval_options__js_eval_options_strict_mode_impl(
+        45 => wire__crate__api__eval_options__js_eval_options_strict_mode_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        46 => wire__crate__api__runtime__js_runtime_create_impl(ptr, rust_vec_len, data_len),
-        47 => wire__crate__api__runtime__js_runtime_create_legacy_impl(ptr, rust_vec_len, data_len),
-        48 => wire__crate__api__runtime__js_runtime_dispose_impl(ptr, rust_vec_len, data_len),
-        55 => wire__crate__api__runtime__js_runtime_memory_usage_impl(ptr, rust_vec_len, data_len),
-        57 => {
+        47 => wire__crate__api__runtime__js_runtime_cancel_eval_impl(ptr, rust_vec_len, data_len),
+        48 => wire__crate__api__runtime__js_runtime_create_impl(ptr, rust_vec_len, data_len),
+        49 => wire__crate__api__runtime__js_runtime_create_legacy_impl(ptr, rust_vec_len, data_len),
+        50 => wire__crate__api__runtime__js_runtime_dispose_impl(ptr, rust_vec_len, data_len),
+        57 => wire__crate__api__runtime__js_runtime_memory_usage_impl(ptr, rust_vec_len, data_len),
+        59 => {
             wire__crate__api__runtime__js_runtime_preload_module_impl(ptr, rust_vec_len, data_len)
         }
-        58 => {
+        60 => {
             wire__crate__api__runtime__js_runtime_release_memory_impl(ptr, rust_vec_len, data_len)
         }
-        59 => wire__crate__api__runtime__js_runtime_run_gc_impl(ptr, rust_vec_len, data_len),
-        60 => {
+        61 => wire__crate__api__runtime__js_runtime_run_gc_impl(ptr, rust_vec_len, data_len),
+        62 => {
             wire__crate__api__runtime__js_runtime_set_memory_limit_impl(ptr, rust_vec_len, data_len)
         }
-        61 => wire__crate__api__runtime__js_runtime_total_memory_usage_impl(
+        63 => wire__crate__api__runtime__js_runtime_total_memory_usage_impl(
             ptr,
             rust_vec_len,
             data_len,
         ),
-        62 => wire__crate__api__runtime__js_runtime_validate_impl(ptr, rust_vec_len, data_len),
-        63 => {
+        64 => wire__crate__api__runtime__js_runtime_validate_impl(ptr, rust_vec_len, data_len),
+        65 => {
             wire__crate__api__runtime__js_runtime_validate_module_impl(ptr, rust_vec_len, data_len)
         }
         _ => unreachable!(),
@@ -3926,8 +3998,11 @@ impl flutter_rust_bridge::IntoDart for crate::api::js_error::JsError {
             crate::api::js_error::JsError::Internal { message } => {
                 [6.into_dart(), message.into_into_dart().into_dart()].into_dart()
             }
-            crate::api::js_error::JsError::Generic { message } => {
+            crate::api::js_error::JsError::Cancelled { message } => {
                 [7.into_dart(), message.into_into_dart().into_dart()].into_dart()
+            }
+            crate::api::js_error::JsError::Generic { message } => {
+                [8.into_dart(), message.into_into_dart().into_dart()].into_dart()
             }
             _ => {
                 unimplemented!("");
@@ -4222,8 +4297,12 @@ impl SseEncode for crate::api::js_error::JsError {
                 <i32>::sse_encode(6, serializer);
                 <String>::sse_encode(message, serializer);
             }
-            crate::api::js_error::JsError::Generic { message } => {
+            crate::api::js_error::JsError::Cancelled { message } => {
                 <i32>::sse_encode(7, serializer);
+                <String>::sse_encode(message, serializer);
+            }
+            crate::api::js_error::JsError::Generic { message } => {
+                <i32>::sse_encode(8, serializer);
                 <String>::sse_encode(message, serializer);
             }
             _ => {

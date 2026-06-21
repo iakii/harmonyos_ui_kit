@@ -60,17 +60,30 @@ class JsCallbackHandler {
   /// 发起 eval 的同时启动后台轮询，JS 执行期间**实时**处理同步回调。
   /// - JS 中 `name(args)` → Dart handler 立刻执行并返回结果
   /// - 无需 `await`，无阻塞延迟
-  Future<JsValue> eval(String code) async {
+  ///
+  /// [cancelSignal] 可选：当此 Future 完成时，调用 [JsEngine.cancelEval]
+  /// 取消正在等待的 eval。适用于页面返回/组件 dispose 场景。
+  /// 取消后 eval 会抛出 [JsError.cancelled]。
+  Future<JsValue> eval(String code, {Future<void>? cancelSignal}) async {
     // 启动后台轮询定时器
     final timer = Timer.periodic(
       Duration(milliseconds: _pollIntervalMs),
       (_) => _processSyncCalls(),
     );
 
+    // 注册取消监听（在 finally 中统一清理）
+    StreamSubscription<void>? cancelSub;
+    if (cancelSignal != null) {
+      cancelSub = cancelSignal.asStream().listen((_) {
+        _engine.cancelEval();
+      });
+    }
+
     try {
       // 执行 JS（eval 会阻塞 worker，但 Dart 主线程的 Timer 持续运行）
       return await _engine.eval(code: code);
     } finally {
+      cancelSub?.cancel();
       timer.cancel();
       // 最后再处理一轮，确保所有回调都已响应
       _processSyncCalls();

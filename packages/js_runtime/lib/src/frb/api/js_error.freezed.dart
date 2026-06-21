@@ -94,6 +94,7 @@ extension JsErrorPatterns on JsError {
     TResult Function(JsError_MemoryLimit value)? memoryLimit,
     TResult Function(JsError_StackOverflow value)? stackOverflow,
     TResult Function(JsError_Internal value)? internal,
+    TResult Function(JsError_Cancelled value)? cancelled,
     TResult Function(JsError_Generic value)? generic,
     required TResult orElse(),
   }) {
@@ -113,6 +114,8 @@ extension JsErrorPatterns on JsError {
         return stackOverflow(_that);
       case JsError_Internal() when internal != null:
         return internal(_that);
+      case JsError_Cancelled() when cancelled != null:
+        return cancelled(_that);
       case JsError_Generic() when generic != null:
         return generic(_that);
       case _:
@@ -142,6 +145,7 @@ extension JsErrorPatterns on JsError {
     required TResult Function(JsError_MemoryLimit value) memoryLimit,
     required TResult Function(JsError_StackOverflow value) stackOverflow,
     required TResult Function(JsError_Internal value) internal,
+    required TResult Function(JsError_Cancelled value) cancelled,
     required TResult Function(JsError_Generic value) generic,
   }) {
     final _that = this;
@@ -160,6 +164,8 @@ extension JsErrorPatterns on JsError {
         return stackOverflow(_that);
       case JsError_Internal():
         return internal(_that);
+      case JsError_Cancelled():
+        return cancelled(_that);
       case JsError_Generic():
         return generic(_that);
     }
@@ -186,6 +192,7 @@ extension JsErrorPatterns on JsError {
     TResult? Function(JsError_MemoryLimit value)? memoryLimit,
     TResult? Function(JsError_StackOverflow value)? stackOverflow,
     TResult? Function(JsError_Internal value)? internal,
+    TResult? Function(JsError_Cancelled value)? cancelled,
     TResult? Function(JsError_Generic value)? generic,
   }) {
     final _that = this;
@@ -204,6 +211,8 @@ extension JsErrorPatterns on JsError {
         return stackOverflow(_that);
       case JsError_Internal() when internal != null:
         return internal(_that);
+      case JsError_Cancelled() when cancelled != null:
+        return cancelled(_that);
       case JsError_Generic() when generic != null:
         return generic(_that);
       case _:
@@ -232,6 +241,7 @@ extension JsErrorPatterns on JsError {
     TResult Function(String message)? memoryLimit,
     TResult Function(String message)? stackOverflow,
     TResult Function(String message)? internal,
+    TResult Function(String message)? cancelled,
     TResult Function(String message)? generic,
     required TResult orElse(),
   }) {
@@ -251,6 +261,8 @@ extension JsErrorPatterns on JsError {
         return stackOverflow(_that.message);
       case JsError_Internal() when internal != null:
         return internal(_that.message);
+      case JsError_Cancelled() when cancelled != null:
+        return cancelled(_that.message);
       case JsError_Generic() when generic != null:
         return generic(_that.message);
       case _:
@@ -280,6 +292,7 @@ extension JsErrorPatterns on JsError {
     required TResult Function(String message) memoryLimit,
     required TResult Function(String message) stackOverflow,
     required TResult Function(String message) internal,
+    required TResult Function(String message) cancelled,
     required TResult Function(String message) generic,
   }) {
     final _that = this;
@@ -298,6 +311,8 @@ extension JsErrorPatterns on JsError {
         return stackOverflow(_that.message);
       case JsError_Internal():
         return internal(_that.message);
+      case JsError_Cancelled():
+        return cancelled(_that.message);
       case JsError_Generic():
         return generic(_that.message);
     }
@@ -324,6 +339,7 @@ extension JsErrorPatterns on JsError {
     TResult? Function(String message)? memoryLimit,
     TResult? Function(String message)? stackOverflow,
     TResult? Function(String message)? internal,
+    TResult? Function(String message)? cancelled,
     TResult? Function(String message)? generic,
   }) {
     final _that = this;
@@ -342,6 +358,8 @@ extension JsErrorPatterns on JsError {
         return stackOverflow(_that.message);
       case JsError_Internal() when internal != null:
         return internal(_that.message);
+      case JsError_Cancelled() when cancelled != null:
+        return cancelled(_that.message);
       case JsError_Generic() when generic != null:
         return generic(_that.message);
       case _:
@@ -833,6 +851,74 @@ class _$JsError_InternalCopyWithImpl<$Res>
     Object? message = null,
   }) {
     return _then(JsError_Internal(
+      message: null == message
+          ? _self.message
+          : message // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+
+class JsError_Cancelled extends JsError {
+  const JsError_Cancelled({required this.message}) : super._();
+
+  @override
+  final String message;
+
+  /// Create a copy of JsError
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $JsError_CancelledCopyWith<JsError_Cancelled> get copyWith =>
+      _$JsError_CancelledCopyWithImpl<JsError_Cancelled>(this, _$identity);
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is JsError_Cancelled &&
+            (identical(other.message, message) || other.message == message));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, message);
+
+  @override
+  String toString() {
+    return 'JsError.cancelled(message: $message)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $JsError_CancelledCopyWith<$Res>
+    implements $JsErrorCopyWith<$Res> {
+  factory $JsError_CancelledCopyWith(
+          JsError_Cancelled value, $Res Function(JsError_Cancelled) _then) =
+      _$JsError_CancelledCopyWithImpl;
+  @override
+  @useResult
+  $Res call({String message});
+}
+
+/// @nodoc
+class _$JsError_CancelledCopyWithImpl<$Res>
+    implements $JsError_CancelledCopyWith<$Res> {
+  _$JsError_CancelledCopyWithImpl(this._self, this._then);
+
+  final JsError_Cancelled _self;
+  final $Res Function(JsError_Cancelled) _then;
+
+  /// Create a copy of JsError
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? message = null,
+  }) {
+    return _then(JsError_Cancelled(
       message: null == message
           ? _self.message
           : message // ignore: cast_nullable_to_non_nullable

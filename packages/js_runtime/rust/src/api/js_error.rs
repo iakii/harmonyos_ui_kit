@@ -37,6 +37,10 @@ pub enum JsError {
     Internal {
         message: String,
     },
+    /// 任务被取消（调用方主动取消等待）。
+    Cancelled {
+        message: String,
+    },
     /// 通用错误（兜底）。
     Generic {
         message: String,
@@ -53,6 +57,7 @@ impl JsError {
     /// - `Runtime` → `"RUNTIME"`
     /// - `MemoryLimit` → `"MEMORY_LIMIT"`
     /// - `StackOverflow` → `"STACK_OVERFLOW"`
+    /// - `Cancelled` → `"CANCELLED"`
     /// - `Internal` → `"INTERNAL"`
     /// - `Generic` → `"GENERIC"`
     pub fn code(&self) -> String {
@@ -63,6 +68,7 @@ impl JsError {
             Self::Runtime { .. } => "RUNTIME",
             Self::MemoryLimit { .. } => "MEMORY_LIMIT",
             Self::StackOverflow { .. } => "STACK_OVERFLOW",
+            Self::Cancelled { .. } => "CANCELLED",
             Self::Internal { .. } => "INTERNAL",
             Self::Generic { .. } => "GENERIC",
         }
@@ -72,6 +78,7 @@ impl JsError {
     /// 判断此错误是否可恢复（可继续使用运行时）。
     pub fn is_recoverable(&self) -> bool {
         !matches!(self, Self::MemoryLimit { .. } | Self::StackOverflow { .. })
+            || matches!(self, Self::Cancelled { .. })
     }
 }
 
@@ -84,6 +91,7 @@ impl std::fmt::Display for JsError {
             | Self::Runtime { message }
             | Self::MemoryLimit { message }
             | Self::StackOverflow { message }
+            | Self::Cancelled { message }
             | Self::Internal { message }
             | Self::Generic { message } => message,
         };

@@ -7,9 +7,12 @@
 //! 此模块不在 `crate::api` 路径下，不会被 flutter_rust_bridge 扫描。
 
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::mpsc;
 use std::sync::Mutex;
+use std::sync::Arc;
 use std::thread;
+use std::time::Duration;
 
 use boa_engine::Context;
 use boa_engine::Source;
@@ -131,6 +134,8 @@ pub(crate) enum WorkerCmd {
 pub(crate) struct WorkerHandle {
     pub sender: mpsc::Sender<WorkerCmd>,
     pub thread: Option<thread::JoinHandle<()>>,
+    /// 取消代际计数器：递增表示取消当前等待中的操作。
+    pub cancel_gen: Arc<AtomicU64>,
 }
 
 /// 全局工作线程注册表。
@@ -139,14 +144,19 @@ pub(crate) static WORKERS: std::sync::LazyLock<Mutex<HashMap<u64, WorkerHandle>>
 
 // ─── 公开 API（供 runtime.rs / engine.rs 调用）────────────
 
-/// 发送命令并等待带 Result 包装的回复。
+/// 发送命令并等待带 Result 包装的回复（支持取消）。
 /// T 是成功值类型，worker 通过 `mpsc::Sender<Result<T, JsError>>` 回复。
 /// 返回 `Result<T, JsError>`（已展平两层 Result）。
+///
+/// 每 100ms 检查一次取消代际，若期间的 `cancel_eval()` 调用导致代际变化，
+/// 则立刻返回 [JsError::Cancelled]，不继续等待。
 fn send_and_wait<T>(
     runtime_id: u64,
     make_cmd: impl FnOnce(mpsc::Sender<Result<T, JsError>>) -> WorkerCmd,
 ) -> Result<T, JsError> {
     let (tx, rx) = mpsc::channel();
+    let cancel_gen: Arc<AtomicU64>;
+    let start_gen: u64;
     {
         let map = WORKERS
             .lock()
@@ -158,27 +168,45 @@ fn send_and_wait<T>(
             .ok_or_else(|| JsError::Internal {
                 message: format!("Runtime {runtime_id} not found"),
             })?;
+        // 记录发送时的代际，后续若变化则表示被取消
+        start_gen = handle.cancel_gen.load(Ordering::SeqCst);
+        cancel_gen = handle.cancel_gen.clone();
         if handle.sender.send(make_cmd(tx)).is_err() {
             return Err(JsError::Internal {
                 message: "Worker thread disconnected".into(),
             });
         }
     }
-    match rx.recv() {
-        Ok(Ok(value)) => Ok(value),
-        Ok(Err(e)) => Err(e),
-        Err(_) => Err(JsError::Internal {
-            message: "Worker thread disconnected".into(),
-        }),
+    // 超时轮询 + 取消检测
+    loop {
+        match rx.recv_timeout(Duration::from_millis(100)) {
+            Ok(Ok(value)) => return Ok(value),
+            Ok(Err(e)) => return Err(e),
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                if cancel_gen.load(Ordering::SeqCst) != start_gen {
+                    return Err(JsError::Cancelled {
+                        message: "eval cancelled".into(),
+                    });
+                }
+                // 未被取消，继续等待
+            }
+            Err(mpsc::RecvTimeoutError::Disconnected) => {
+                return Err(JsError::Internal {
+                    message: "Worker thread disconnected".into(),
+                });
+            }
+        }
     }
 }
 
-/// 发送命令并等待原始值回复（worker 不包装 Result，如 u64、Vec<T>）。
+/// 发送命令并等待原始值回复（worker 不包装 Result，如 u64、Vec<T>），支持取消。
 fn send_and_wait_raw<T>(
     runtime_id: u64,
     make_cmd: impl FnOnce(mpsc::Sender<T>) -> WorkerCmd,
 ) -> Result<T, JsError> {
     let (tx, rx) = mpsc::channel();
+    let cancel_gen: Arc<AtomicU64>;
+    let start_gen: u64;
     {
         let map = WORKERS
             .lock()
@@ -190,36 +218,64 @@ fn send_and_wait_raw<T>(
             .ok_or_else(|| JsError::Internal {
                 message: format!("Runtime {runtime_id} not found"),
             })?;
+        start_gen = handle.cancel_gen.load(Ordering::SeqCst);
+        cancel_gen = handle.cancel_gen.clone();
         if handle.sender.send(make_cmd(tx)).is_err() {
             return Err(JsError::Internal {
                 message: "Worker thread disconnected".into(),
             });
         }
     }
-    rx.recv().map_err(|_| JsError::Internal {
-        message: "Worker thread disconnected".into(),
-    })
+    loop {
+        match rx.recv_timeout(Duration::from_millis(100)) {
+            Ok(value) => return Ok(value),
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                if cancel_gen.load(Ordering::SeqCst) != start_gen {
+                    return Err(JsError::Cancelled {
+                        message: "eval cancelled".into(),
+                    });
+                }
+            }
+            Err(mpsc::RecvTimeoutError::Disconnected) => {
+                return Err(JsError::Internal {
+                    message: "Worker thread disconnected".into(),
+                });
+            }
+        }
+    }
 }
 
-/// 发送命令并等待带 `Result<String, String>` 回复（eval_js_str 专用）。
+/// 发送命令并等待带 `Result<String, String>` 回复（eval_js_str 专用），支持取消。
 fn send_and_wait_str<T>(
     runtime_id: u64,
     make_cmd: impl FnOnce(mpsc::Sender<Result<T, String>>) -> WorkerCmd,
 ) -> Result<T, String> {
     let (tx, rx) = mpsc::channel();
+    let (cancel_gen, start_gen);
     {
         let map = WORKERS.lock().map_err(|e| format!("WORKERS lock poisoned: {e}"))?;
         let handle = map
             .get(&runtime_id)
             .ok_or_else(|| format!("Runtime {runtime_id} not found"))?;
+        start_gen = handle.cancel_gen.load(Ordering::SeqCst);
+        cancel_gen = handle.cancel_gen.clone();
         if handle.sender.send(make_cmd(tx)).is_err() {
             return Err("Worker thread disconnected".to_string());
         }
     }
-    match rx.recv() {
-        Ok(Ok(value)) => Ok(value),
-        Ok(Err(e)) => Err(e),
-        Err(_) => Err("Worker thread disconnected".to_string()),
+    loop {
+        match rx.recv_timeout(Duration::from_millis(100)) {
+            Ok(Ok(value)) => return Ok(value),
+            Ok(Err(e)) => return Err(e),
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                if cancel_gen.load(Ordering::SeqCst) != start_gen {
+                    return Err("eval cancelled".to_string());
+                }
+            }
+            Err(mpsc::RecvTimeoutError::Disconnected) => {
+                return Err("Worker thread disconnected".to_string());
+            }
+        }
     }
 }
 
@@ -237,6 +293,18 @@ fn send_without_reply(runtime_id: u64, cmd: WorkerCmd) -> Result<(), JsError> {
     handle.sender.send(cmd).map_err(|e| JsError::Internal {
         message: format!("Worker thread disconnected: {e}"),
     })
+}
+
+/// 取消当前运行时上正在等待的 eval（以及其他通过 `send_and_wait*` 等待的操作）。
+///
+/// 递增取消代际计数器，使等待中的 `send_and_wait*` 调用立刻返回 [JsError::Cancelled]。
+/// worker 线程中的 JS 执行会继续在后台完成（结果被丢弃），取消后可立即发起新的调用。
+pub(crate) fn cancel_eval(runtime_id: u64) {
+    if let Ok(map) = WORKERS.lock() {
+        if let Some(handle) = map.get(&runtime_id) {
+            handle.cancel_gen.fetch_add(1, Ordering::SeqCst);
+        }
+    }
 }
 
 pub(crate) fn eval(runtime_id: u64, code: String, options: JsEvalOptions) -> Result<JsValue, JsError> {
@@ -359,6 +427,7 @@ pub(crate) fn spawn_worker(
             WorkerHandle {
                 sender: tx,
                 thread: Some(handle),
+                cancel_gen: Arc::new(AtomicU64::new(0)),
             },
         );
 
