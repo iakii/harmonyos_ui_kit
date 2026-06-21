@@ -82,6 +82,42 @@ js_runtime/
 4. **工作线程模型**: 每个 `JsRuntime` 拥有一个专用 OS 线程（worker），Boa Context 在 worker 内运行。`eval`/`eval_file`/`eval_bytes`/`eval_path` 等方法通过 `mpsc` channel 向 worker 发送命令，Dart 端返回 `Future`（不阻塞主 isolate）。`create()`/`dispose()`/`memory_usage()` 等轻量操作保持 `#[frb(sync)]`
 5. **同步回调桥**: `sync_bridge`（全局 `Mutex + Condvar`）独立于 worker channel，实现真正的同步 JS→Dart 回调——JS 调用后 Dart handler **立刻执行**并返回结果。Dart 端通过 Timer 定时轮询 `pollSyncCalls()` / `resolveSyncCall()` / `rejectSyncCall()`（均为 `#[frb(sync)]`，直接访问全局 Mutex，不排队）
 6. **JS↔Dart 回调**: 推荐 `JsCallbackHandler`（基于 `registerSyncFunction` + `sync_bridge`，JS 调用立刻同步响应）；Promise 模式（`registerGlobalCallable` / `registerGlobalFunction` + `pollCalls` / `resolveCall` / `rejectCall`）作为高级选项
+7. **Eval 取消机制**: 每个 worker 持有一个代际计数器 `Arc<AtomicU64>`（`cancel_gen`）。`send_and_wait` 系列函数使用 `recv_timeout(100ms)` 轮询，若检测到代际变化则立即返回 `JsError::Cancelled`。`cancel_eval()` 递增代际计数器。由于 Boa 的 `eval()` 为同步阻塞执行，取消仅在**调用方等待侧**生效 —— worker 线程会继续完成当前 JS 执行并丢弃结果。取消后可立即发起新的 eval 调用，无需等待旧任务完成。
+
+### Eval 取消机制详解
+
+**Rust 侧**（`rust/src/js_runtime/worker.rs`）:
+- `WorkerHandle.cancel_gen: Arc<AtomicU64>` — 代际计数器，初始值 0
+- `send_and_wait*()` 记录发送命令时的代际 `start_gen`，超时轮询中检测 `cancel_gen != start_gen` 则返回 `JsError::Cancelled`
+- `cancel_eval(runtime_id)` — `#[frb(sync)]`，递增代际计数器
+- `JsError::Cancelled { message }` — 取消时返回的错误变体，`code()` 返回 `"CANCELLED"`
+
+**Dart 侧使用模式** — `JsCallbackHandler.eval()` 的 `cancelSignal` 参数:
+```dart
+final cancelCompleter = Completer<void>();
+final handler = JsCallbackHandler(engine);
+
+// 发起 eval，传入取消信号
+final result = await handler.eval(
+  code,
+  cancelSignal: cancelCompleter.future,  // Future<void>?
+);
+
+// dispose 时触发取消
+ref.onDispose(() {
+  cancelCompleter.complete();  // 触发 engine.cancelEval()
+  engine.close();
+});
+```
+
+**错误处理** — 使用 `JsError.whenOrNull` 区分取消与真实错误:
+```dart
+} on JsError catch (e) {
+  final isCancelled = e.whenOrNull(cancelled: (_) => true) ?? false;
+  if (isCancelled) return;  // dispose 触发的正常终止，不报错
+  // ... 处理其他错误
+}
+```
 
 ## 修改 Rust API 流程
 
