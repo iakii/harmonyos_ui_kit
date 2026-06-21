@@ -21,7 +21,7 @@ abstract class JsRepl implements RustOpaqueInterface {
 
   /// 创建一个新的 REPL 实例。
   ///
-  /// 内部创建一个 [JsRuntime]，支持跨行状态保持。
+  /// 内部创建一个 [JsRuntime]（含专用工作线程），支持跨行状态保持。
   static JsRepl create() =>
       JsRuntimeLib.instance.api.crateApiReplJsReplCreate();
 
@@ -30,14 +30,6 @@ abstract class JsRepl implements RustOpaqueInterface {
   /// - 如果当前行是完整语句，返回 `is_complete: true` 并清空缓冲区
   /// - 如果当前行不完整（如 `function foo() {` 缺少 `}`），返回 `is_complete: false`
   ///   并将内容追加到内部缓冲区，等待后续行继续
-  ///
-  /// # 示例流程
-  /// ```text
-  /// > var x = 1;           // is_complete: true
-  /// > function foo() {     // is_complete: false
-  /// >   return 42;         // is_complete: false
-  /// > }                    // is_complete: true, 执行整个函数定义
-  /// ```
   ReplResult evalLine({required String line});
 
   /// 强制执行当前缓冲区中的所有代码（即使未闭合）。

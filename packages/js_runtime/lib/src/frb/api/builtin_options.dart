@@ -23,22 +23,22 @@ class JsBuiltinOptions {
   });
 
   /// 全部内置模块。
-  static Future<JsBuiltinOptions> all() =>
+  static JsBuiltinOptions all() =>
       JsRuntimeLib.instance.api.crateApiBuiltinOptionsJsBuiltinOptionsAll();
 
-  static Future<JsBuiltinOptions> default_() =>
+  static JsBuiltinOptions default_() =>
       JsRuntimeLib.instance.api.crateApiBuiltinOptionsJsBuiltinOptionsDefault();
 
   /// 基础组合：仅 Console。
-  static Future<JsBuiltinOptions> essential() => JsRuntimeLib.instance.api
+  static JsBuiltinOptions essential() => JsRuntimeLib.instance.api
       .crateApiBuiltinOptionsJsBuiltinOptionsEssential();
 
   /// 不注册任何内置模块。
-  static Future<JsBuiltinOptions> none() =>
+  static JsBuiltinOptions none() =>
       JsRuntimeLib.instance.api.crateApiBuiltinOptionsJsBuiltinOptionsNone();
 
   /// Web 兼容组合：Console + Fetch。
-  static Future<JsBuiltinOptions> web() =>
+  static JsBuiltinOptions web() =>
       JsRuntimeLib.instance.api.crateApiBuiltinOptionsJsBuiltinOptionsWeb();
 
   @override

@@ -28,11 +28,11 @@ class JsEvalOptions {
       JsRuntimeLib.instance.api.crateApiEvalOptionsJsEvalOptionsDefault();
 
   /// 默认选项。
-  static Future<JsEvalOptions> defaults() =>
+  static JsEvalOptions defaults() =>
       JsRuntimeLib.instance.api.crateApiEvalOptionsJsEvalOptionsDefaults();
 
   /// 启用严格模式。
-  static Future<JsEvalOptions> strictMode() =>
+  static JsEvalOptions strictMode() =>
       JsRuntimeLib.instance.api.crateApiEvalOptionsJsEvalOptionsStrictMode();
 
   @override

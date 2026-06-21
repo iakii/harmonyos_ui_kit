@@ -144,6 +144,9 @@ abstract class JsRuntimeLibApiImplPlatform
   List<JsValue> dco_decode_list_js_value(dynamic raw);
 
   @protected
+  List<int> dco_decode_list_prim_u_8_loose(dynamic raw);
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
@@ -164,6 +167,9 @@ abstract class JsRuntimeLibApiImplPlatform
 
   @protected
   JsBuiltinOptions? dco_decode_opt_box_autoadd_js_builtin_options(dynamic raw);
+
+  @protected
+  JsEvalOptions? dco_decode_opt_box_autoadd_js_eval_options(dynamic raw);
 
   @protected
   JsRuntimeOptions? dco_decode_opt_box_autoadd_js_runtime_options(dynamic raw);
@@ -316,6 +322,9 @@ abstract class JsRuntimeLibApiImplPlatform
   List<JsValue> sse_decode_list_js_value(SseDeserializer deserializer);
 
   @protected
+  List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer);
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
@@ -336,6 +345,10 @@ abstract class JsRuntimeLibApiImplPlatform
 
   @protected
   JsBuiltinOptions? sse_decode_opt_box_autoadd_js_builtin_options(
+      SseDeserializer deserializer);
+
+  @protected
+  JsEvalOptions? sse_decode_opt_box_autoadd_js_eval_options(
       SseDeserializer deserializer);
 
   @protected
@@ -501,6 +514,9 @@ abstract class JsRuntimeLibApiImplPlatform
   void sse_encode_list_js_value(List<JsValue> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_prim_u_8_loose(List<int> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_prim_u_8_strict(
       Uint8List self, SseSerializer serializer);
 
@@ -524,6 +540,10 @@ abstract class JsRuntimeLibApiImplPlatform
   @protected
   void sse_encode_opt_box_autoadd_js_builtin_options(
       JsBuiltinOptions? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_js_eval_options(
+      JsEvalOptions? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_js_runtime_options(

@@ -1,5 +1,5 @@
 //! JsEvalOptions —— JS 代码求值选项。
-
+use flutter_rust_bridge::frb;
 /// JS 代码求值选项。
 ///
 /// 注意：Boa 引擎 0.21 不直接支持所有选项；
@@ -22,10 +22,12 @@ impl Default for JsEvalOptions {
 
 impl JsEvalOptions {
     /// 默认选项。
+    #[frb(sync)]
     pub fn defaults() -> Self {
         Self::default()
     }
 
+    #[frb(sync)]
     /// 启用严格模式。
     pub fn strict_mode() -> Self {
         Self {
@@ -33,7 +35,7 @@ impl JsEvalOptions {
             global: false,
         }
     }
-
+    #[frb(sync)]
     /// 对给定源码应用选项（如在 strict 模式下前置 `"use strict";`）。
     pub(crate) fn apply(&self, source: &str) -> String {
         if self.strict {

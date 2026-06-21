@@ -12,12 +12,7 @@ import 'module.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'runtime.dart';
 
-// These functions are ignored because they are not marked as `pub`: `runtime`
-
 /// JS→Dart 方法调用请求。
-///
-/// 通过 [JsEngine::poll_calls] 获取，处理完后调用 [JsEngine::resolve_call]
-/// 或 [JsEngine::reject_call] 回传结果。
 class CompletedCall {
   /// 调用唯一 ID（用于 `resolve_call` / `reject_call` 回传结果）
   final BigInt callId;
@@ -49,7 +44,7 @@ class CompletedCall {
 
 /// 高层 JS 引擎。
 ///
-/// 内部持有一个 [JsRuntime]，自动管理生命周期。
+/// 内部持有一个 JsRuntime（专用后台工作线程），自动管理生命周期。
 /// 方法失败时返回 [JsError]。
 class JsEngine {
   final BigInt runtimeId;
@@ -64,7 +59,7 @@ class JsEngine {
   /// - `module`: 模块名称（已通过 [declare_module](Self::declare_module) 注册）
   /// - `method`: 导出函数名
   /// - `params`: 参数列表
-  JsValue call(
+  Future<JsValue> call(
           {required String module,
           required String method,
           required List<JsValue> params}) =>
@@ -99,19 +94,40 @@ class JsEngine {
           .crateApiEngineJsEngineDeclareModules(that: this, modules: modules);
 
   /// 执行 JavaScript 代码，返回类型化的 [JsValue]。
-  JsValue eval({required String code}) => JsRuntimeLib.instance.api
+  ///
+  /// 实际执行在工作线程中进行，返回 Future，不阻塞 Dart 主 isolate。
+  /// 自动解析顶层 Promise。
+  Future<JsValue> eval({required String code}) => JsRuntimeLib.instance.api
       .crateApiEngineJsEngineEval(that: this, code: code);
+
+  /// 从字节数组执行 JS 代码（UTF-8 编码）。
+  Future<JsValue> evalBytes(
+          {required List<int> bytes, JsEvalOptions? options}) =>
+      JsRuntimeLib.instance.api.crateApiEngineJsEngineEvalBytes(
+          that: this, bytes: bytes, options: options);
+
+  /// 从文件路径读取 JS 代码并执行（Script 模式）。
+  Future<JsValue> evalFile({required String path, JsEvalOptions? options}) =>
+      JsRuntimeLib.instance.api.crateApiEngineJsEngineEvalFile(
+          that: this, path: path, options: options);
+
+  /// 读取文件作为 ES 模块执行（支持相对路径 import）。
+  ///
+  /// 文件所在目录设置为模块解析基础路径。
+  Future<JsValue> evalPath({required String path, JsEvalOptions? options}) =>
+      JsRuntimeLib.instance.api.crateApiEngineJsEngineEvalPath(
+          that: this, path: path, options: options);
 
   /// 执行 JavaScript 代码，**不**自动 resolve 顶层 Promise。
   ///
   /// 适用于 JS 代码中包含 `await registeredMethod()` 的场景，
   /// 避免 `await_blocking` 与回调等待形成死锁。
   /// 调用后需配合 [run_jobs](Self::run_jobs) 执行微任务。
-  JsValue evalRaw({required String code}) => JsRuntimeLib.instance.api
+  Future<JsValue> evalRaw({required String code}) => JsRuntimeLib.instance.api
       .crateApiEngineJsEngineEvalRaw(that: this, code: code);
 
   /// 带选项执行 JavaScript 代码。
-  JsValue evalWithOptions(
+  Future<JsValue> evalWithOptions(
           {required String code, required JsEvalOptions options}) =>
       JsRuntimeLib.instance.api.crateApiEngineJsEngineEvalWithOptions(
           that: this, code: code, options: options);
@@ -122,9 +138,6 @@ class JsEngine {
       );
 
   /// 拉取所有来自 JS 的待处理方法调用（排空队列）。
-  ///
-  /// 返回 [CompletedCall] 列表。每个调用需通过 [resolve_call](Self::resolve_call)
-  /// 或 [reject_call](Self::reject_call) 回传结果。
   List<CompletedCall> pollCalls() =>
       JsRuntimeLib.instance.api.crateApiEngineJsEnginePollCalls(
         that: this,
@@ -132,71 +145,31 @@ class JsEngine {
 
   /// （内部）注册 Dart 侧 FFI 回调函数指针。
   ///
-  /// 由 [JsCallbackHandler] 在构造时调用，传入 `NativeCallable.nativeFunction.address`。
-  /// 所有通过 [register_sync_function](Self::register_sync_function) 注册的方法
-  /// 共享这同一个函数指针（通过 JSON 中的方法名分发）。
+  /// 直接操作全局 DART_HANDLERS 注册表，无需经过 worker。
   void registerDartHandler({required PlatformInt64 ptr}) =>
       JsRuntimeLib.instance.api
           .crateApiEngineJsEngineRegisterDartHandler(that: this, ptr: ptr);
 
   /// 注册一个全局可构造函数（JS 端可通过 `await <name>(...args)` 或 `new <name>(...args)` 调用）。
-  ///
-  /// 内部使用 Boa 的 `context.register_global_callable()`，
-  /// 创建的函数既是 callable 又是 constructable。
-  ///
-  /// JS 调用返回 Promise，Dart 通过 [poll_calls](Self::poll_calls) 获取调用请求，
-  /// 处理完后用 [resolve_call](Self::resolve_call) 或 [reject_call](Self::reject_call) 回传结果。
-  ///
-  /// # 示例
-  ///
-  /// ```dart
-  /// engine.registerGlobalCallable(name: 'sum');
-  /// engine.eval(code: 'sum(3, 4).then(r => console.log(r));');
-  /// final calls = engine.pollCalls();
-  /// engine.resolveCall(callId: calls.first.callId, result: JsValue.integer(7));
-  /// engine.runJobs();
-  /// ```
   void registerGlobalCallable({required String name}) =>
       JsRuntimeLib.instance.api
           .crateApiEngineJsEngineRegisterGlobalCallable(that: this, name: name);
 
   /// 注册一个全局纯函数（不可构造，JS 端通过 `await <name>(...args)` 调用）。
-  ///
-  /// 内部使用 `FunctionObjectBuilder` 构建不可构造的函数对象，
-  /// 并手动绑定到全局对象。`new <name>(...)` 会抛出 TypeError。
-  ///
-  /// JS 调用返回 Promise，与 [register_global_callable](Self::register_global_callable)
-  /// 共用相同的 poll/resolve 机制。
   void registerGlobalFunction({required String name}) =>
       JsRuntimeLib.instance.api
           .crateApiEngineJsEngineRegisterGlobalFunction(that: this, name: name);
 
   /// 注册一个同步全局函数（JS 调用立刻响应，无 Promise）。
-  ///
-  /// 内部使用 `create_sync_native_fn` 创建 NativeFunction，
-  /// 通过 FFI 直接同步调用 Dart handler，返回结果给 JS。
-  ///
-  /// JS 端可 **直接拿到返回值**：`const x = sum(3, 4)`（无需 `await`）。
-  ///
-  /// 使用 `FunctionObjectBuilder` 构建不可构造的纯函数。
-  /// 如需可构造版本，使用 [register_global_callable](Self::register_global_callable)。
-  ///
-  /// # 前提
-  /// 需先通过 [register_dart_handler](Self::register_dart_handler) 注册 Dart 回调指针
-  /// （由 [JsCallbackHandler] 自动处理）。
   void registerSyncFunction({required String name}) => JsRuntimeLib.instance.api
       .crateApiEngineJsEngineRegisterSyncFunction(that: this, name: name);
 
   /// 回传错误给 JS 端（reject 对应的 Promise）。
-  ///
-  /// 调用后应执行 [run_jobs](Self::run_jobs) 让 JS 侧的 `.catch()` 回调运行。
   void rejectCall({required BigInt callId, required String error}) =>
       JsRuntimeLib.instance.api.crateApiEngineJsEngineRejectCall(
           that: this, callId: callId, error: error);
 
   /// 回传成功结果给 JS 端（resolve 对应的 Promise）。
-  ///
-  /// 调用后应执行 [run_jobs](Self::run_jobs) 让 JS 侧的 `.then()` 回调运行。
   void resolveCall({required BigInt callId, required JsValue result}) =>
       JsRuntimeLib.instance.api.crateApiEngineJsEngineResolveCall(
           that: this, callId: callId, result: result);
@@ -207,9 +180,6 @@ class JsEngine {
       );
 
   /// 执行待处理的微任务（Promise reactions）。
-  ///
-  /// 在 `resolve_call` 或 `reject_call` 之后调用，确保 JS 侧的
-  /// `.then()` / `.catch()` 回调被执行。
   void runJobs() => JsRuntimeLib.instance.api.crateApiEngineJsEngineRunJobs(
         that: this,
       );

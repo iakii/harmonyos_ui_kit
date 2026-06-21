@@ -8,7 +8,7 @@
 use crate::api::js_error::JsError;
 use crate::api::js_value::JsValue;
 use crate::api::runtime::JsRuntime;
-use crate::js_runtime::internal;
+use crate::js_runtime::worker;
 use boa_ast::scope::Scope;
 use boa_engine::Source;
 use boa_interner::Interner;
@@ -34,7 +34,7 @@ pub struct ReplResult {
 /// Dart 端通过句柄调用方法。
 #[frb(opaque)]
 pub struct JsRepl {
-    /// 内部运行时 ID（使用已有 JsRuntime 的线程存储）
+    /// 内部运行时 ID（使用已有 JsRuntime 的后台工作线程）
     runtime_id: u64,
     /// 未完成的代码缓冲区（多行输入累积）
     buffer: String,
@@ -43,7 +43,7 @@ pub struct JsRepl {
 impl JsRepl {
     /// 创建一个新的 REPL 实例。
     ///
-    /// 内部创建一个 [JsRuntime]，支持跨行状态保持。
+    /// 内部创建一个 [JsRuntime]（含专用工作线程），支持跨行状态保持。
     #[frb(sync)]
     pub fn create() -> Self {
         let runtime = JsRuntime::create(None);
@@ -60,61 +60,24 @@ impl JsRepl {
     /// - 如果当前行是完整语句，返回 `is_complete: true` 并清空缓冲区
     /// - 如果当前行不完整（如 `function foo() {` 缺少 `}`），返回 `is_complete: false`
     ///   并将内容追加到内部缓冲区，等待后续行继续
-    ///
-    /// # 示例流程
-    /// ```text
-    /// > var x = 1;           // is_complete: true
-    /// > function foo() {     // is_complete: false
-    /// >   return 42;         // is_complete: false
-    /// > }                    // is_complete: true, 执行整个函数定义
-    /// ```
     #[frb(sync)]
     pub fn eval_line(&mut self, line: String) -> Result<ReplResult, JsError> {
-        // 追加到缓冲区
         if !self.buffer.is_empty() {
             self.buffer.push('\n');
         }
         self.buffer.push_str(&line);
 
-        // 语法检查：是否完整语句
         let is_complete = !needs_continuation(&self.buffer);
 
         if is_complete {
             let code = self.buffer.clone();
             self.buffer.clear();
 
-            let result = internal::RUNTIMES.with(|map| {
-                let mut map = map.borrow_mut();
-                let state = map
-                    .get_mut(&self.runtime_id)
-                    .ok_or_else(|| JsError::Internal {
-                        message: "REPL runtime not found".to_string(),
-                    })?;
-
-                match state.context.eval(Source::from_bytes(code.as_bytes())) {
-                    Ok(value) => {
-                        let resolved = if let Some(promise) = value.as_promise() {
-                            match promise.await_blocking(&mut state.context) {
-                                Ok(v) => v,
-                                Err(e) => return Err(JsError::from(e)),
-                            }
-                        } else {
-                            value
-                        };
-                        let js_val = JsValue::from_boa(&resolved, &mut state.context);
-                        let output = resolved
-                            .to_string(&mut state.context)
-                            .map(|s| s.to_std_string_escaped())
-                            .unwrap_or_else(|_| "undefined".to_string());
-                        Ok((output, js_val))
-                    }
-                    Err(e) => Err(JsError::from(e)),
-                }
-            })?;
+            let (output, js_val) = worker::repl_eval(self.runtime_id, code)?;
 
             Ok(ReplResult {
-                output: result.0,
-                value: result.1,
+                output,
+                value: js_val,
                 is_complete: true,
             })
         } else {
@@ -138,38 +101,13 @@ impl JsRepl {
         }
         let code = self.buffer.clone();
         self.buffer.clear();
-        // 复用 eval_line 的完整逻辑
-        internal::RUNTIMES.with(|map| {
-            let mut map = map.borrow_mut();
-            let state = map
-                .get_mut(&self.runtime_id)
-                .ok_or_else(|| JsError::Internal {
-                    message: "REPL runtime not found".to_string(),
-                })?;
 
-            match state.context.eval(Source::from_bytes(code.as_bytes())) {
-                Ok(value) => {
-                    let resolved = if let Some(promise) = value.as_promise() {
-                        match promise.await_blocking(&mut state.context) {
-                            Ok(v) => v,
-                            Err(e) => return Err(JsError::from(e)),
-                        }
-                    } else {
-                        value
-                    };
-                    let js_val = JsValue::from_boa(&resolved, &mut state.context);
-                    let output = resolved
-                        .to_string(&mut state.context)
-                        .map(|s| s.to_std_string_escaped())
-                        .unwrap_or_else(|_| "undefined".to_string());
-                    Ok(ReplResult {
-                        output,
-                        value: js_val,
-                        is_complete: true,
-                    })
-                }
-                Err(e) => Err(JsError::from(e)),
-            }
+        let (output, js_val) = worker::repl_eval(self.runtime_id, code)?;
+
+        Ok(ReplResult {
+            output,
+            value: js_val,
+            is_complete: true,
         })
     }
 
@@ -194,22 +132,19 @@ impl JsRepl {
     /// 运行垃圾回收。
     #[frb(sync)]
     pub fn run_gc(&self) {
-        self.runtime().run_gc();
+        worker::run_gc(self.runtime_id);
     }
 
     /// 关闭 REPL 并释放运行时。
     #[frb(sync)]
     pub fn close(self) -> Result<(), JsError> {
-        self.runtime().dispose()
+        worker::dispose(self.runtime_id)
     }
 }
 
 // ─── 多行检测 ────────────────────────────────────────────
 
 /// 检查 JavaScript 代码是否需要续行。
-///
-/// 使用 `boa_parser::Parser` 进行真实语法解析。
-/// 如果解析失败且错误为"意外的输入结束"（`AbruptEnd`），说明需要续行。
 fn needs_continuation(code: &str) -> bool {
     let scope = Scope::new_global();
     let mut interner = Interner::new();
@@ -217,11 +152,7 @@ fn needs_continuation(code: &str) -> bool {
     let mut parser = Parser::new(source);
 
     match parser.parse_script(&scope, &mut interner) {
-        Ok(_) => false, // 完整语句，无需续行
-        Err(e) => {
-            // 仅当错误是"意外结束"时才需要续行
-            // 其他语法错误（如拼写错误）不应触发续行
-            matches!(e, boa_parser::Error::AbruptEnd)
-        }
+        Ok(_) => false,
+        Err(e) => matches!(e, boa_parser::Error::AbruptEnd),
     }
 }

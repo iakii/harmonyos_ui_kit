@@ -77,7 +77,7 @@ class JsRuntimeLib extends BaseEntrypoint<JsRuntimeLibApi, JsRuntimeLibApiImpl,
   String get codegenVersion => '2.13.0-beta.2';
 
   @override
-  int get rustContentHash => 803579941;
+  int get rustContentHash => -1846014766;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -108,17 +108,17 @@ abstract class JsRuntimeLibApi extends BaseApi {
 
   Future<String> crateApiHelloHello({required String hello});
 
-  Future<JsBuiltinOptions> crateApiBuiltinOptionsJsBuiltinOptionsAll();
+  JsBuiltinOptions crateApiBuiltinOptionsJsBuiltinOptionsAll();
 
-  Future<JsBuiltinOptions> crateApiBuiltinOptionsJsBuiltinOptionsDefault();
+  JsBuiltinOptions crateApiBuiltinOptionsJsBuiltinOptionsDefault();
 
-  Future<JsBuiltinOptions> crateApiBuiltinOptionsJsBuiltinOptionsEssential();
+  JsBuiltinOptions crateApiBuiltinOptionsJsBuiltinOptionsEssential();
 
-  Future<JsBuiltinOptions> crateApiBuiltinOptionsJsBuiltinOptionsNone();
+  JsBuiltinOptions crateApiBuiltinOptionsJsBuiltinOptionsNone();
 
-  Future<JsBuiltinOptions> crateApiBuiltinOptionsJsBuiltinOptionsWeb();
+  JsBuiltinOptions crateApiBuiltinOptionsJsBuiltinOptionsWeb();
 
-  JsValue crateApiEngineJsEngineCall(
+  Future<JsValue> crateApiEngineJsEngineCall(
       {required JsEngine that,
       required String module,
       required String method,
@@ -137,13 +137,24 @@ abstract class JsRuntimeLibApi extends BaseApi {
   void crateApiEngineJsEngineDeclareModules(
       {required JsEngine that, required List<JsModule> modules});
 
-  JsValue crateApiEngineJsEngineEval(
+  Future<JsValue> crateApiEngineJsEngineEval(
       {required JsEngine that, required String code});
 
-  JsValue crateApiEngineJsEngineEvalRaw(
+  Future<JsValue> crateApiEngineJsEngineEvalBytes(
+      {required JsEngine that,
+      required List<int> bytes,
+      JsEvalOptions? options});
+
+  Future<JsValue> crateApiEngineJsEngineEvalFile(
+      {required JsEngine that, required String path, JsEvalOptions? options});
+
+  Future<JsValue> crateApiEngineJsEngineEvalPath(
+      {required JsEngine that, required String path, JsEvalOptions? options});
+
+  Future<JsValue> crateApiEngineJsEngineEvalRaw(
       {required JsEngine that, required String code});
 
-  JsValue crateApiEngineJsEngineEvalWithOptions(
+  Future<JsValue> crateApiEngineJsEngineEvalWithOptions(
       {required JsEngine that,
       required String code,
       required JsEvalOptions options});
@@ -185,9 +196,9 @@ abstract class JsRuntimeLibApi extends BaseApi {
 
   Future<JsEvalOptions> crateApiEvalOptionsJsEvalOptionsDefault();
 
-  Future<JsEvalOptions> crateApiEvalOptionsJsEvalOptionsDefaults();
+  JsEvalOptions crateApiEvalOptionsJsEvalOptionsDefaults();
 
-  Future<JsEvalOptions> crateApiEvalOptionsJsEvalOptionsStrictMode();
+  JsEvalOptions crateApiEvalOptionsJsEvalOptionsStrictMode();
 
   Future<JsModule> crateApiModuleJsModuleNew(
       {required String name, required String source});
@@ -198,13 +209,24 @@ abstract class JsRuntimeLibApi extends BaseApi {
 
   void crateApiRuntimeJsRuntimeDispose({required JsRuntime that});
 
-  JsValue crateApiRuntimeJsRuntimeEval(
+  Future<JsValue> crateApiRuntimeJsRuntimeEval(
       {required JsRuntime that, required String code});
 
-  String crateApiRuntimeJsRuntimeEvalJsStr(
+  Future<JsValue> crateApiRuntimeJsRuntimeEvalBytes(
+      {required JsRuntime that,
+      required List<int> bytes,
+      JsEvalOptions? options});
+
+  Future<JsValue> crateApiRuntimeJsRuntimeEvalFile(
+      {required JsRuntime that, required String path, JsEvalOptions? options});
+
+  Future<String> crateApiRuntimeJsRuntimeEvalJsStr(
       {required JsRuntime that, required String code});
 
-  JsValue crateApiRuntimeJsRuntimeEvalWithOptions(
+  Future<JsValue> crateApiRuntimeJsRuntimeEvalPath(
+      {required JsRuntime that, required String path, JsEvalOptions? options});
+
+  Future<JsValue> crateApiRuntimeJsRuntimeEvalWithOptions(
       {required JsRuntime that,
       required String code,
       required JsEvalOptions options});
@@ -515,12 +537,11 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       );
 
   @override
-  Future<JsBuiltinOptions> crateApiBuiltinOptionsJsBuiltinOptionsAll() {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
+  JsBuiltinOptions crateApiBuiltinOptionsJsBuiltinOptionsAll() {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 10, port: port_);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_builtin_options,
@@ -539,12 +560,11 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       );
 
   @override
-  Future<JsBuiltinOptions> crateApiBuiltinOptionsJsBuiltinOptionsDefault() {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
+  JsBuiltinOptions crateApiBuiltinOptionsJsBuiltinOptionsDefault() {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 11, port: port_);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_builtin_options,
@@ -563,12 +583,11 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       );
 
   @override
-  Future<JsBuiltinOptions> crateApiBuiltinOptionsJsBuiltinOptionsEssential() {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
+  JsBuiltinOptions crateApiBuiltinOptionsJsBuiltinOptionsEssential() {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 12, port: port_);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_builtin_options,
@@ -587,12 +606,11 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       );
 
   @override
-  Future<JsBuiltinOptions> crateApiBuiltinOptionsJsBuiltinOptionsNone() {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
+  JsBuiltinOptions crateApiBuiltinOptionsJsBuiltinOptionsNone() {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 13, port: port_);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_builtin_options,
@@ -611,12 +629,11 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       );
 
   @override
-  Future<JsBuiltinOptions> crateApiBuiltinOptionsJsBuiltinOptionsWeb() {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
+  JsBuiltinOptions crateApiBuiltinOptionsJsBuiltinOptionsWeb() {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 14, port: port_);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 14)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_builtin_options,
@@ -635,19 +652,20 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       );
 
   @override
-  JsValue crateApiEngineJsEngineCall(
+  Future<JsValue> crateApiEngineJsEngineCall(
       {required JsEngine that,
       required String module,
       required String method,
       required List<JsValue> params}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_engine(that, serializer);
         sse_encode_String(module, serializer);
         sse_encode_String(method, serializer);
         sse_encode_list_js_value(params, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 15)!;
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 15, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_value,
@@ -771,14 +789,15 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       );
 
   @override
-  JsValue crateApiEngineJsEngineEval(
+  Future<JsValue> crateApiEngineJsEngineEval(
       {required JsEngine that, required String code}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_engine(that, serializer);
         sse_encode_String(code, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 20)!;
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 20, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_value,
@@ -796,14 +815,101 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       );
 
   @override
-  JsValue crateApiEngineJsEngineEvalRaw(
+  Future<JsValue> crateApiEngineJsEngineEvalBytes(
+      {required JsEngine that,
+      required List<int> bytes,
+      JsEvalOptions? options}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_box_autoadd_js_engine(that, serializer);
+        sse_encode_list_prim_u_8_loose(bytes, serializer);
+        sse_encode_opt_box_autoadd_js_eval_options(options, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 21, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_js_value,
+        decodeErrorData: sse_decode_js_error,
+      ),
+      constMeta: kCrateApiEngineJsEngineEvalBytesConstMeta,
+      argValues: [that, bytes, options],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiEngineJsEngineEvalBytesConstMeta =>
+      const TaskConstMeta(
+        debugName: "js_engine_eval_bytes",
+        argNames: ["that", "bytes", "options"],
+      );
+
+  @override
+  Future<JsValue> crateApiEngineJsEngineEvalFile(
+      {required JsEngine that, required String path, JsEvalOptions? options}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_box_autoadd_js_engine(that, serializer);
+        sse_encode_String(path, serializer);
+        sse_encode_opt_box_autoadd_js_eval_options(options, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 22, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_js_value,
+        decodeErrorData: sse_decode_js_error,
+      ),
+      constMeta: kCrateApiEngineJsEngineEvalFileConstMeta,
+      argValues: [that, path, options],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiEngineJsEngineEvalFileConstMeta =>
+      const TaskConstMeta(
+        debugName: "js_engine_eval_file",
+        argNames: ["that", "path", "options"],
+      );
+
+  @override
+  Future<JsValue> crateApiEngineJsEngineEvalPath(
+      {required JsEngine that, required String path, JsEvalOptions? options}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_box_autoadd_js_engine(that, serializer);
+        sse_encode_String(path, serializer);
+        sse_encode_opt_box_autoadd_js_eval_options(options, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 23, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_js_value,
+        decodeErrorData: sse_decode_js_error,
+      ),
+      constMeta: kCrateApiEngineJsEngineEvalPathConstMeta,
+      argValues: [that, path, options],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiEngineJsEngineEvalPathConstMeta =>
+      const TaskConstMeta(
+        debugName: "js_engine_eval_path",
+        argNames: ["that", "path", "options"],
+      );
+
+  @override
+  Future<JsValue> crateApiEngineJsEngineEvalRaw(
       {required JsEngine that, required String code}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_engine(that, serializer);
         sse_encode_String(code, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 21)!;
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 24, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_value,
@@ -822,17 +928,18 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       );
 
   @override
-  JsValue crateApiEngineJsEngineEvalWithOptions(
+  Future<JsValue> crateApiEngineJsEngineEvalWithOptions(
       {required JsEngine that,
       required String code,
       required JsEvalOptions options}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_engine(that, serializer);
         sse_encode_String(code, serializer);
         sse_encode_box_autoadd_js_eval_options(options, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 22)!;
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 25, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_value,
@@ -856,7 +963,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_engine(that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 23)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 26)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_u_64,
@@ -881,7 +988,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_engine(that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 24)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 27)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_list_completed_call,
@@ -907,7 +1014,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_engine(that, serializer);
         sse_encode_i_64(ptr, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 25)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 28)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -933,7 +1040,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_engine(that, serializer);
         sse_encode_String(name, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 26)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 29)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -959,7 +1066,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_engine(that, serializer);
         sse_encode_String(name, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 27)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 30)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -985,7 +1092,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_engine(that, serializer);
         sse_encode_String(name, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 28)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 31)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1012,7 +1119,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         sse_encode_box_autoadd_js_engine(that, serializer);
         sse_encode_u_64(callId, serializer);
         sse_encode_String(error, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 29)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 32)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1041,7 +1148,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         sse_encode_box_autoadd_js_engine(that, serializer);
         sse_encode_u_64(callId, serializer);
         sse_encode_box_autoadd_js_value(result, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 30)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 33)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1065,7 +1172,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_engine(that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 31)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 34)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1089,7 +1196,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_engine(that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 32)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 35)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1115,7 +1222,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_engine(that, serializer);
         sse_encode_u_64(limitBytes, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 33)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 36)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1140,7 +1247,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_error(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 34, port: port_);
+            funcId: 37, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
@@ -1164,7 +1271,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_error(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 35, port: port_);
+            funcId: 38, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -1188,7 +1295,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 36, port: port_);
+            funcId: 39, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_eval_options,
@@ -1207,12 +1314,11 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       );
 
   @override
-  Future<JsEvalOptions> crateApiEvalOptionsJsEvalOptionsDefaults() {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
+  JsEvalOptions crateApiEvalOptionsJsEvalOptionsDefaults() {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 37, port: port_);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 40)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_eval_options,
@@ -1231,12 +1337,11 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       );
 
   @override
-  Future<JsEvalOptions> crateApiEvalOptionsJsEvalOptionsStrictMode() {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
+  JsEvalOptions crateApiEvalOptionsJsEvalOptionsStrictMode() {
+    return handler.executeSync(SyncTask(
+      callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 38, port: port_);
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 41)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_eval_options,
@@ -1263,7 +1368,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         sse_encode_String(name, serializer);
         sse_encode_String(source, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 39, port: port_);
+            funcId: 42, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_module,
@@ -1286,7 +1391,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_opt_box_autoadd_js_runtime_options(options, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 40)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 43)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_runtime,
@@ -1310,7 +1415,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_opt_box_autoadd_u_64(maxMemoryBytes, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 41)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 44)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_runtime,
@@ -1334,7 +1439,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_runtime(that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 42)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 45)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1353,14 +1458,15 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       );
 
   @override
-  JsValue crateApiRuntimeJsRuntimeEval(
+  Future<JsValue> crateApiRuntimeJsRuntimeEval(
       {required JsRuntime that, required String code}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_runtime(that, serializer);
         sse_encode_String(code, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 43)!;
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 46, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_value,
@@ -1379,14 +1485,73 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       );
 
   @override
-  String crateApiRuntimeJsRuntimeEvalJsStr(
+  Future<JsValue> crateApiRuntimeJsRuntimeEvalBytes(
+      {required JsRuntime that,
+      required List<int> bytes,
+      JsEvalOptions? options}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_box_autoadd_js_runtime(that, serializer);
+        sse_encode_list_prim_u_8_loose(bytes, serializer);
+        sse_encode_opt_box_autoadd_js_eval_options(options, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 47, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_js_value,
+        decodeErrorData: sse_decode_js_error,
+      ),
+      constMeta: kCrateApiRuntimeJsRuntimeEvalBytesConstMeta,
+      argValues: [that, bytes, options],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiRuntimeJsRuntimeEvalBytesConstMeta =>
+      const TaskConstMeta(
+        debugName: "js_runtime_eval_bytes",
+        argNames: ["that", "bytes", "options"],
+      );
+
+  @override
+  Future<JsValue> crateApiRuntimeJsRuntimeEvalFile(
+      {required JsRuntime that, required String path, JsEvalOptions? options}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_box_autoadd_js_runtime(that, serializer);
+        sse_encode_String(path, serializer);
+        sse_encode_opt_box_autoadd_js_eval_options(options, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 48, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_js_value,
+        decodeErrorData: sse_decode_js_error,
+      ),
+      constMeta: kCrateApiRuntimeJsRuntimeEvalFileConstMeta,
+      argValues: [that, path, options],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiRuntimeJsRuntimeEvalFileConstMeta =>
+      const TaskConstMeta(
+        debugName: "js_runtime_eval_file",
+        argNames: ["that", "path", "options"],
+      );
+
+  @override
+  Future<String> crateApiRuntimeJsRuntimeEvalJsStr(
       {required JsRuntime that, required String code}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_runtime(that, serializer);
         sse_encode_String(code, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 44)!;
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 49, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
@@ -1405,17 +1570,46 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       );
 
   @override
-  JsValue crateApiRuntimeJsRuntimeEvalWithOptions(
+  Future<JsValue> crateApiRuntimeJsRuntimeEvalPath(
+      {required JsRuntime that, required String path, JsEvalOptions? options}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_box_autoadd_js_runtime(that, serializer);
+        sse_encode_String(path, serializer);
+        sse_encode_opt_box_autoadd_js_eval_options(options, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 50, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_js_value,
+        decodeErrorData: sse_decode_js_error,
+      ),
+      constMeta: kCrateApiRuntimeJsRuntimeEvalPathConstMeta,
+      argValues: [that, path, options],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiRuntimeJsRuntimeEvalPathConstMeta =>
+      const TaskConstMeta(
+        debugName: "js_runtime_eval_path",
+        argNames: ["that", "path", "options"],
+      );
+
+  @override
+  Future<JsValue> crateApiRuntimeJsRuntimeEvalWithOptions(
       {required JsRuntime that,
       required String code,
       required JsEvalOptions options}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_runtime(that, serializer);
         sse_encode_String(code, serializer);
         sse_encode_box_autoadd_js_eval_options(options, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 45)!;
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 51, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_value,
@@ -1439,7 +1633,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_runtime(that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 46)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 52)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_u_64,
@@ -1463,7 +1657,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 47, port: port_);
+            funcId: 53, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_runtime_options,
@@ -1490,7 +1684,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         sse_encode_box_autoadd_js_runtime(that, serializer);
         sse_encode_String(name, serializer);
         sse_encode_String(source, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 48)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 54)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1514,7 +1708,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_runtime(that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 49)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 55)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1538,7 +1732,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_runtime(that, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 50)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 56)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1564,7 +1758,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_runtime(that, serializer);
         sse_encode_u_64(limitBytes, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 51)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 57)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1587,7 +1781,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
     return handler.executeSync(SyncTask(
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 52)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 58)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_u_64,
@@ -1611,7 +1805,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       callFfi: () {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(code, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 53)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 59)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1637,7 +1831,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(name, serializer);
         sse_encode_String(source, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 54)!;
+        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 60)!;
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
@@ -1662,7 +1856,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_value(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 55, port: port_);
+            funcId: 61, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_box_autoadd_bool,
@@ -1687,7 +1881,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_value(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 56, port: port_);
+            funcId: 62, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_box_autoadd_i_64,
@@ -1712,7 +1906,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_value(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 57, port: port_);
+            funcId: 63, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_box_autoadd_f_64,
@@ -1738,7 +1932,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_value(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 58, port: port_);
+            funcId: 64, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_box_autoadd_i_64,
@@ -1763,7 +1957,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_value(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 59, port: port_);
+            funcId: 65, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_opt_box_autoadd_f_64,
@@ -1788,7 +1982,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_bool(b, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 60, port: port_);
+            funcId: 66, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_value,
@@ -1813,7 +2007,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_f_64(f, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 61, port: port_);
+            funcId: 67, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_value,
@@ -1838,7 +2032,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_i_64(i, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 62, port: port_);
+            funcId: 68, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_value,
@@ -1863,7 +2057,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(s, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 63, port: port_);
+            funcId: 69, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_value,
@@ -1888,7 +2082,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(s, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 64, port: port_);
+            funcId: 70, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_value,
@@ -1913,7 +2107,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_value(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 65, port: port_);
+            funcId: 71, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -1938,7 +2132,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_value(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 66, port: port_);
+            funcId: 72, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -1963,7 +2157,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_value(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 67, port: port_);
+            funcId: 73, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -1988,7 +2182,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_value(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 68, port: port_);
+            funcId: 74, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -2013,7 +2207,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_value(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 69, port: port_);
+            funcId: 75, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -2038,7 +2232,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_value(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 70, port: port_);
+            funcId: 76, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -2063,7 +2257,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_value(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 71, port: port_);
+            funcId: 77, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -2088,7 +2282,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_value(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 72, port: port_);
+            funcId: 78, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -2113,7 +2307,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_value(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 73, port: port_);
+            funcId: 79, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -2138,7 +2332,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_value(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 74, port: port_);
+            funcId: 80, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -2163,7 +2357,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_value(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 75, port: port_);
+            funcId: 81, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_bool,
@@ -2187,7 +2381,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
       callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 76, port: port_);
+            funcId: 82, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_js_value,
@@ -2211,7 +2405,7 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_box_autoadd_js_value(that, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 77, port: port_);
+            funcId: 83, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_String,
@@ -2580,6 +2774,12 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
   }
 
   @protected
+  List<int> dco_decode_list_prim_u_8_loose(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as List<int>;
+  }
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
@@ -2622,6 +2822,12 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
   JsBuiltinOptions? dco_decode_opt_box_autoadd_js_builtin_options(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_js_builtin_options(raw);
+  }
+
+  @protected
+  JsEvalOptions? dco_decode_opt_box_autoadd_js_eval_options(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_js_eval_options(raw);
   }
 
   @protected
@@ -3043,6 +3249,13 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
   }
 
   @protected
+  List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getUint8List(len_);
+  }
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
@@ -3113,6 +3326,18 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_box_autoadd_js_builtin_options(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  JsEvalOptions? sse_decode_opt_box_autoadd_js_eval_options(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_js_eval_options(deserializer));
     } else {
       return null;
     }
@@ -3536,6 +3761,15 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
   }
 
   @protected
+  void sse_encode_list_prim_u_8_loose(
+      List<int> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer
+        .putUint8List(self is Uint8List ? self : Uint8List.fromList(self));
+  }
+
+  @protected
   void sse_encode_list_prim_u_8_strict(
       Uint8List self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -3602,6 +3836,17 @@ class JsRuntimeLibApiImpl extends JsRuntimeLibApiImplPlatform
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_js_builtin_options(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_js_eval_options(
+      JsEvalOptions? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_js_eval_options(self, serializer);
     }
   }
 
@@ -3733,14 +3978,6 @@ class JsReplImpl extends RustOpaque implements JsRepl {
   /// - 如果当前行是完整语句，返回 `is_complete: true` 并清空缓冲区
   /// - 如果当前行不完整（如 `function foo() {` 缺少 `}`），返回 `is_complete: false`
   ///   并将内容追加到内部缓冲区，等待后续行继续
-  ///
-  /// # 示例流程
-  /// ```text
-  /// > var x = 1;           // is_complete: true
-  /// > function foo() {     // is_complete: false
-  /// >   return 42;         // is_complete: false
-  /// > }                    // is_complete: true, 执行整个函数定义
-  /// ```
   ReplResult evalLine({required String line}) => JsRuntimeLib.instance.api
       .crateApiReplJsReplEvalLine(that: this, line: line);
 

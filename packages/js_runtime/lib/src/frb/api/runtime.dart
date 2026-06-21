@@ -10,12 +10,10 @@ import 'js_error.dart';
 import 'js_value.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `eval_internal`
-
 /// JS 运行时句柄。
 ///
 /// 通过 [JsRuntime::create] 创建，使用完毕后调用 [JsRuntime::dispose] 释放。
-/// 每次调用会占用资源（Boa 上下文），建议复用。
+/// 每次调用会创建一个专用的后台工作线程来执行 JS 代码。
 class JsRuntime {
   final BigInt id;
 
@@ -25,6 +23,9 @@ class JsRuntime {
 
   /// 创建一个新的 JS 运行时。
   ///
+  /// 内部启动一个专用 OS 线程来运行 Boa Context，
+  /// 所有后续操作通过 channel 向该线程发送命令。
+  ///
   /// # 参数
   /// - `options`: 运行时配置选项，`null` 使用默认值（无内存限制 + essential 内置模块）。
   static JsRuntime create({JsRuntimeOptions? options}) =>
@@ -32,15 +33,13 @@ class JsRuntime {
           .crateApiRuntimeJsRuntimeCreate(options: options);
 
   /// 旧版 create 的别名：使用简单的内存限制参数。
-  ///
-  /// 新代码推荐使用 `JsRuntime::create(options:)`。
   static JsRuntime createLegacy({BigInt? maxMemoryBytes}) =>
       JsRuntimeLib.instance.api
           .crateApiRuntimeJsRuntimeCreateLegacy(maxMemoryBytes: maxMemoryBytes);
 
   /// 销毁运行时，释放所有关联资源。
   ///
-  /// 调用后该句柄不再可用。
+  /// 关闭工作线程并释放 Boa Context。调用后该句柄不再可用。
   void dispose() => JsRuntimeLib.instance.api.crateApiRuntimeJsRuntimeDispose(
         that: this,
       );
@@ -48,26 +47,48 @@ class JsRuntime {
   /// 执行 JavaScript 代码，返回类型化的 [JsValue]。
   ///
   /// 自动解析 Promise（通过 `await_blocking`）。
-  /// 如已设置内存上限，执行前后会进行内存检查。
+  /// 实际执行在工作线程中进行，不阻塞 Dart 主 isolate。
   ///
   /// # 错误
   /// - [JsError::Syntax] — 代码解析失败
   /// - [JsError::Runtime] — 执行期间抛出异常
   /// - [JsError::MemoryLimit] — 内存超限
-  JsValue eval({required String code}) => JsRuntimeLib.instance.api
+  Future<JsValue> eval({required String code}) => JsRuntimeLib.instance.api
       .crateApiRuntimeJsRuntimeEval(that: this, code: code);
 
-  /// 旧版 eval_js 的别名：返回字符串而非 [JsValue]。
+  /// 从字节数组执行 JS 代码（UTF-8 编码）。
   ///
-  /// 新代码推荐使用 `eval(code)` 获取类型化的 [JsValue]。
-  String evalJsStr({required String code}) => JsRuntimeLib.instance.api
+  /// 将字节按 UTF-8 解码后执行。
+  Future<JsValue> evalBytes(
+          {required List<int> bytes, JsEvalOptions? options}) =>
+      JsRuntimeLib.instance.api.crateApiRuntimeJsRuntimeEvalBytes(
+          that: this, bytes: bytes, options: options);
+
+  /// 从文件路径读取 JS 代码并执行。
+  ///
+  /// 读取指定路径的文件内容，按 Script 模式执行。
+  /// 实际 I/O 和 eval 均在后台工作线程中进行。
+  Future<JsValue> evalFile({required String path, JsEvalOptions? options}) =>
+      JsRuntimeLib.instance.api.crateApiRuntimeJsRuntimeEvalFile(
+          that: this, path: path, options: options);
+
+  /// 旧版 eval_js 的别名：返回字符串而非 [JsValue]。
+  Future<String> evalJsStr({required String code}) => JsRuntimeLib.instance.api
       .crateApiRuntimeJsRuntimeEvalJsStr(that: this, code: code);
+
+  /// 读取文件作为 ES 模块执行（支持相对路径 import）。
+  ///
+  /// 文件所在目录会被设置为模块解析的基础路径（通过 `JS_MODULE_BASE_PATH` 环境变量）。
+  /// 如需在 JS 代码中使用 `import` 相对路径，请使用此方法。
+  Future<JsValue> evalPath({required String path, JsEvalOptions? options}) =>
+      JsRuntimeLib.instance.api.crateApiRuntimeJsRuntimeEvalPath(
+          that: this, path: path, options: options);
 
   /// 带选项执行 JavaScript 代码。
   ///
   /// `options` 控制 strict mode、global scope 等行为。
   /// 详见 [JsEvalOptions]。
-  JsValue evalWithOptions(
+  Future<JsValue> evalWithOptions(
           {required String code, required JsEvalOptions options}) =>
       JsRuntimeLib.instance.api.crateApiRuntimeJsRuntimeEvalWithOptions(
           that: this, code: code, options: options);
@@ -91,8 +112,7 @@ class JsRuntime {
 
   /// 触发垃圾回收。
   ///
-  /// 调用 `boa_gc::force_collect()` 执行完整的标记-清除 GC，
-  /// 同时清理 WeakRef 保持的对象。
+  /// 在工作线程中执行完整的标记-清除 GC，同时清理 WeakRef 保持的对象。
   void runGc() => JsRuntimeLib.instance.api.crateApiRuntimeJsRuntimeRunGc(
         that: this,
       );
@@ -111,14 +131,11 @@ class JsRuntime {
   /// 使用 `boa_parser` 解析为 Script AST，成功返回 `Ok(())`，
   /// 失败返回包含行列信息的 [JsError::Syntax]。
   ///
-  /// 与 `eval()` 不同，此方法不会创建或修改任何 JS 运行时状态。
+  /// 此方法不需要运行时实例，可直接调用。
   static void validate({required String code}) =>
       JsRuntimeLib.instance.api.crateApiRuntimeJsRuntimeValidate(code: code);
 
   /// 校验 ES 模块语法，**不执行代码**。
-  ///
-  /// 使用 `boa_parser` 解析为 Module AST。
-  /// 适用于在 `preload_module()` 之前预检模块源码。
   static void validateModule({required String name, required String source}) =>
       JsRuntimeLib.instance.api
           .crateApiRuntimeJsRuntimeValidateModule(name: name, source: source);

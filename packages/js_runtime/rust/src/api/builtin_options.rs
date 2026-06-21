@@ -1,5 +1,5 @@
 //! JsBuiltinOptions —— 内置 Web API 模块配置。
-
+use flutter_rust_bridge::frb;
 /// 内置模块配置。
 ///
 /// 控制创建运行时向 JS 上下文注册哪些 Web API 扩展。
@@ -12,6 +12,7 @@ pub struct JsBuiltinOptions {
 }
 
 impl Default for JsBuiltinOptions {
+    #[frb(sync)]
     fn default() -> Self {
         Self::essential()
     }
@@ -19,6 +20,7 @@ impl Default for JsBuiltinOptions {
 
 impl JsBuiltinOptions {
     /// 不注册任何内置模块。
+    #[frb(sync)]
     pub fn none() -> Self {
         Self {
             console: false,
@@ -27,6 +29,7 @@ impl JsBuiltinOptions {
     }
 
     /// 基础组合：仅 Console。
+    #[frb(sync)]
     pub fn essential() -> Self {
         Self {
             console: true,
@@ -35,6 +38,7 @@ impl JsBuiltinOptions {
     }
 
     /// Web 兼容组合：Console + Fetch。
+    #[frb(sync)]
     pub fn web() -> Self {
         Self {
             console: true,
@@ -43,6 +47,7 @@ impl JsBuiltinOptions {
     }
 
     /// 全部内置模块。
+    #[frb(sync)]
     pub fn all() -> Self {
         Self::web()
     }
