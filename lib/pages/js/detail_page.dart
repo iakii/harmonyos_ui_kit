@@ -1,5 +1,7 @@
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
+import 'package:hm_icon/hm_icon.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../models/plugin/gallery_item.dart';
@@ -158,21 +160,30 @@ class _DetailCard extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(12),
                 ),
-                child: Image.network(
+                child: ExtendedImage.network(
                   item.cover!,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    height: 200,
-                    color: theme.surfaceColor,
-                    child: const Center(child: Icon(Icons.broken_image)),
-                  ),
-                  loadingBuilder: (_, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      height: 200,
-                      color: theme.surfaceColor,
-                      child: const Center(child: HosLoading()),
-                    );
+                  cache: true,
+                  loadStateChanged: (state) {
+                    if (state.extendedImageLoadState == LoadState.loading) {
+                      return Container(
+                        height: 200,
+                        color: theme.surfaceColor,
+                        child: const Center(
+                          child: Icon(HMIcons.loading, size: 32),
+                        ),
+                      );
+                    }
+                    if (state.extendedImageLoadState == LoadState.failed) {
+                      return Container(
+                        height: 200,
+                        color: theme.surfaceColor,
+                        child: const Center(
+                          child: Icon(HMIcons.artGallery, size: 32),
+                        ),
+                      );
+                    }
+                    return null; // 默认显示图片
                   },
                 ),
               ),

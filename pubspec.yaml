@@ -50,7 +50,14 @@ dependencies:
   logger: ^2.5.0
   hm_icon:
     path: packages/hm_icon
+  extended_image: ^10.0.1
 
+dependency_overrides:
+  path_provider:
+    git:
+      url: https://gitcode.com/CPF-Flutter/flutter_packages.git
+      # ref: br_path_provider-v2.1.4_ohos
+      path: packages/path_provider/path_provider
 dev_dependencies:
   flutter_test:
     sdk: flutter

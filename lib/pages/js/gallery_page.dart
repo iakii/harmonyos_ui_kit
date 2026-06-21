@@ -1,7 +1,9 @@
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
+import 'package:hm_icon/hm_icon.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../models/plugin/gallery_item.dart';
@@ -106,32 +108,34 @@ class _GalleryBody extends HookConsumerWidget {
     final displayData = galleryAsync.valueOrNull ?? cachedData.value;
     final isTransitioning = galleryAsync.isLoading && cachedData.value != null;
 
-    return Column(
-      children: [
-        // ── 菜单 TabBar ──
-        if (menus.isNotEmpty)
-          HosTabBar(
-            tabs: menus.map((m) => m.label).toList(),
-            selectedIndex: selectedTabIndex.value,
-            onChanged: (i) {
-              selectedTabIndex.value = i;
-              currentPage.value = 1; // 切换 tab 时重置页码
-            },
-          ),
-        const SizedBox(height: 8),
+    return HosPage(
+      body: Column(
+        children: [
+          // ── 菜单 TabBar ──
+          if (menus.isNotEmpty)
+            HosTabBar(
+              tabs: menus.map((m) => m.label).toList(),
+              selectedIndex: selectedTabIndex.value,
+              onChanged: (i) {
+                selectedTabIndex.value = i;
+                currentPage.value = 1; // 切换 tab 时重置页码
+              },
+            ),
+          const SizedBox(height: 8),
 
-        // ── 图集网格 ──
-        Expanded(
-          child: _buildBody(
-            galleryAsync: galleryAsync,
-            displayData: displayData,
-            isTransitioning: isTransitioning,
-            currentUrl: currentUrl,
-            currentPage: currentPage.value,
-            ref: ref,
+          // ── 图集网格 ──
+          Expanded(
+            child: _buildBody(
+              galleryAsync: galleryAsync,
+              displayData: displayData,
+              isTransitioning: isTransitioning,
+              currentUrl: currentUrl,
+              currentPage: currentPage.value,
+              ref: ref,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -246,10 +250,11 @@ class _GalleryGrid extends StatelessWidget {
               GridView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  childAspectRatio: 0.72,
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 16 / 10,
+                  // mainAxisExtent: 100,
                 ),
                 itemCount: items.length,
                 itemBuilder: (context, index) {
@@ -257,7 +262,6 @@ class _GalleryGrid extends StatelessWidget {
                   return _GridItemCard(item: item);
                 },
               ),
-
               // 加载遮罩（半透明 + 居中转圈，显示在上层）
               if (isLoading)
                 Positioned.fill(
@@ -266,14 +270,15 @@ class _GalleryGrid extends StatelessWidget {
                     duration: const Duration(milliseconds: 200),
                     child: Container(
                       color: Colors.black.withValues(alpha: 0.06),
-                      child: const Center(child: HosLoading(size: 36)),
+                      child: const Center(
+                        child: Icon(HMIcons.loading, size: 36),
+                      ),
                     ),
                   ),
                 ),
             ],
           ),
         ),
-
         // ── 分页控件 ──
         if (totalPage > 1)
           Padding(
@@ -343,8 +348,12 @@ class _GridItemCard extends StatelessWidget {
     final theme = HarmonyTheme.of(context);
 
     return GestureDetector(
-      onTap: () => context.push('/js_gallery_detail', extra: item.link),
+      onTap: () => context.push(
+        item.to == 'gallery' ? '/js_gallery' : '/js_gallery_detail',
+        extra: item.link,
+      ),
       child: HosCard(
+        margin: EdgeInsets.zero,
         padding: EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -355,19 +364,29 @@ class _GridItemCard extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(12),
                 ),
-                child: Image.network(
-                  'https://cdn.pixabay.com/photo/2016/05/31/11/26/baby-1426651_1280.jpg', // '${item.cover}8888?x-oss-process=image/resize,w_400',
+                child: ExtendedImage.network(
+                  // 'https://cdn.pixabay.com/photo/2016/05/31/11/26/baby-1426651_1280.jpg', //
+                  item.cover,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: theme.surfaceColor,
-                    child: const Center(child: Icon(Icons.broken_image)),
-                  ),
-                  loadingBuilder: (_, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      color: theme.surfaceColor,
-                      child: const Center(child: HosLoading()),
-                    );
+                  cache: true,
+                  loadStateChanged: (state) {
+                    if (state.extendedImageLoadState == LoadState.loading) {
+                      return Container(
+                        color: theme.surfaceColor,
+                        child: const Center(
+                          child: Icon(HMIcons.loading, size: 32),
+                        ),
+                      );
+                    }
+                    if (state.extendedImageLoadState == LoadState.failed) {
+                      return Container(
+                        color: theme.surfaceColor,
+                        child: const Center(
+                          child: Icon(HMIcons.artGallery, size: 32),
+                        ),
+                      );
+                    }
+                    return null; // 默认显示图片
                   },
                 ),
               ),

@@ -48,28 +48,54 @@ class Client {
     try {
       const html = await fetch(url).then((response) => response.text());
       const dom = await import('dom');
+      const isModelPage = url.includes('/model');
+      if (isModelPage) {
+        // 模特列表页：提取 a.list-img 中的 img 标签的 data-src 和 alt
+        const links = JSON.parse(dom.querySelectorAll(html, 'div.list ul li a.list-img'));
+        const imgs = JSON.parse(dom.querySelectorAll(html, 'div.list ul li a.list-img img'));
+        const titles = JSON.parse(dom.querySelectorAll(html, 'div.list ul li div.list-num span'));
+        console.log("模特列表页 - titles：", titles);
+        const results = [];
+        for (let i = 0; i < links.length; i++) {
+          const linkEl = links[i];
+          const imgEl = imgs[i];
+          const count = titles[i]?.text || '';
+          const href = linkEl.attrs.find(a => a[0] === 'href')?.[1] || '';
+          results.push({
+            link: parsedUrl + href,
+            cover: this._pluginInfo.website + imgEl?.attrs?.find(a => a[0] === 'data-src')?.[1] || '',
+            title: (imgEl?.attrs?.find(a => a[0] === 'alt')?.[1] || '') + ` (${count})`,
+            to: "gallery"
+          });
+        }
+        console.log("获取到的模特数量：", results);
+
+        const totalPages = await this.getPhotosPageSize(html);
+        return JSON.stringify({
+          list: results,
+          totalPage: totalPages,
+          current: page,
+
+        });
+      }
 
       // 用 DOM 解析替代正则：分别查询 a 标签和内部 img 标签，索引一一对应
       const links = JSON.parse(dom.querySelectorAll(html, 'a.list-img'));
-      const imgs  = JSON.parse(dom.querySelectorAll(html, 'a.list-img img'));
-
+      const imgs = JSON.parse(dom.querySelectorAll(html, 'a.list-img img'));
       const results = [];
       for (let i = 0; i < links.length; i++) {
         const linkEl = links[i];
-        const imgEl  = imgs[i];
-        const href   = linkEl.attrs.find(a => a[0] === 'href')?.[1] || '';
+        const imgEl = imgs[i];
+        const href = linkEl.attrs.find(a => a[0] === 'href')?.[1] || '';
         results.push({
           link: parsedUrl + href,
           cover: imgEl?.attrs?.find(a => a[0] === 'data-src')?.[1] || '',
           title: imgEl?.attrs?.find(a => a[0] === 'alt')?.[1] || '',
         });
       }
-
       const totalPages = await this.getPhotosPageSize(html);
-
       console.log("获取到的页数：", totalPages);
       // console.log("获取数据：", results);
-
       return JSON.stringify({
         list: results,
         totalPage: totalPages,
@@ -110,15 +136,17 @@ class Client {
       const aRaw = dom.querySelector(contentDiv.innerHtml, 'a[href][title]');
       const aTag = aRaw !== null ? JSON.parse(aRaw) : null;
       if (aTag) {
-        href  = aTag.attrs.find(a => a[0] === 'href')?.[1] || null;
+        href = aTag.attrs.find(a => a[0] === 'href')?.[1] || null;
         title = aTag.attrs.find(a => a[0] === 'title')?.[1] || null;
       }
+
 
       const imgRaw = dom.querySelector(contentDiv.innerHtml, 'img[src]');
       const imgTag = imgRaw !== null ? JSON.parse(imgRaw) : null;
       if (imgTag) {
         src = imgTag.attrs.find(a => a[0] === 'src')?.[1] || null;
       }
+
     }
 
     const items = [
@@ -128,6 +156,9 @@ class Client {
         title,
       },
     ];
+
+
+
     // 获取总页数
     if (parsePage) {
       const totalPages = await this.getPhotosPageSize(html);
