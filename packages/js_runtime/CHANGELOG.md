@@ -2,6 +2,47 @@
 
 * TODO: Describe initial release.
 
+---
+
+## 工作线程重构 (2026-06-21)
+
+### 重大变更：JS Eval 移至后台工作线程
+
+eval 方法不再阻塞 Dart 主 isolate。每个 `JsRuntime` 拥有一个专用 OS 线程（worker），
+Boa Context 在 worker 内运行。eval 方法通过 `mpsc` channel 向 worker 发送命令。
+
+### 新增
+- `JsRuntime.eval_file(path, options?)` — 读取文件执行 JS（`Future<JsValue>`）
+- `JsRuntime.eval_bytes(bytes, options?)` — 从 UTF-8 字节数组执行 JS（`Future<JsValue>`）
+- `JsRuntime.eval_path(path, options?)` — 读取文件作为 ES 模块执行，支持相对 import（`Future<JsValue>`）
+- `JsEngine.eval_file(path, options?)` — 高层封装
+- `JsEngine.eval_bytes(bytes, options?)` — 高层封装
+- `JsEngine.eval_path(path, options?)` — 高层封装
+- `JsEngine.poll_sync_calls()` — 拉取同步回调请求（sync_bridge）
+- `JsEngine.resolve_sync_call(callId, resultJson)` — 回传同步回调结果
+- `JsEngine.reject_sync_call(callId, error)` — 回传同步回调错误
+- `SyncCall` 类型 — JS→Dart 同步调用请求
+- `rust/src/js_runtime/worker.rs` — 工作线程模块（WorkerCmd + 全局 WORKERS 注册表 + worker_loop）
+- `rust/src/js_runtime/sync_bridge.rs` — 同步回调桥（全局 Mutex + Condvar，独立于 worker channel）
+
+### 变更
+- **`eval()` / `eval_with_options()` / `eval_raw()` / `eval_js_str()` 改为异步**：Dart 端返回 `Future<JsValue>`，需 `await`
+- **`JsCallbackHandler` 重构**：移除 `dart:ffi` NativeCallable 依赖，改用 sync_bridge（全局 Mutex + Condvar）+ `registerSyncFunction`。API 接口不变（`register`/`eval`/`unregister` 签名相同），内部通过 Timer 自动轮询同步桥
+- **线程模型变更**：`thread_local! RUNTIMES` → 全局 `WORKERS: Mutex<HashMap<u64, WorkerHandle>>`；`thread_local! COMPLETED_CALLS/PENDING_CALLS` → `worker_locals` 模块（仅在 worker 线程内访问）
+- **`register_dart_handler` / `unregister_dart_handler`** → 改为 no-op（同步回调改用 sync_bridge）
+
+### 删除
+- `thread_local! RUNTIMES` — 不再使用（改为 worker 线程持有 RuntimeState）
+- `thread_local! DART_HANDLERS` — 改为 no-op（sync_bridge 替代）
+- `call_dart_handler()` — FFI 跨线程调用不再支持
+
+### 修复
+- 同步回调现在使用 `sync_bridge`（Mutex + Condvar），Dart Timer 轮询，不经过 worker channel 排队，实现真正的实时响应
+
+---
+
+## 同步 FFI 回调 (2026-06-20)
+
 ## 同步 FFI 回调 (2026-06-20)
 
 ### 新增

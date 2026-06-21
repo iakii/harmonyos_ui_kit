@@ -111,30 +111,139 @@ pub(crate) fn create_native_fn(method_name: String) -> NativeFunction {
     )
 }
 
-// ─── 同步 FFI 回调（已弃用，改用 Promise 机制）─────────────
+// ─── Dart FFI 回调指针（已弃用，保留为 no-op 兼容旧 API）────
 
-/// 注册 Dart 侧 FFI 回调函数指针（已弃用）。
-///
-/// 由于 JS 执行在独立工作线程中进行，无法直接通过 FFI 同步调用 Dart。
-/// 现改为使用 Promise 机制，此函数保留为向后兼容的 no-op。
+/// 注册 Dart 侧 FFI 回调函数指针（已弃用，同步回调改用 sync_bridge）。
 pub(crate) fn register_dart_handler(_runtime_id: u64, _ptr: i64) {
-    // no-op: sync FFI callbacks now use Promise-based mechanism
+    // no-op
 }
 
-/// 注销 Dart 侧 FFI 回调函数指针（已弃用，保留为 no-op）。
+/// 注销 Dart 侧 FFI 回调函数指针（已弃用，同步回调改用 sync_bridge）。
 pub(crate) fn unregister_dart_handler(_runtime_id: u64) {
     // no-op
 }
 
-/// 创建"同步"NativeFunction。
+// ─── 同步回调桥（全局 Mutex + Condvar，独立于 worker channel）─────
+
+/// 创建同步 NativeFunction（真正的同步调用，JS 调用立刻响应）。
 ///
-/// **注意**：由于 JS 执行在独立工作线程中进行，无法直接通过 FFI 同步调用 Dart。
-/// 改为使用 Promise 机制（与 [create_native_fn] 相同），JS 端通过 `await` 获取结果。
-/// Dart 端需配合 `poll_calls` / `resolve_call` / `reject_call` 完成响应。
+/// 通过全局 `sync_bridge` 实现：worker 线程写入请求 → Condvar 阻塞等待，
+/// Dart 主线程通过 `pollSyncCalls` / `resolveSyncCall` 处理。
 ///
-/// 保留此函数为 `create_native_fn` 的别名，用于向后兼容 `register_sync_function` API。
+/// 与 Promise-based [create_native_fn] 不同，此函数**不创建 Promise**，
+/// JS 端 `name(args)` 直接拿到返回值（无需 `await`）。
 pub(crate) fn create_sync_native_fn(method_name: String, _runtime_id: u64) -> NativeFunction {
-    create_native_fn(method_name)
+    NativeFunction::from_copy_closure_with_captures(
+        move |_this, args, _name, ctx| -> boa_engine::JsResult<boa_engine::JsValue> {
+            // 序列化 JS args → JSON
+            let args_frb: Vec<FrbJsValue> = args
+                .iter()
+                .map(|v| FrbJsValue::from_boa(v, ctx))
+                .collect();
+            let args_json_vals: Vec<serde_json::Value> =
+                args_frb.iter().map(|v| frb_value_to_json(v)).collect();
+            let args_json = serde_json::to_string(&args_json_vals).unwrap_or_default();
+
+            // 通过同步桥发送请求并阻塞等待 Dart 响应
+            let raw_response = crate::js_runtime::sync_bridge::worker_send_and_wait(
+                _name,
+                &args_json,
+            );
+
+            // 解析响应：{"v": result_json} 或 {"e": error}
+            let wrapper: serde_json::Value =
+                serde_json::from_str(&raw_response).unwrap_or_default();
+            if let Some(err) = wrapper.get("e").and_then(|e| e.as_str()) {
+                return Err(boa_engine::JsError::from_native(
+                    boa_engine::JsNativeError::typ()
+                        .with_message(format!("Dart: {err}")),
+                ));
+            }
+            if let Some(val) = wrapper.get("v") {
+                let result_frb = json_to_frb_value(val);
+                return result_frb.to_boa(ctx).map_err(|e| {
+                    boa_engine::JsError::from_native(
+                        boa_engine::JsNativeError::typ()
+                            .with_message(format!("{e}")),
+                    )
+                });
+            }
+            Err(boa_engine::JsError::from_native(
+                boa_engine::JsNativeError::typ()
+                    .with_message("Dart handler returned invalid response"),
+            ))
+        },
+        method_name,
+    )
+}
+
+// ─── JsValue ↔ serde_json::Value 转换（同步桥 JSON 协议用）───────
+
+/// 将 FrbJsValue 转为 serde_json::Value。
+fn frb_value_to_json(v: &FrbJsValue) -> serde_json::Value {
+    match v {
+        FrbJsValue::None => serde_json::Value::Null,
+        FrbJsValue::Boolean(b) => serde_json::Value::Bool(*b),
+        FrbJsValue::Integer(i) => serde_json::Value::Number((*i).into()),
+        FrbJsValue::Float(f) => {
+            let n = serde_json::Number::from_f64(*f).unwrap_or_else(|| 0.into());
+            serde_json::Value::Number(n)
+        }
+        FrbJsValue::BigInt(s) => serde_json::Value::String(s.clone()),
+        FrbJsValue::String_(s) => serde_json::Value::String(s.clone()),
+        FrbJsValue::Bytes(b) => {
+            let arr: Vec<serde_json::Value> =
+                b.iter().map(|&byte| serde_json::Value::Number(byte.into())).collect();
+            serde_json::Value::Array(arr)
+        }
+        FrbJsValue::Array(items) => {
+            let arr: Vec<serde_json::Value> = items.iter().map(|i| frb_value_to_json(i)).collect();
+            serde_json::Value::Array(arr)
+        }
+        FrbJsValue::Object(entries) => {
+            let mut map = serde_json::Map::new();
+            for (k, val) in entries {
+                map.insert(k.clone(), frb_value_to_json(val));
+            }
+            serde_json::Value::Object(map)
+        }
+        FrbJsValue::Date(ts) => serde_json::Value::Number((*ts).into()),
+        FrbJsValue::Symbol(desc) => serde_json::Value::String(desc.clone()),
+    }
+}
+
+/// 将 serde_json::Value 转为 FrbJsValue。
+fn json_to_frb_value(v: &serde_json::Value) -> FrbJsValue {
+    match v {
+        serde_json::Value::Null => FrbJsValue::None,
+        serde_json::Value::Bool(b) => FrbJsValue::Boolean(*b),
+        serde_json::Value::Number(n) => {
+            if let Some(i) = n.as_i64() {
+                if n.as_f64().map_or(false, |f| f == i as f64) {
+                    FrbJsValue::Integer(i)
+                } else {
+                    FrbJsValue::Float(n.as_f64().unwrap_or(0.0))
+                }
+            } else {
+                FrbJsValue::Float(n.as_f64().unwrap_or(0.0))
+            }
+        }
+        serde_json::Value::String(s) => FrbJsValue::String_(s.clone()),
+        serde_json::Value::Array(arr) => {
+            let items: Vec<Box<FrbJsValue>> = arr
+                .iter()
+                .map(|v| Box::new(json_to_frb_value(v)))
+                .collect();
+            FrbJsValue::Array(items)
+        }
+        serde_json::Value::Object(map) => {
+            let entries: Vec<(String, Box<FrbJsValue>)> = map
+                .iter()
+                .map(|(k, v)| (k.clone(), Box::new(json_to_frb_value(v))))
+                .collect();
+            FrbJsValue::Object(entries)
+        }
+    }
 }
 
 // ─── 进程内存 ────────────────────────────────────────────

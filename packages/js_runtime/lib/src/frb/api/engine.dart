@@ -14,13 +14,8 @@ import 'runtime.dart';
 
 /// JS→Dart 方法调用请求。
 class CompletedCall {
-  /// 调用唯一 ID（用于 `resolve_call` / `reject_call` 回传结果）
   final BigInt callId;
-
-  /// 注册的方法名
   final String name;
-
-  /// 调用参数
   final List<JsValue> params;
 
   const CompletedCall({
@@ -143,6 +138,18 @@ class JsEngine {
         that: this,
       );
 
+  /// 拉取所有来自 JS 的**同步**调用请求（排空队列）。
+  ///
+  /// 返回 `(call_id, method_name, args_json)` 列表。
+  /// 处理完后用 [resolve_sync_call] / [reject_sync_call] 回传结果。
+  ///
+  /// 此方法直接访问全局 sync_bridge，不经过 worker channel，
+  /// 因此可在 JS 执行期间**实时**被调用。
+  List<SyncCall> pollSyncCalls() =>
+      JsRuntimeLib.instance.api.crateApiEngineJsEnginePollSyncCalls(
+        that: this,
+      );
+
   /// （内部）注册 Dart 侧 FFI 回调函数指针。
   ///
   /// 直接操作全局 DART_HANDLERS 注册表，无需经过 worker。
@@ -169,10 +176,22 @@ class JsEngine {
       JsRuntimeLib.instance.api.crateApiEngineJsEngineRejectCall(
           that: this, callId: callId, error: error);
 
+  /// 回传错误给阻塞的 worker 线程（通过 sync_bridge）。
+  void rejectSyncCall({required BigInt callId, required String error}) =>
+      JsRuntimeLib.instance.api.crateApiEngineJsEngineRejectSyncCall(
+          that: this, callId: callId, error: error);
+
   /// 回传成功结果给 JS 端（resolve 对应的 Promise）。
   void resolveCall({required BigInt callId, required JsValue result}) =>
       JsRuntimeLib.instance.api.crateApiEngineJsEngineResolveCall(
           that: this, callId: callId, result: result);
+
+  /// 回传成功结果给阻塞的 worker 线程（通过 sync_bridge）。
+  ///
+  /// [result_json] 是 Dart handler 返回值的 JSON 序列化字符串。
+  void resolveSyncCall({required BigInt callId, required String resultJson}) =>
+      JsRuntimeLib.instance.api.crateApiEngineJsEngineResolveSyncCall(
+          that: this, callId: callId, resultJson: resultJson);
 
   /// 触发垃圾回收。
   void runGc() => JsRuntimeLib.instance.api.crateApiEngineJsEngineRunGc(
@@ -197,4 +216,33 @@ class JsEngine {
       other is JsEngine &&
           runtimeType == other.runtimeType &&
           runtimeId == other.runtimeId;
+}
+
+/// JS→Dart 同步调用请求（sync_bridge 模式）。
+///
+/// 通过 `poll_sync_calls` 获取，处理完后用 `resolve_sync_call` 回传。
+class SyncCall {
+  final BigInt callId;
+  final String name;
+
+  /// JSON 序列化的参数数组
+  final String argsJson;
+
+  const SyncCall({
+    required this.callId,
+    required this.name,
+    required this.argsJson,
+  });
+
+  @override
+  int get hashCode => callId.hashCode ^ name.hashCode ^ argsJson.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SyncCall &&
+          runtimeType == other.runtimeType &&
+          callId == other.callId &&
+          name == other.name &&
+          argsJson == other.argsJson;
 }

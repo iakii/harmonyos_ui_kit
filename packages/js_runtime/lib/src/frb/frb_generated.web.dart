@@ -156,6 +156,9 @@ abstract class JsRuntimeLibApiImplPlatform
       dynamic raw);
 
   @protected
+  List<SyncCall> dco_decode_list_sync_call(dynamic raw);
+
+  @protected
   String? dco_decode_opt_String(dynamic raw);
 
   @protected
@@ -190,6 +193,9 @@ abstract class JsRuntimeLibApiImplPlatform
 
   @protected
   ReplResult dco_decode_repl_result(dynamic raw);
+
+  @protected
+  SyncCall dco_decode_sync_call(dynamic raw);
 
   @protected
   int dco_decode_u_32(dynamic raw);
@@ -334,6 +340,9 @@ abstract class JsRuntimeLibApiImplPlatform
       SseDeserializer deserializer);
 
   @protected
+  List<SyncCall> sse_decode_list_sync_call(SseDeserializer deserializer);
+
+  @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
 
   @protected
@@ -372,6 +381,9 @@ abstract class JsRuntimeLibApiImplPlatform
 
   @protected
   ReplResult sse_decode_repl_result(SseDeserializer deserializer);
+
+  @protected
+  SyncCall sse_decode_sync_call(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_32(SseDeserializer deserializer);
@@ -527,6 +539,9 @@ abstract class JsRuntimeLibApiImplPlatform
       List<(String, JsValue)> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_sync_call(List<SyncCall> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
 
   @protected
@@ -567,6 +582,9 @@ abstract class JsRuntimeLibApiImplPlatform
 
   @protected
   void sse_encode_repl_result(ReplResult self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_sync_call(SyncCall self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_32(int self, SseSerializer serializer);

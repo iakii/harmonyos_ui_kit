@@ -43,9 +43,23 @@ js_runtime/
 │   ├── Cargo.toml                 # crate: js_runtime, cdylib+staticlib, 依赖 boa_engine 0.21.1
 │   └── src/
 │       ├── lib.rs                 # 入口：mod frb_generated + pub mod api
-│       ├── api/
+│       ├── api/                   # FRB 公开 API（手写）
 │       │   ├── mod.rs             # 公开 API 模块声明
-│       │   └── hello.rs           # 手写：hello() 函数（示例）
+│       │   ├── runtime.rs         # JsRuntime 低层 API
+│       │   ├── engine.rs          # JsEngine 高层 API
+│       │   ├── repl.rs            # JsRepl 交互式 REPL
+│       │   ├── js_value.rs        # JsValue 枚举 + Boa 互转
+│       │   ├── js_error.rs        # JsError 枚举 + 错误码
+│       │   ├── eval_options.rs    # JsEvalOptions
+│       │   ├── builtin_options.rs # JsBuiltinOptions + 预设
+│       │   ├── module.rs          # JsModule
+│       │   └── hello.rs           # 示例函数
+│       ├── js_runtime/            # 内部实现（不暴露给 FRB）
+│       │   ├── mod.rs
+│       │   ├── internal.rs        # RuntimeState, init_context, NativeFunction 工厂
+│       │   ├── worker.rs          # 工作线程：WorkerCmd + 全局 WORKERS 注册表
+│       │   └── sync_bridge.rs     # 同步回调桥：全局 Mutex+Condvar
+│       ├── dom.rs                 # DOM 解析模块（scraper）
 │       └── frb_generated.rs       # FRB 自动生成（勿手动编辑）
 ├── cargokit/                      # 跨平台 Cargo 构建胶水（CMake/Gradle/Pod）
 ├── ohos/                          # HarmonyOS 原生工程（CMake + cargokit）
@@ -65,7 +79,9 @@ js_runtime/
 1. **纯 flutter_rust_bridge**: 不再使用 `dart:ffi` 直接调用或 `ffigen` 生成绑定，所有 FFI 调用通过 `JsRuntimeLib`（flutter_rust_bridge 生成）完成
 2. **Boa 集成**: Rust 端依赖 `boa_engine`，rust_input 中包含 `boa_engine`，允许 Dart 通过 FRB 调用 JS 执行相关功能
 3. **入口类 `JsRuntimeLib`**: 取代旧的 `RustLib`，通过 `JsRuntimeLib.init()` 初始化，通过自动生成的 Wrapper 函数调用 Rust
-4. **JS↔Dart 回调**: 推荐 `JsCallbackHandler`（基于 `dart:ffi` NativeCallable + `registerSyncFunction`，JS 调用立刻同步响应）；Promise 模式（`registerGlobalCallable` / `registerGlobalFunction` + `pollCalls` / `resolveCall` / `rejectCall`）作为高级选项
+4. **工作线程模型**: 每个 `JsRuntime` 拥有一个专用 OS 线程（worker），Boa Context 在 worker 内运行。`eval`/`eval_file`/`eval_bytes`/`eval_path` 等方法通过 `mpsc` channel 向 worker 发送命令，Dart 端返回 `Future`（不阻塞主 isolate）。`create()`/`dispose()`/`memory_usage()` 等轻量操作保持 `#[frb(sync)]`
+5. **同步回调桥**: `sync_bridge`（全局 `Mutex + Condvar`）独立于 worker channel，实现真正的同步 JS→Dart 回调——JS 调用后 Dart handler **立刻执行**并返回结果。Dart 端通过 Timer 定时轮询 `pollSyncCalls()` / `resolveSyncCall()` / `rejectSyncCall()`（均为 `#[frb(sync)]`，直接访问全局 Mutex，不排队）
+6. **JS↔Dart 回调**: 推荐 `JsCallbackHandler`（基于 `registerSyncFunction` + `sync_bridge`，JS 调用立刻同步响应）；Promise 模式（`registerGlobalCallable` / `registerGlobalFunction` + `pollCalls` / `resolveCall` / `rejectCall`）作为高级选项
 
 ## 修改 Rust API 流程
 

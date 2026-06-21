@@ -181,7 +181,42 @@ impl JsEngine {
         worker::reject_call(self.runtime_id, call_id, error)
     }
 
-    // ─── 同步 FFI 回调 ──────────────────────────────────
+    // ─── 同步回调桥（独立于 worker channel）─────────────
+
+    /// 拉取所有来自 JS 的**同步**调用请求（排空队列）。
+    ///
+    /// 返回 `(call_id, method_name, args_json)` 列表。
+    /// 处理完后用 [resolve_sync_call] / [reject_sync_call] 回传结果。
+    ///
+    /// 此方法直接访问全局 sync_bridge，不经过 worker channel，
+    /// 因此可在 JS 执行期间**实时**被调用。
+    #[frb(sync)]
+    pub fn poll_sync_calls(&self) -> Vec<SyncCall> {
+        crate::js_runtime::sync_bridge::poll_pending_calls()
+            .into_iter()
+            .map(|(call_id, name, args_json)| SyncCall {
+                call_id,
+                name,
+                args_json,
+            })
+            .collect()
+    }
+
+    /// 回传成功结果给阻塞的 worker 线程（通过 sync_bridge）。
+    ///
+    /// [result_json] 是 Dart handler 返回值的 JSON 序列化字符串。
+    #[frb(sync)]
+    pub fn resolve_sync_call(&self, call_id: u64, result_json: String) {
+        crate::js_runtime::sync_bridge::resolve_call(call_id, result_json);
+    }
+
+    /// 回传错误给阻塞的 worker 线程（通过 sync_bridge）。
+    #[frb(sync)]
+    pub fn reject_sync_call(&self, call_id: u64, error: String) {
+        crate::js_runtime::sync_bridge::reject_call(call_id, error);
+    }
+
+    // ─── 同步 FFI 回调（已弃用）──────────────────────────
 
     /// （内部）注册 Dart 侧 FFI 回调函数指针。
     ///
@@ -232,10 +267,17 @@ impl JsEngine {
 
 /// JS→Dart 方法调用请求。
 pub struct CompletedCall {
-    /// 调用唯一 ID（用于 `resolve_call` / `reject_call` 回传结果）
     pub call_id: u64,
-    /// 注册的方法名
     pub name: String,
-    /// 调用参数
     pub params: Vec<JsValue>,
+}
+
+/// JS→Dart 同步调用请求（sync_bridge 模式）。
+///
+/// 通过 `poll_sync_calls` 获取，处理完后用 `resolve_sync_call` 回传。
+pub struct SyncCall {
+    pub call_id: u64,
+    pub name: String,
+    /// JSON 序列化的参数数组
+    pub args_json: String,
 }
