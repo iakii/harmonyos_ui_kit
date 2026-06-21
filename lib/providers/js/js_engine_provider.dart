@@ -11,7 +11,7 @@ final jsEngineProvider = FutureProvider<JsEngine>((ref) async {
 
   final engine = JsEngine.create(
     runtimeOptions: JsRuntimeOptions(
-      builtins: await JsBuiltinOptions.web(), // Console + Fetch
+      builtins: JsBuiltinOptions.web(), // Console + Fetch
       info: 'meitule',
     ),
     modules: [JsModule(name: 'client', source: jsFiles)],

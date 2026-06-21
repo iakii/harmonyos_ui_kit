@@ -32,13 +32,13 @@ void _galleryWorker(dynamic params) {
       // 懒加载：首次请求时创建 engine 并注册 client 模块
       engine ??= JsEngine.create(
         runtimeOptions: JsRuntimeOptions(
-          builtins: await JsBuiltinOptions.web(),
+          builtins: JsBuiltinOptions.web(),
           info: 'meitule-gallery',
         ),
         modules: [JsModule(name: 'client', source: message.jsSource)],
       );
 
-      final result = engine!.eval(
+      final result = await engine!.eval(
         code:
             '''
         (async () => {

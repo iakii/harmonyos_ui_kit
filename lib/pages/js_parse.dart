@@ -111,7 +111,7 @@ class _JsParsePageState extends State<JsParsePage> {
 
       _jsRuntime = JsEngine.create(
         runtimeOptions: JsRuntimeOptions(
-          builtins: await JsBuiltinOptions.all(),
+          builtins: JsBuiltinOptions.all(),
           info: "parser=esbuild",
           // memoryLimit: BigInt.from(100 * 1024 * 1024),
         ),
@@ -126,7 +126,7 @@ class _JsParsePageState extends State<JsParsePage> {
 
   // ─── Actions ─────────────────────────────────────────────────
 
-  void runCode() {
+  Future<void> runCode() async {
     final engine = _jsRuntime;
 
     final handler = JsCallbackHandler(engine);
@@ -163,7 +163,7 @@ class _JsParsePageState extends State<JsParsePage> {
     error.value = null;
 
     try {
-      final output = handler.eval(code);
+      final output = await handler.eval(code);
       result.value = fmtVal(output);
       // 更新内存信息
       final used = engine.memoryUsage();

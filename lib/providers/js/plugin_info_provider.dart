@@ -13,7 +13,7 @@ import 'js_engine_provider.dart';
 final pluginInfoProvider = FutureProvider<PluginInfo>((ref) async {
   final engine = await ref.watch(jsEngineProvider.future);
 
-  final result = engine.eval(
+  final result = await engine.eval(
     code: '''
     (async () => {
       const { default: client } = await import('client');

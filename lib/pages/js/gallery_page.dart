@@ -30,6 +30,8 @@ class GalleryPage extends HookConsumerWidget {
       title: title,
       body: AsyncValueWidget<PluginInfo>(
         value: pluginInfoAsync,
+        error: (err, _) =>
+            HosErrorState(message: err.toString(), onRetry: null),
         data: (pluginInfo) => _GalleryBody(
           pluginInfo: pluginInfo,
           selectedTabIndex: selectedTabIndex,

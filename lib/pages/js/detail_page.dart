@@ -21,6 +21,8 @@ class DetailPage extends HookConsumerWidget {
     final asyncState = ref.watch(detailLoadProvider(url));
     final theme = HarmonyTheme.of(context);
 
+    void onRetry() => ref.refresh(detailLoadProvider(url));
+
     return HosPage(
       leading: const BackIcon(),
       title: '详情',
@@ -29,8 +31,8 @@ class DetailPage extends HookConsumerWidget {
       body: asyncState.when(
         loading: () => _LoadingWidget(theme: theme),
         error: (err, _) =>
-            HosErrorState(message: err.toString(), onRetry: null),
-        data: (state) => _buildBody(context, theme, state),
+            HosErrorState(message: err.toString(), onRetry: onRetry),
+        data: (state) => _buildBody(context, theme, state, onRetry),
       ),
     );
   }
@@ -39,10 +41,11 @@ class DetailPage extends HookConsumerWidget {
     BuildContext context,
     HarmonyThemeData theme,
     DetailLoadState state,
+    VoidCallback onRetry,
   ) {
     // 错误状态
     if (state.error != null) {
-      return HosErrorState(message: state.error!, onRetry: null);
+      return HosErrorState(message: state.error!, onRetry: onRetry);
     }
 
     // 加载中（可能有部分数据）
