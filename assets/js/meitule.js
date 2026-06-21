@@ -69,8 +69,8 @@ class Client {
           });
         }
         console.log("获取到的模特数量：", results);
-
         const totalPages = await this.getPhotosPageSize(html);
+        console.log("获取到的总页数：", totalPages);
         return JSON.stringify({
           list: results,
           totalPage: totalPages,
@@ -172,7 +172,7 @@ class Client {
         console.log("当前获取到的数量：", items.length, "当前页数：", index, "总页数：", totalPages, "当前页url：", pageUrl, items.length % 5 == 0 ? "发送数据" : "不发送数据");
         if (items.length % 5 == 0) {
           console.log("发送数据：", items.length);
-          postMessage('sendChannelDetails', JSON.stringify({
+          await postMessage('sendChannelDetails', JSON.stringify({
             list: items,
             current: index,
           }));

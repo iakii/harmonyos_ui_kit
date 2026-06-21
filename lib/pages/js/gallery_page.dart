@@ -186,9 +186,8 @@ class GalleryContentPage extends HookConsumerWidget {
     if (displayData == null && galleryAsync.hasError) {
       return HosErrorState(
         message: galleryAsync.error.toString(),
-        onRetry: () => ref.invalidate(
-          galleryProvider(url: url, page: currentPage.value),
-        ),
+        onRetry: () =>
+            ref.invalidate(galleryProvider(url: url, page: currentPage.value)),
       );
     }
 
@@ -288,7 +287,7 @@ class _GalleryGrid extends StatelessWidget {
                   crossAxisCount: 2,
                   mainAxisSpacing: 12,
                   crossAxisSpacing: 12,
-                  childAspectRatio: 16 / 10,
+                  childAspectRatio: 4 / 3,
                   // mainAxisExtent: 100,
                 ),
                 itemCount: items.length,

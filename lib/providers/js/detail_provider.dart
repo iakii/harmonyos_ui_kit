@@ -1,84 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:hooks_riverpod/hooks_riverpod.dart' show Ref;
-import 'package:isolate_manager/isolate_manager.dart';
 import 'package:js_runtime/js_runtime.dart';
+import 'package:logger/logger.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../models/plugin/gallery_item.dart';
 
 part 'detail_provider.g.dart';
-
-// ─── Worker 参数 ────────────────────────────────────────────────
-
-typedef _DetailParams = ({String jsSource, String safeUrl});
-
-// ─── 后台 Worker ─────────────────────────────────────────────────
-
-/// 后台 isolate：独立创建 JsEngine → eval(getDetails) → 回传进度和结果。
-///
-/// 使用 [IsolateManagerFunction.customFunction]：
-/// - [onInit] 初始化 flutter_rust_bridge
-/// - [onEvent] 每次 compute() 调用时执行 JS eval，进度通过 sendResult() 实时回传
-@pragma('vm:entry-point')
-void _detailWorker(dynamic params) {
-  JsEngine? engine;
-
-  IsolateManagerFunction.customFunction<Map<String, dynamic>, _DetailParams>(
-    params,
-    onInit: (controller) async {
-      await JsRuntimeLib.init();
-    },
-    onEvent: (controller, message) async {
-      engine = JsEngine.create(
-        runtimeOptions: JsRuntimeOptions(
-          builtins: JsBuiltinOptions.web(),
-          info: 'meitule-detail',
-        ),
-        modules: [JsModule(name: 'client', source: message.jsSource)],
-      );
-
-      try {
-        final handler = JsCallbackHandler(engine!);
-
-        handler.register('postMessage', (args) {
-          final type = args[0].asStringSync ?? '';
-          final data = args[1].asStringSync ?? '';
-          if (type == 'sendChannelDetails') {
-            controller.sendResult({'type': 'progress', 'data': data});
-          }
-          return JsValue.none();
-        });
-
-        final result = await handler.eval('''
-          (async () => {
-            const { default: client } = await import('client');
-            return await client.getDetails(${message.safeUrl}, true);
-          })()
-        ''');
-
-        final finalJson = result.asStringSync ?? '';
-
-        controller.sendResult({'type': 'final', 'data': finalJson});
-      } catch (e) {
-        controller.sendResult({'type': 'error', 'data': e.toString()});
-      } finally {
-        engine?.close();
-        engine = null;
-      }
-
-      return <String, dynamic>{}; // autoHandleResult=false 时不使用
-    },
-    onDispose: (controller) {
-      engine?.cancelEval();
-      engine?.close();
-    },
-    autoHandleException: false,
-    autoHandleResult: false,
-  );
-}
 
 // ─── 加载状态 ───────────────────────────────────────────────────
 
@@ -103,146 +34,207 @@ class DetailLoadState {
     isLoading: true,
     isComplete: false,
   );
+
+  factory DetailLoadState.error(String message) => DetailLoadState(
+        items: [],
+        isLoading: false,
+        isComplete: true,
+        error: message,
+      );
+
+  factory DetailLoadState.done({
+    required List<DetailItem> items,
+    int batchCount = 0,
+  }) =>
+      DetailLoadState(
+        items: items,
+        isLoading: false,
+        isComplete: true,
+        batchCount: batchCount,
+      );
+}
+
+// ─── Worker 通信 ────────────────────────────────────────────────
+
+/// 主 isolate → Worker。
+class _WorkerInit {
+  final String jsSource;
+  final String url;
+  final SendPort sendPort;
+  const _WorkerInit({
+    required this.jsSource,
+    required this.url,
+    required this.sendPort,
+  });
+}
+
+abstract class _Msg {
+  static const progress = 'progress';
+  static const final_ = 'final';
+  static const error = 'error';
 }
 
 // ─── Provider ───────────────────────────────────────────────────
 
 /// 详情加载 Provider（按链接 URL）。
 ///
-/// 每次请求在独立 isolate 中执行，通过 [Stream] 渐进式回传进度和结果。
-/// [ref.onDispose] 确保 isolate 被杀死，不残留后台线程。
+/// JS 执行（含 fetch）在后台 isolate 中进行，不阻塞 UI。
+/// [Isolate.kill] 同步杀死线程，dispose 可靠终止。
+/// 局部变量 + 字段双引用确保任意 await 间隙都不会漏杀。
 @riverpod
-Stream<DetailLoadState> detailLoad(Ref ref, String url) {
-  final controller = StreamController<DetailLoadState>();
-  IsolateManager<Map<String, dynamic>, _DetailParams>? isolate;
-  var disposed = false;
+class DetailLoad extends _$DetailLoad {
+  final _controller = StreamController<DetailLoadState>();
+  Isolate? _isolate;
+  ReceivePort? _receivePort;
 
-  Future<void> startLoading() async {
-    controller.add(DetailLoadState.initial);
+  @override
+  Stream<DetailLoadState> build(String url) {
+    ref.onDispose(() {
+      Logger().d('DetailLoadProvider: dispose, kill isolate');
+
+      // 先关 ReceivePort，强制 await for 退出（避免等消息卡住）
+      _receivePort?.close();
+      _receivePort = null;
+
+      try { _isolate?.kill(priority: Isolate.immediate); } catch (_) {}
+      _isolate = null;
+
+      if (!_controller.isClosed) _controller.close();
+    });
+
+    _startLoad(url);
+    return _controller.stream;
+  }
+
+  Future<void> _startLoad(String url) async {
+    _controller.add(DetailLoadState.initial);
+    Isolate? isolate; // 局部引用，finally 中兜底 kill
 
     try {
-      // 1. 主 isolate 加载 JS 源码
       final jsSource = await rootBundle.loadString('assets/js/meitule.js');
-      final safeUrl = jsonEncode(url);
+      if (_controller.isClosed) return;
 
-      // 2. 创建 isolate manager
-      isolate =
-          IsolateManager<Map<String, dynamic>, _DetailParams>.createCustom(
-            _detailWorker,
-            workerName: 'detail',
-          );
-
-      if (disposed) return;
-
-      // 3. 执行 JS eval（后台 isolate）
-      final progressJsons = <String>[];
-
-      final result = await isolate!.compute(
-        (jsSource: jsSource, safeUrl: safeUrl),
-        callback: (event) {
-          if (disposed || controller.isClosed) return true;
-
-          final type = event['type'] as String;
-
-          if (type == 'progress') {
-            progressJsons.add(event['data'] as String);
-
-            // 逐批展示进度
-            for (var i = 0; i < progressJsons.length; i++) {
-              if (disposed || controller.isClosed) break;
-
-              try {
-                final json =
-                    jsonDecode(progressJsons[i]) as Map<String, dynamic>;
-                final listJson = json['list'] as List<dynamic>?;
-                if (listJson != null) {
-                  final items = listJson
-                      .map(
-                        (e) => DetailItem.fromJson(e as Map<String, dynamic>),
-                      )
-                      .toList();
-
-                  controller.add(
-                    DetailLoadState(
-                      items: items,
-                      isLoading: true,
-                      isComplete: false,
-                      batchCount: i + 1,
-                    ),
-                  );
-                }
-              } catch (_) {}
-            }
-          }
-
-          return type == 'final' || type == 'error';
-        },
+      _receivePort = ReceivePort();
+      isolate = await Isolate.spawn(
+        _detailWorker,
+        _WorkerInit(jsSource: jsSource, url: url, sendPort: _receivePort!.sendPort),
+        debugName: 'DetailWorker',
       );
+      _isolate = isolate;
+      if (_controller.isClosed) return; // dispose 可能在 spawn await 期间触发
 
-      if (disposed || controller.isClosed) return;
-
-      // 4. 处理最终结果
-      final type = result['type'] as String;
-      final data = result['data'] as String?;
-
-      if (type == 'error') {
-        controller.add(
-          DetailLoadState(
-            items: [],
-            isLoading: false,
-            isComplete: true,
-            error: data,
-          ),
-        );
-      } else if (data == null || data.isEmpty || data == 'undefined') {
-        controller.add(
-          DetailLoadState(
-            items: [],
-            isLoading: false,
-            isComplete: true,
-            error: '获取详情失败: 返回数据为空',
-          ),
-        );
-      } else {
-        final parsed = jsonDecode(data) as Map<String, dynamic>;
-        final detail = GalleryDetail.fromJson(parsed);
-
-        controller.add(
-          DetailLoadState(
-            items: detail.list,
-            isLoading: false,
-            isComplete: true,
-            batchCount: progressJsons.length,
-          ),
-        );
+      await for (final message in _receivePort!) {
+        if (_controller.isClosed) break;
+        _handleMessage(message as Map<String, Object?>);
       }
     } catch (e) {
-      if (!disposed && !controller.isClosed) {
-        controller.add(
-          DetailLoadState(
-            items: [],
-            isLoading: false,
-            isComplete: true,
-            error: e.toString(),
-          ),
-        );
+      if (!_controller.isClosed) {
+        _controller.add(DetailLoadState.error(e.toString()));
       }
-    }
-
-    if (!disposed && !controller.isClosed) {
-      controller.close();
+    } finally {
+      try { isolate?.kill(priority: Isolate.immediate); } catch (_) {}
+      _isolate = null;
+      _receivePort?.close();
+      _receivePort = null;
     }
   }
 
-  // 启动加载
-  startLoading();
+  void _handleMessage(Map<String, Object?> msg) {
+    switch (msg['type'] as String) {
+      case _Msg.progress:
+        final jsons = (msg['data'] as List).cast<String>();
+        _emitProgress(jsons, msg['batch'] as int);
+      case _Msg.final_:
+        _emitFinal(msg['data'] as String, msg['batch'] as int);
+      case _Msg.error:
+        _controller.add(DetailLoadState.error(msg['error'] as String));
+    }
+  }
 
-  // 确保 dispose 时 isolate 可被杀死
-  ref.onDispose(() {
-    disposed = true;
-    isolate?.stop();
-    controller.close();
-  });
+  // ─── 状态推送 ─────────────────────────────────────────────────
 
-  return controller.stream;
+  void _emitProgress(List<String> jsons, int batch) {
+    for (var i = 0; i < jsons.length; i++) {
+      if (_controller.isClosed) return;
+      try {
+        final json = jsonDecode(jsons[i]) as Map<String, dynamic>;
+        final list = json['list'] as List<dynamic>?;
+        if (list != null) {
+          _controller.add(
+            DetailLoadState(
+              items: list
+                  .map((e) => DetailItem.fromJson(e as Map<String, dynamic>))
+                  .toList(),
+              isLoading: true,
+              isComplete: false,
+              batchCount: i + 1,
+            ),
+          );
+        }
+      } catch (_) {}
+    }
+  }
+
+  void _emitFinal(String jsonStr, int batch) {
+    if (jsonStr.isEmpty || jsonStr == 'undefined') {
+      _controller.add(DetailLoadState.error('获取详情失败: 返回数据为空'));
+      return;
+    }
+    final parsed = jsonDecode(jsonStr) as Map<String, dynamic>;
+    final detail = GalleryDetail.fromJson(parsed);
+    _controller.add(DetailLoadState.done(items: detail.list, batchCount: batch));
+  }
+}
+
+// ─── 后台 Worker ─────────────────────────────────────────────────
+
+@pragma('vm:entry-point')
+Future<void> _detailWorker(_WorkerInit init) async {
+  await JsRuntimeLib.init();
+
+  final engine = JsEngine.create(
+    runtimeOptions: JsRuntimeOptions(
+      builtins: JsBuiltinOptions.web(),
+      info: 'meitule-detail',
+    ),
+    modules: [JsModule(name: 'client', source: init.jsSource)],
+  );
+
+  try {
+    final handler = JsCallbackHandler(engine);
+    final progressJsons = <String>[];
+    var batch = 0;
+
+    handler.register('postMessage', (args) {
+      final type = args[0].asStringSync ?? '';
+      final data = args[1].asStringSync ?? '';
+      if (type != 'sendChannelDetails') return JsValue.none();
+
+      progressJsons.add(data);
+      batch++;
+      init.sendPort.send({
+        'type': _Msg.progress,
+        'data': List<String>.from(progressJsons),
+        'batch': batch,
+      });
+      return JsValue.none();
+    });
+
+    final result = await handler.eval('''
+      (async () => {
+        const { default: client } = await import('client');
+        return await client.getDetails(${jsonEncode(init.url)}, true);
+      })()
+    ''');
+
+    init.sendPort.send({
+      'type': _Msg.final_,
+      'data': result.asStringSync ?? '',
+      'batch': batch,
+    });
+  } catch (e) {
+    init.sendPort.send({'type': _Msg.error, 'error': e.toString()});
+  } finally {
+    engine.close();
+  }
 }

@@ -6,7 +6,7 @@ part of 'detail_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$detailLoadHash() => r'64b9676cc39b6902e4961c59239fb3aef963e199';
+String _$detailLoadHash() => r'd3240402c3a579ff49dd00ab05a11b33721b5973';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -29,36 +29,47 @@ class _SystemHash {
   }
 }
 
+abstract class _$DetailLoad
+    extends BuildlessAutoDisposeStreamNotifier<DetailLoadState> {
+  late final String url;
+
+  Stream<DetailLoadState> build(String url);
+}
+
 /// 详情加载 Provider（按链接 URL）。
 ///
-/// 每次请求在独立 isolate 中执行，通过 [Stream] 渐进式回传进度和结果。
-/// [ref.onDispose] 确保 isolate 被杀死，不残留后台线程。
+/// JS 执行（含 fetch）在后台 isolate 中进行，不阻塞 UI。
+/// [Isolate.kill] 同步杀死线程，dispose 可靠终止。
+/// 局部变量 + 字段双引用确保任意 await 间隙都不会漏杀。
 ///
-/// Copied from [detailLoad].
-@ProviderFor(detailLoad)
+/// Copied from [DetailLoad].
+@ProviderFor(DetailLoad)
 const detailLoadProvider = DetailLoadFamily();
 
 /// 详情加载 Provider（按链接 URL）。
 ///
-/// 每次请求在独立 isolate 中执行，通过 [Stream] 渐进式回传进度和结果。
-/// [ref.onDispose] 确保 isolate 被杀死，不残留后台线程。
+/// JS 执行（含 fetch）在后台 isolate 中进行，不阻塞 UI。
+/// [Isolate.kill] 同步杀死线程，dispose 可靠终止。
+/// 局部变量 + 字段双引用确保任意 await 间隙都不会漏杀。
 ///
-/// Copied from [detailLoad].
+/// Copied from [DetailLoad].
 class DetailLoadFamily extends Family<AsyncValue<DetailLoadState>> {
   /// 详情加载 Provider（按链接 URL）。
   ///
-  /// 每次请求在独立 isolate 中执行，通过 [Stream] 渐进式回传进度和结果。
-  /// [ref.onDispose] 确保 isolate 被杀死，不残留后台线程。
+  /// JS 执行（含 fetch）在后台 isolate 中进行，不阻塞 UI。
+  /// [Isolate.kill] 同步杀死线程，dispose 可靠终止。
+  /// 局部变量 + 字段双引用确保任意 await 间隙都不会漏杀。
   ///
-  /// Copied from [detailLoad].
+  /// Copied from [DetailLoad].
   const DetailLoadFamily();
 
   /// 详情加载 Provider（按链接 URL）。
   ///
-  /// 每次请求在独立 isolate 中执行，通过 [Stream] 渐进式回传进度和结果。
-  /// [ref.onDispose] 确保 isolate 被杀死，不残留后台线程。
+  /// JS 执行（含 fetch）在后台 isolate 中进行，不阻塞 UI。
+  /// [Isolate.kill] 同步杀死线程，dispose 可靠终止。
+  /// 局部变量 + 字段双引用确保任意 await 间隙都不会漏杀。
   ///
-  /// Copied from [detailLoad].
+  /// Copied from [DetailLoad].
   DetailLoadProvider call(String url) {
     return DetailLoadProvider(url);
   }
@@ -87,20 +98,23 @@ class DetailLoadFamily extends Family<AsyncValue<DetailLoadState>> {
 
 /// 详情加载 Provider（按链接 URL）。
 ///
-/// 每次请求在独立 isolate 中执行，通过 [Stream] 渐进式回传进度和结果。
-/// [ref.onDispose] 确保 isolate 被杀死，不残留后台线程。
+/// JS 执行（含 fetch）在后台 isolate 中进行，不阻塞 UI。
+/// [Isolate.kill] 同步杀死线程，dispose 可靠终止。
+/// 局部变量 + 字段双引用确保任意 await 间隙都不会漏杀。
 ///
-/// Copied from [detailLoad].
-class DetailLoadProvider extends AutoDisposeStreamProvider<DetailLoadState> {
+/// Copied from [DetailLoad].
+class DetailLoadProvider
+    extends AutoDisposeStreamNotifierProviderImpl<DetailLoad, DetailLoadState> {
   /// 详情加载 Provider（按链接 URL）。
   ///
-  /// 每次请求在独立 isolate 中执行，通过 [Stream] 渐进式回传进度和结果。
-  /// [ref.onDispose] 确保 isolate 被杀死，不残留后台线程。
+  /// JS 执行（含 fetch）在后台 isolate 中进行，不阻塞 UI。
+  /// [Isolate.kill] 同步杀死线程，dispose 可靠终止。
+  /// 局部变量 + 字段双引用确保任意 await 间隙都不会漏杀。
   ///
-  /// Copied from [detailLoad].
+  /// Copied from [DetailLoad].
   DetailLoadProvider(String url)
     : this._internal(
-        (ref) => detailLoad(ref as DetailLoadRef, url),
+        () => DetailLoad()..url = url,
         from: detailLoadProvider,
         name: r'detailLoadProvider',
         debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -124,13 +138,16 @@ class DetailLoadProvider extends AutoDisposeStreamProvider<DetailLoadState> {
   final String url;
 
   @override
-  Override overrideWith(
-    Stream<DetailLoadState> Function(DetailLoadRef provider) create,
-  ) {
+  Stream<DetailLoadState> runNotifierBuild(covariant DetailLoad notifier) {
+    return notifier.build(url);
+  }
+
+  @override
+  Override overrideWith(DetailLoad Function() create) {
     return ProviderOverride(
       origin: this,
       override: DetailLoadProvider._internal(
-        (ref) => create(ref as DetailLoadRef),
+        () => create()..url = url,
         from: from,
         name: null,
         dependencies: null,
@@ -142,7 +159,8 @@ class DetailLoadProvider extends AutoDisposeStreamProvider<DetailLoadState> {
   }
 
   @override
-  AutoDisposeStreamProviderElement<DetailLoadState> createElement() {
+  AutoDisposeStreamNotifierProviderElement<DetailLoad, DetailLoadState>
+  createElement() {
     return _DetailLoadProviderElement(this);
   }
 
@@ -162,13 +180,14 @@ class DetailLoadProvider extends AutoDisposeStreamProvider<DetailLoadState> {
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin DetailLoadRef on AutoDisposeStreamProviderRef<DetailLoadState> {
+mixin DetailLoadRef on AutoDisposeStreamNotifierProviderRef<DetailLoadState> {
   /// The parameter `url` of this provider.
   String get url;
 }
 
 class _DetailLoadProviderElement
-    extends AutoDisposeStreamProviderElement<DetailLoadState>
+    extends
+        AutoDisposeStreamNotifierProviderElement<DetailLoad, DetailLoadState>
     with DetailLoadRef {
   _DetailLoadProviderElement(super.provider);
 

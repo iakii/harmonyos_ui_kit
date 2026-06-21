@@ -98,3 +98,49 @@ rohos_app/
 `js_runtime` 使用 **flutter_rust_bridge** 作为唯一的 FFI 通道。入口类 `JsRuntimeLib`（定义于 `lib/src/frb/frb_generated.dart`），通过 `JsRuntimeLib.init()` 初始化后，调用自动生成的 Wrapper 函数（如 `hello()`）即可执行 Rust 代码。
 
 不再使用 `dart:ffi` 直接调用或 `ffigen` 生成绑定的旧方案。
+
+### JS Eval 调用模式
+
+**推荐模式** — 直接在主 isolate 使用 `JsCallbackHandler`（同步 JS↔Dart 回调）：
+```dart
+final engine = JsEngine.create(...);
+final handler = JsCallbackHandler(engine);
+
+// 注册同步回调（JS 端 name(args) 立刻拿到返回值，无需 await）
+handler.register('postMessage', (args) { ... });
+
+// 执行 JS，cancelSignal 用于页面 dispose 时取消 eval
+final result = await handler.eval(code, cancelSignal: cancelCompleter.future);
+```
+
+**取消模式** — dispose 时通过 `Completer<void>` 触发 `JsEngine.cancelEval()`：
+```dart
+final cancelCompleter = Completer<void>();
+
+// eval 中传入 cancelSignal
+final result = await handler.eval(code, cancelSignal: cancelCompleter.future);
+
+// dispose 时
+ref.onDispose(() {
+  if (!cancelCompleter.isCompleted) cancelCompleter.complete();
+  engine.close();
+});
+```
+
+**错误处理** — 区分取消（正常终止）与真实错误：
+```dart
+} on JsError catch (e) {
+  if (e is JsError_Cancelled) return;  // dispose 触发，不报错
+  // ... 处理其他 JsError 变体
+}
+```
+
+**共享引擎模式**（跨页面复用，见 `gallery_provider.dart`）：
+- 使用 `IsolateManager` 在后台 isolate 中持有长生命周期 `JsEngine`
+- `onDispose` 回调中先调 `cancelEval()` 再 `close()`
+- 适用于需要反复调用的场景（如分页列表）
+
+**独立引擎模式**（单次请求，见 `detail_provider.dart`）：
+- 主 isolate 中直接创建 `JsEngine`，请求完成后立即 `close()`
+- 通过 `cancelCompleter` + `cancelSignal` 支持页面返回时即时取消
+- 适用于一次性数据获取场景

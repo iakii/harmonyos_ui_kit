@@ -6,30 +6,7 @@ part of 'gallery_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$galleryIsolateHash() => r'66f53bdd93ab90d0f080e21f0abf2890b767fd9e';
-
-/// 全局 Gallery isolate 管理器（单例，所有图集请求复用同一 isolate）。
-///
-/// `keepAlive: true` 确保 isolate 跨请求存活，但 dispose 时会被杀死。
-///
-/// Copied from [galleryIsolate].
-@ProviderFor(galleryIsolate)
-final galleryIsolateProvider =
-    FutureProvider<IsolateManager<String, _GalleryParams>>.internal(
-      galleryIsolate,
-      name: r'galleryIsolateProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$galleryIsolateHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef GalleryIsolateRef =
-    FutureProviderRef<IsolateManager<String, _GalleryParams>>;
-String _$galleryHash() => r'1f5f236d3f72294758fd75f814723378cfa60918';
+String _$galleryHash() => r'1130ab6ca47c5b43695fec089462392fcbebcfb9';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -54,8 +31,7 @@ class _SystemHash {
 
 /// 图集列表 Provider（按 URL 和页码分页）。
 ///
-/// 依赖 [galleryIsolateProvider] 在后台 isolate 执行 JS eval，
-/// 不阻塞主 UI 线程。dispose 时不杀死共享 isolate，仅取消本次请求。
+/// 依赖 [jsEngineProvider] 的共享 JsEngine，JS eval 在工作线程执行不阻塞 UI。
 ///
 /// Copied from [gallery].
 @ProviderFor(gallery)
@@ -63,23 +39,20 @@ const galleryProvider = GalleryFamily();
 
 /// 图集列表 Provider（按 URL 和页码分页）。
 ///
-/// 依赖 [galleryIsolateProvider] 在后台 isolate 执行 JS eval，
-/// 不阻塞主 UI 线程。dispose 时不杀死共享 isolate，仅取消本次请求。
+/// 依赖 [jsEngineProvider] 的共享 JsEngine，JS eval 在工作线程执行不阻塞 UI。
 ///
 /// Copied from [gallery].
 class GalleryFamily extends Family<AsyncValue<GalleryPageData>> {
   /// 图集列表 Provider（按 URL 和页码分页）。
   ///
-  /// 依赖 [galleryIsolateProvider] 在后台 isolate 执行 JS eval，
-  /// 不阻塞主 UI 线程。dispose 时不杀死共享 isolate，仅取消本次请求。
+  /// 依赖 [jsEngineProvider] 的共享 JsEngine，JS eval 在工作线程执行不阻塞 UI。
   ///
   /// Copied from [gallery].
   const GalleryFamily();
 
   /// 图集列表 Provider（按 URL 和页码分页）。
   ///
-  /// 依赖 [galleryIsolateProvider] 在后台 isolate 执行 JS eval，
-  /// 不阻塞主 UI 线程。dispose 时不杀死共享 isolate，仅取消本次请求。
+  /// 依赖 [jsEngineProvider] 的共享 JsEngine，JS eval 在工作线程执行不阻塞 UI。
   ///
   /// Copied from [gallery].
   GalleryProvider call({required String url, required int page}) {
@@ -108,15 +81,13 @@ class GalleryFamily extends Family<AsyncValue<GalleryPageData>> {
 
 /// 图集列表 Provider（按 URL 和页码分页）。
 ///
-/// 依赖 [galleryIsolateProvider] 在后台 isolate 执行 JS eval，
-/// 不阻塞主 UI 线程。dispose 时不杀死共享 isolate，仅取消本次请求。
+/// 依赖 [jsEngineProvider] 的共享 JsEngine，JS eval 在工作线程执行不阻塞 UI。
 ///
 /// Copied from [gallery].
 class GalleryProvider extends AutoDisposeFutureProvider<GalleryPageData> {
   /// 图集列表 Provider（按 URL 和页码分页）。
   ///
-  /// 依赖 [galleryIsolateProvider] 在后台 isolate 执行 JS eval，
-  /// 不阻塞主 UI 线程。dispose 时不杀死共享 isolate，仅取消本次请求。
+  /// 依赖 [jsEngineProvider] 的共享 JsEngine，JS eval 在工作线程执行不阻塞 UI。
   ///
   /// Copied from [gallery].
   GalleryProvider({required String url, required int page})
