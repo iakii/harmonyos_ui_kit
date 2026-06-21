@@ -4,9 +4,12 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:isolate_manager/isolate_manager.dart';
 import 'package:js_runtime/js_runtime.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../models/app_exception.dart';
 import '../../models/plugin/gallery_item.dart';
+
+part 'gallery_provider.g.dart';
 
 // ─── Worker 参数 ────────────────────────────────────────────────
 
@@ -39,8 +42,7 @@ void _galleryWorker(dynamic params) {
       );
 
       final result = await engine!.eval(
-        code:
-            '''
+        code: '''
         (async () => {
           const { default: client } = await import('client');
           return await client.getPage(${message.safeUrl}, ${message.page});
@@ -59,44 +61,46 @@ void _galleryWorker(dynamic params) {
 // ─── Providers ──────────────────────────────────────────────────
 
 /// 全局 Gallery isolate 管理器（单例，所有图集请求复用同一 isolate）。
-final galleryIsolateProvider =
-    FutureProvider<IsolateManager<String, _GalleryParams>>((ref) async {
-      final isolate = IsolateManager<String, _GalleryParams>.createCustom(
-        _galleryWorker,
-        workerName: 'gallery',
-      );
+///
+/// `keepAlive: true` 确保 isolate 跨请求存活，但 dispose 时会被杀死。
+@Riverpod(keepAlive: true)
+Future<IsolateManager<String, _GalleryParams>> galleryIsolate(Ref ref) async {
+  final isolate = IsolateManager<String, _GalleryParams>.createCustom(
+    _galleryWorker,
+    workerName: 'gallery',
+  );
 
-      ref.onDispose(() => isolate.stop());
-      await isolate.start(); // 显式启动，触发 onInit（FRB 初始化）
-      return isolate;
-    });
+  ref.onDispose(() => isolate.stop());
+  await isolate.start(); // 显式启动，触发 onInit（FRB 初始化）
+  return isolate;
+}
 
 /// 图集列表 Provider（按 URL 和页码分页）。
 ///
 /// 依赖 [galleryIsolateProvider] 在后台 isolate 执行 JS eval，
-/// 不阻塞主 UI 线程。
-final galleryProvider =
-    FutureProvider.family<GalleryPageData, ({String url, int page})>((
-      ref,
-      params,
-    ) async {
-      final isolate = await ref.watch(galleryIsolateProvider.future);
+/// 不阻塞主 UI 线程。dispose 时不杀死共享 isolate，仅取消本次请求。
+@riverpod
+Future<GalleryPageData> gallery(
+  Ref ref, {
+  required String url,
+  required int page,
+}) async {
+  final isolate = await ref.watch(galleryIsolateProvider.future);
 
-      final (:url, :page) = params;
-      final safeUrl = jsonEncode(url);
-      final jsSource = await rootBundle.loadString('assets/js/meitule.js');
+  final safeUrl = jsonEncode(url);
+  final jsSource = await rootBundle.loadString('assets/js/meitule.js');
 
-      final jsonStr = await isolate.compute((
-        jsSource: jsSource,
-        safeUrl: safeUrl,
-        page: page,
-      ));
+  final jsonStr = await isolate.compute((
+    jsSource: jsSource,
+    safeUrl: safeUrl,
+    page: page,
+  ));
 
-      if (jsonStr.isEmpty || jsonStr == 'undefined') {
-        throw NetworkException('获取图集数据失败: $url');
-      }
+  if (jsonStr.isEmpty || jsonStr == 'undefined') {
+    throw NetworkException('获取图集数据失败: $url');
+  }
 
-      return GalleryPageData.fromJson(
-        jsonDecode(jsonStr) as Map<String, dynamic>,
-      );
-    });
+  return GalleryPageData.fromJson(
+    jsonDecode(jsonStr) as Map<String, dynamic>,
+  );
+}

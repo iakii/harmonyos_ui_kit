@@ -23,7 +23,6 @@ class GalleryPage extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final pluginInfoAsync = ref.watch(pluginInfoProvider);
     final selectedTabIndex = useState(0);
-    final currentPage = useState(1);
 
     final title = pluginInfoAsync.valueOrNull?.name ?? '图集';
 
@@ -37,7 +36,6 @@ class GalleryPage extends HookConsumerWidget {
         data: (pluginInfo) => _GalleryBody(
           pluginInfo: pluginInfo,
           selectedTabIndex: selectedTabIndex,
-          currentPage: currentPage,
         ),
       ),
     );
@@ -45,16 +43,18 @@ class GalleryPage extends HookConsumerWidget {
 }
 
 /// 插件信息加载完成后渲染的主体内容。
+///
+/// 仅负责协调菜单栏和图集内容区，两者通过 [currentUrl] 解耦：
+/// - [_GalleryMenuBar] 接收 [menus]，回传选中的菜单索引
+/// - [_GalleryContent] 只接收 [url]，独立管理分页/缓存/错误
 class _GalleryBody extends HookConsumerWidget {
   const _GalleryBody({
     required this.pluginInfo,
     required this.selectedTabIndex,
-    required this.currentPage,
   });
 
   final PluginInfo pluginInfo;
   final ValueNotifier<int> selectedTabIndex;
-  final ValueNotifier<int> currentPage;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -67,98 +67,127 @@ class _GalleryBody extends HookConsumerWidget {
         ? '$website${currentMenu.path}'
         : website;
 
-    // 请求图集数据
+    return Column(
+      children: [
+        // ── 菜单 TabBar（与内容区解耦）──
+        if (menus.isNotEmpty)
+          _GalleryMenuBar(
+            menus: menus,
+            selectedIndex: selectedTabIndex.value,
+            onChanged: (i) {
+              selectedTabIndex.value = i;
+            },
+          ),
+        const SizedBox(height: 8),
+
+        // ── 图集内容区（仅依赖 url）──
+        Expanded(child: GalleryContentPage(url: currentUrl)),
+      ],
+    );
+  }
+}
+
+/// 菜单 TabBar 组件。
+///
+/// 纯展示组件，不关心数据来源，通过 [onChanged] 回传选中索引。
+class _GalleryMenuBar extends StatelessWidget {
+  const _GalleryMenuBar({
+    required this.menus,
+    required this.selectedIndex,
+    required this.onChanged,
+  });
+
+  final List<MenuItem> menus;
+  final int selectedIndex;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return HosTabBar(
+      tabs: menus.map((m) => m.label).toList(),
+      selectedIndex: selectedIndex,
+      onChanged: onChanged,
+    );
+  }
+}
+
+/// 图集内容区。
+///
+/// 完全自包含：根据 [url] 加载图集、管理分页、缓存及错误处理。
+/// 与菜单完全解耦 —— url 变化时自动重置页码。
+class GalleryContentPage extends HookConsumerWidget {
+  const GalleryContentPage({
+    super.key,
+    required this.url,
+    this.showAppBar = false,
+    this.title = '图集',
+  });
+
+  /// 请求图集的目标 URL。
+  final String url;
+  final bool showAppBar;
+  final String title;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // ── 内部状态 ──
+    final currentPage = useState(1);
+
+    // url 变化时重置页码
+    useEffect(() {
+      currentPage.value = 1;
+      return null;
+    }, [url]);
+
     final galleryAsync = ref.watch(
-      galleryProvider((url: currentUrl, page: currentPage.value)),
+      galleryProvider(url: url, page: currentPage.value),
     );
 
     // ── 缓存上一次成功数据，避免分页/切 Tab 时内容闪烁 ──
     final cachedData = useState<GalleryPageData?>(null);
-    // 记录上一次的错误，避免重复弹 SnackBar
     final lastErrorKey = useRef<String?>(null);
 
-    ref.listen(galleryProvider((url: currentUrl, page: currentPage.value)), (
+    ref.listen(galleryProvider(url: url, page: currentPage.value), (
       prev,
       next,
     ) {
-      // 成功获取数据 → 更新缓存
       final data = next.valueOrNull;
       if (data != null) {
         cachedData.value = data;
-        lastErrorKey.value = null; // 清除错误记录
+        lastErrorKey.value = null;
         return;
       }
-      // 出错且有缓存数据 → 弹 SnackBar 提示（防重复）
       if (next.hasError && cachedData.value != null) {
         final errMsg = next.error.toString();
         if (errMsg != lastErrorKey.value) {
           lastErrorKey.value = errMsg;
-          _showErrorSnackBar(
+          _showGalleryErrorSnackBar(
             context,
             errMsg,
             () => ref.invalidate(
-              galleryProvider((url: currentUrl, page: currentPage.value)),
+              galleryProvider(url: url, page: currentPage.value),
             ),
           );
         }
       }
     });
 
-    // 决定实际展示的数据和过渡状态
     final displayData = galleryAsync.valueOrNull ?? cachedData.value;
     final isTransitioning = galleryAsync.isLoading && cachedData.value != null;
 
-    return HosPage(
-      body: Column(
-        children: [
-          // ── 菜单 TabBar ──
-          if (menus.isNotEmpty)
-            HosTabBar(
-              tabs: menus.map((m) => m.label).toList(),
-              selectedIndex: selectedTabIndex.value,
-              onChanged: (i) {
-                selectedTabIndex.value = i;
-                currentPage.value = 1; // 切换 tab 时重置页码
-              },
-            ),
-          const SizedBox(height: 8),
+    // ── 状态渲染 ──
 
-          // ── 图集网格 ──
-          Expanded(
-            child: _buildBody(
-              galleryAsync: galleryAsync,
-              displayData: displayData,
-              isTransitioning: isTransitioning,
-              currentUrl: currentUrl,
-              currentPage: currentPage.value,
-              ref: ref,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 根据状态渲染不同内容。
-  Widget _buildBody({
-    required AsyncValue<GalleryPageData> galleryAsync,
-    required GalleryPageData? displayData,
-    required bool isTransitioning,
-    required String currentUrl,
-    required int currentPage,
-    required WidgetRef ref,
-  }) {
-    // 首次加载（无缓存数据）→ 全屏加载动画
+    // 首次加载（无缓存数据）
     if (displayData == null && galleryAsync.isLoading) {
       return const Center(child: HosLoading(message: '加载中…'));
     }
 
-    // 出错且无缓存数据 → 全屏错误
+    // 出错且无缓存数据
     if (displayData == null && galleryAsync.hasError) {
       return HosErrorState(
         message: galleryAsync.error.toString(),
         onRetry: () => ref.invalidate(
-          galleryProvider((url: currentUrl, page: currentPage)),
+          galleryProvider(url: url, page: currentPage.value),
         ),
       );
     }
@@ -173,44 +202,50 @@ class _GalleryBody extends HookConsumerWidget {
       return const HosEmptyState(message: '暂无图片');
     }
 
-    return _GalleryGrid(
-      items: displayData.list,
-      hasMore: displayData.hasMore,
-      currentPage: currentPage,
-      totalPage: displayData.totalPage,
-      isLoading: isTransitioning,
-      onPrevPage: () {
-        if (currentPage > 1) {
-          this.currentPage.value--;
-        }
-      },
-      onNextPage: () {
-        if (displayData.hasMore) {
-          this.currentPage.value++;
-        }
-      },
+    return HosPage(
+      showAppBar: showAppBar,
+      title: title,
+      leading: showAppBar ? const BackIcon() : null,
+      //  showAppBar: showAppBar,
+      body: _GalleryGrid(
+        items: displayData.list,
+        hasMore: displayData.hasMore,
+        currentPage: currentPage.value,
+        totalPage: displayData.totalPage,
+        isLoading: isTransitioning,
+        onPrevPage: () {
+          if (currentPage.value > 1) {
+            currentPage.value--;
+          }
+        },
+        onNextPage: () {
+          if (displayData.hasMore) {
+            currentPage.value++;
+          }
+        },
+      ),
     );
   }
+}
 
-  /// 显示出错 SnackBar（有缓存数据时不会全屏错误，而是轻量提示）。
-  static void _showErrorSnackBar(
-    BuildContext context,
-    String message,
-    VoidCallback onRetry,
-  ) {
-    // 延迟到下一帧，避免在 build 期间操作 overlay
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('加载失败: $message'),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 4),
-          action: SnackBarAction(label: '重试', onPressed: onRetry),
-        ),
-      );
-    });
-  }
+/// 显示出错 SnackBar（有缓存数据时不会全屏错误，而是轻量提示）。
+void _showGalleryErrorSnackBar(
+  BuildContext context,
+  String message,
+  VoidCallback onRetry,
+) {
+  // 延迟到下一帧，避免在 build 期间操作 overlay
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('加载失败: $message'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(label: '重试', onPressed: onRetry),
+      ),
+    );
+  });
 }
 
 /// GridView 网格展示 + 底部分页控件。
@@ -349,8 +384,8 @@ class _GridItemCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => context.push(
-        item.to == 'gallery' ? '/js_gallery' : '/js_gallery_detail',
-        extra: item.link,
+        item.to == 'gallery' ? '/js_gallery_list' : '/js_gallery_detail',
+        extra: {"title": item.title, 'url': item.link},
       ),
       child: HosCard(
         margin: EdgeInsets.zero,

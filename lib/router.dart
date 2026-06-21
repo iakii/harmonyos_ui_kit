@@ -6,7 +6,7 @@ import 'pages/glass_kit.dart' show GlassKitPage;
 import 'pages/glass_page.dart' show GlassPage;
 import 'pages/immersive.dart' show ImmersivePage;
 import 'pages/icon_preview.dart' show IconPreviewPage;
-import 'pages/js/gallery_page.dart' show GalleryPage;
+import 'pages/js/gallery_page.dart' show GalleryContentPage, GalleryPage;
 import 'pages/js/detail_page.dart' show DetailPage;
 import 'pages/layout.dart' show AppLayout;
 
@@ -59,7 +59,20 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/js_gallery_detail',
-      builder: (context, state) => DetailPage(url: state.extra as String),
+      builder: (context, state) => DetailPage(
+        url: (state.extra as Map<String, dynamic>)['url'] as String,
+        title: (state.extra as Map<String, dynamic>)['title'] as String? ?? '',
+      ),
+    ),
+    GoRoute(
+      path: '/js_gallery_list',
+      builder: (context, state) {
+        return GalleryContentPage(
+          url: (state.extra as Map<String, dynamic>)['url'] as String,
+          title: (state.extra as Map<String, dynamic>)['title'] as String,
+          showAppBar: true,
+        );
+      },
     ),
     GoRoute(
       path: '/immersive',

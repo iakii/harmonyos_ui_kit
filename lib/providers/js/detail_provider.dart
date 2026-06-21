@@ -2,11 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart' show Ref;
 import 'package:isolate_manager/isolate_manager.dart';
 import 'package:js_runtime/js_runtime.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../models/plugin/gallery_item.dart';
+
+part 'detail_provider.g.dart';
 
 // ─── Worker 参数 ────────────────────────────────────────────────
 
@@ -55,6 +58,7 @@ void _detailWorker(dynamic params) {
         ''');
 
         final finalJson = result.asStringSync ?? '';
+
         controller.sendResult({'type': 'final', 'data': finalJson});
       } catch (e) {
         controller.sendResult({'type': 'error', 'data': e.toString()});
@@ -94,146 +98,144 @@ class DetailLoadState {
   );
 }
 
-// ─── StreamProvider ─────────────────────────────────────────────
+// ─── Provider ───────────────────────────────────────────────────
 
 /// 详情加载 Provider（按链接 URL）。
 ///
-/// 使用 [IsolateManager.createCustom] 管理后台 isolate：
-/// - 进度数据通过 callback 实时推送到 Stream
-/// - 最终结果通过 compute() 返回
-/// - dispose 时 isolate.stop() 安全终止（不损坏 FFI 资源）
-final detailLoadProvider = StreamProvider.autoDispose
-    .family<DetailLoadState, String>((ref, url) {
-      final controller = StreamController<DetailLoadState>();
-      IsolateManager<Map<String, dynamic>, _DetailParams>? isolate;
-      var disposed = false;
+/// 每次请求在独立 isolate 中执行，通过 [Stream] 渐进式回传进度和结果。
+/// [ref.onDispose] 确保 isolate 被杀死，不残留后台线程。
+@riverpod
+Stream<DetailLoadState> detailLoad(Ref ref, String url) {
+  final controller = StreamController<DetailLoadState>();
+  IsolateManager<Map<String, dynamic>, _DetailParams>? isolate;
+  var disposed = false;
 
-      Future<void> startLoading() async {
-        controller.add(DetailLoadState.initial);
+  Future<void> startLoading() async {
+    controller.add(DetailLoadState.initial);
 
-        try {
-          // 1. 主 isolate 加载 JS 源码
-          final jsSource = await rootBundle.loadString('assets/js/meitule.js');
-          final safeUrl = jsonEncode(url);
+    try {
+      // 1. 主 isolate 加载 JS 源码
+      final jsSource = await rootBundle.loadString('assets/js/meitule.js');
+      final safeUrl = jsonEncode(url);
 
-          // 2. 创建 isolate manager
-          isolate =
-              IsolateManager<Map<String, dynamic>, _DetailParams>.createCustom(
-                _detailWorker,
-                workerName: 'detail',
-              );
-
-          if (disposed) return;
-
-          // 3. 执行 JS eval（后台 isolate）
-          final progressJsons = <String>[];
-
-          final result = await isolate!.compute(
-            (jsSource: jsSource, safeUrl: safeUrl),
-            callback: (event) {
-              if (disposed || controller.isClosed) return true;
-
-              final type = event['type'] as String;
-
-              if (type == 'progress') {
-                progressJsons.add(event['data'] as String);
-
-                // 逐批展示进度
-                for (var i = 0; i < progressJsons.length; i++) {
-                  if (disposed || controller.isClosed) break;
-
-                  try {
-                    final json =
-                        jsonDecode(progressJsons[i]) as Map<String, dynamic>;
-                    final listJson = json['list'] as List<dynamic>?;
-                    if (listJson != null) {
-                      final items = listJson
-                          .map(
-                            (e) =>
-                                DetailItem.fromJson(e as Map<String, dynamic>),
-                          )
-                          .toList();
-
-                      controller.add(
-                        DetailLoadState(
-                          items: items,
-                          isLoading: true,
-                          isComplete: false,
-                          batchCount: i + 1,
-                        ),
-                      );
-                    }
-                  } catch (_) {}
-                }
-              }
-
-              return type == 'final' || type == 'error';
-            },
+      // 2. 创建 isolate manager
+      isolate =
+          IsolateManager<Map<String, dynamic>, _DetailParams>.createCustom(
+            _detailWorker,
+            workerName: 'detail',
           );
 
-          if (disposed || controller.isClosed) return;
+      if (disposed) return;
 
-          // 4. 处理最终结果
-          final type = result['type'] as String;
-          final data = result['data'] as String?;
+      // 3. 执行 JS eval（后台 isolate）
+      final progressJsons = <String>[];
 
-          if (type == 'error') {
-            controller.add(
-              DetailLoadState(
-                items: [],
-                isLoading: false,
-                isComplete: true,
-                error: data,
-              ),
-            );
-          } else if (data == null || data.isEmpty || data == 'undefined') {
-            controller.add(
-              DetailLoadState(
-                items: [],
-                isLoading: false,
-                isComplete: true,
-                error: '获取详情失败: 返回数据为空',
-              ),
-            );
-          } else {
-            final parsed = jsonDecode(data) as Map<String, dynamic>;
-            final detail = GalleryDetail.fromJson(parsed);
+      final result = await isolate!.compute(
+        (jsSource: jsSource, safeUrl: safeUrl),
+        callback: (event) {
+          if (disposed || controller.isClosed) return true;
 
-            controller.add(
-              DetailLoadState(
-                items: detail.list,
-                isLoading: false,
-                isComplete: true,
-                batchCount: progressJsons.length,
-              ),
-            );
+          final type = event['type'] as String;
+
+          if (type == 'progress') {
+            progressJsons.add(event['data'] as String);
+
+            // 逐批展示进度
+            for (var i = 0; i < progressJsons.length; i++) {
+              if (disposed || controller.isClosed) break;
+
+              try {
+                final json =
+                    jsonDecode(progressJsons[i]) as Map<String, dynamic>;
+                final listJson = json['list'] as List<dynamic>?;
+                if (listJson != null) {
+                  final items = listJson
+                      .map(
+                        (e) => DetailItem.fromJson(e as Map<String, dynamic>),
+                      )
+                      .toList();
+
+                  controller.add(
+                    DetailLoadState(
+                      items: items,
+                      isLoading: true,
+                      isComplete: false,
+                      batchCount: i + 1,
+                    ),
+                  );
+                }
+              } catch (_) {}
+            }
           }
-        } catch (e) {
-          if (!disposed && !controller.isClosed) {
-            controller.add(
-              DetailLoadState(
-                items: [],
-                isLoading: false,
-                isComplete: true,
-                error: e.toString(),
-              ),
-            );
-          }
-        }
 
-        if (!disposed && !controller.isClosed) {
-          controller.close();
-        }
+          return type == 'final' || type == 'error';
+        },
+      );
+
+      if (disposed || controller.isClosed) return;
+
+      // 4. 处理最终结果
+      final type = result['type'] as String;
+      final data = result['data'] as String?;
+
+      if (type == 'error') {
+        controller.add(
+          DetailLoadState(
+            items: [],
+            isLoading: false,
+            isComplete: true,
+            error: data,
+          ),
+        );
+      } else if (data == null || data.isEmpty || data == 'undefined') {
+        controller.add(
+          DetailLoadState(
+            items: [],
+            isLoading: false,
+            isComplete: true,
+            error: '获取详情失败: 返回数据为空',
+          ),
+        );
+      } else {
+        final parsed = jsonDecode(data) as Map<String, dynamic>;
+        final detail = GalleryDetail.fromJson(parsed);
+
+        controller.add(
+          DetailLoadState(
+            items: detail.list,
+            isLoading: false,
+            isComplete: true,
+            batchCount: progressJsons.length,
+          ),
+        );
       }
+    } catch (e) {
+      if (!disposed && !controller.isClosed) {
+        controller.add(
+          DetailLoadState(
+            items: [],
+            isLoading: false,
+            isComplete: true,
+            error: e.toString(),
+          ),
+        );
+      }
+    }
 
-      // 启动加载
-      startLoading();
+    if (!disposed && !controller.isClosed) {
+      controller.close();
+    }
+  }
 
-      ref.onDispose(() {
-        disposed = true;
-        isolate?.stop(); // 安全：自动触发 onDispose → engine.close()
-        controller.close();
-      });
+  // 启动加载
+  startLoading();
 
-      return controller.stream;
-    });
+  // 确保 dispose 时 isolate 可被杀死
+  ref.onDispose(() {
+    disposed = true;
+    isolate?.stop();
+    controller.close();
+  });
+
+  return controller.stream;
+}

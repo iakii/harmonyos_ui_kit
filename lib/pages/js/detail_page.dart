@@ -13,10 +13,13 @@ import '../../providers/js/detail_provider.dart';
 /// 利用 JS 端 __postMessage('sendChannelDetails', ...) 的进度消息
 /// 逐步展示数据，最后展示完整结果。
 class DetailPage extends HookConsumerWidget {
-  const DetailPage({super.key, required this.url});
+  const DetailPage({super.key, required this.url, this.title = '详情'});
 
   /// 图集详情链接（从 GoRouter state.extra 传入）。
   final String url;
+
+  /// 图集详情标题（从 GoRouter state.extra 传入）。
+  final String title;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,7 +30,7 @@ class DetailPage extends HookConsumerWidget {
 
     return HosPage(
       leading: const BackIcon(),
-      title: '详情',
+      title: title,
       backgroundColor: HarmonyTheme.of(context).surfaceColor,
       showAppBar: true,
       body: asyncState.when(
