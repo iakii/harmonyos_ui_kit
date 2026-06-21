@@ -7,10 +7,24 @@ function waitTime(duration = 300) {
   });
 }
 
-
+/**
+ *  @description: 美图乐妹子
+ *  @website: https://www.meitula.org
+ *   class BaseClient {
+ *      info:{
+ *        type: string;
+ *        version: string;
+ *        website: string;
+ *        name: string;
+ *        menus: { label: string; path: string }[];
+ *      }
+ *     async fetchGallery(url: string, page: number): Promise<string> ;
+ *     async fetchDetails(url: string): Promise<string> ;
+ *   }
+ *
+ */
 class Client {
-
-  _pluginInfo = {
+  info = {
     type: "photo",
     version: "1.0.0",
     website: "https://www.meitula.org",
@@ -23,27 +37,19 @@ class Client {
       { label: "年榜", path: "/year" },
       { label: "最热", path: "/top" },
       { label: "模特", path: "/model" },
-      { label: "机构", path: "/page/jigou" },
+      // { label: "机构", path: "/page/jigou" },
       { label: "标签", path: "/photo" },
     ],
   }
+
   get pluginInfo() {
-    return JSON.stringify(this._pluginInfo);
+    return JSON.stringify(this.info);
   }
-
-  getOriginFromUrl(url) {
-    const match = url.match(/^(https?:\/\/[^/]+)/);
-    return match ? match[1] : null;
-  }
-
-  async getPage(url, page = 1) {
+  async fetchGallery(url, page = 1) {
     if (page != 1) {
       url = `${url}/index_${page}.html`
     }
-
     console.log("getPage 请求的url：", url);
-
-    const parsedUrl = this._pluginInfo.website;
 
     try {
       const html = await fetch(url).then((response) => response.text());
@@ -62,14 +68,14 @@ class Client {
           const count = titles[i]?.text || '';
           const href = linkEl.attrs.find(a => a[0] === 'href')?.[1] || '';
           results.push({
-            link: parsedUrl + href,
-            cover: this._pluginInfo.website + imgEl?.attrs?.find(a => a[0] === 'data-src')?.[1] || '',
+            link: this.info.website + href,
+            cover: this.info.website + imgEl?.attrs?.find(a => a[0] === 'data-src')?.[1] || '',
             title: (imgEl?.attrs?.find(a => a[0] === 'alt')?.[1] || '') + ` (${count})`,
             to: "gallery"
           });
         }
         console.log("获取到的模特数量：", results);
-        const totalPages = await this.getPhotosPageSize(html);
+        const totalPages = await this._parsePageSize(html, dom);
         console.log("获取到的总页数：", totalPages);
         return JSON.stringify({
           list: results,
@@ -88,12 +94,12 @@ class Client {
         const imgEl = imgs[i];
         const href = linkEl.attrs.find(a => a[0] === 'href')?.[1] || '';
         results.push({
-          link: parsedUrl + href,
+          link: this.info.website + href,
           cover: imgEl?.attrs?.find(a => a[0] === 'data-src')?.[1] || '',
           title: imgEl?.attrs?.find(a => a[0] === 'alt')?.[1] || '',
         });
       }
-      const totalPages = await this.getPhotosPageSize(html);
+      const totalPages = await this._parsePageSize(html, dom);
       console.log("获取到的页数：", totalPages);
       // console.log("获取数据：", results);
       return JSON.stringify({
@@ -107,7 +113,7 @@ class Client {
     }
   }
 
-  async getDetails(url, parsePage = true) {
+  async fetchDetails(url, parsePage = true) {
     // 创建 URL 对象
     const items = await this._parse(url, parsePage);
     return JSON.stringify({
@@ -119,7 +125,6 @@ class Client {
 
   async _parse(url, parsePage = true) {
     const html = await fetch(url).then((response) => response.text());
-    // const parsedUrl = getOriginFromUrl( url );
     console.log("是否获取页数：", parsePage);
 
     const dom = await import('dom');
@@ -161,7 +166,7 @@ class Client {
 
     // 获取总页数
     if (parsePage) {
-      const totalPages = await this.getPhotosPageSize(html);
+      const totalPages = await this._parsePageSize(html, dom);
       for (let index = 2; index < +totalPages; index++) {
         console.log("获取第几页：", index, "总页数：", totalPages);
         const pageUrl = `${url.replace(".html", `_${index}.html`)}`;
@@ -185,12 +190,7 @@ class Client {
     return items;
   }
 
-
-
-
-  async getPhotosPageSize(html) {
-    const dom = await import('dom');
-
+  async _parsePageSize(html, dom) {
     // 用 DOM 查询分页链接替代正则
     const pageLinks = JSON.parse(dom.querySelectorAll(html, 'li.page-item a.page-link'));
 

@@ -35,12 +35,9 @@ class _JsParsePageState extends State<JsParsePage> {
     var mockHtml = '<a class="list-img" href="/photo/123.html"><img data-src="https://example.com/1.jpg" alt="写真集 A"></a>';
     mockHtml += '<li class="page-item"><a class="page-link" href="index_3.html"></a></li>';
 
-    var totalPages = client.getPhotosPageSize(mockHtml);
-    console.log('step:', 1);
-    postMessage('pageSize', JSON.stringify({ totalPages: totalPages }));
  console.log('step:', 2);
     // 3. 在线获取图片列表（需要 JS 运行时支持 fetch）:
-    var result = await client.getPage('https://www.meitula.org/', 1);
+    var result = await client.fetchGallery('https://www.meitula.org/', 1);
      console.log('step:', 3);
     postMessage('pageResult', result);
      console.log('step:', 4);
@@ -48,11 +45,8 @@ class _JsParsePageState extends State<JsParsePage> {
     // 4. 处理结果并回传给 Dart 端
     // const sumRes= await sum(1,2);
     // console.log('sum(1,2) =', sumRes);
-setTimeout(()=>{
-console.log(12112222222222222222212)
-},2000)
 
-    return JSON.stringify({ name: info.name, totalPages: totalPages });
+    return JSON.stringify({ name: info.name, result, mockHtml});
 })()
 ''',
   );
@@ -166,7 +160,7 @@ console.log(12112222222222222222212)
     error.value = null;
 
     try {
-      final output = await engine.evalRaw(code: code);
+      final output = await engine.eval(code: code);
       result.value = fmtVal(output);
       // 更新内存信息
       final used = engine.memoryUsage();

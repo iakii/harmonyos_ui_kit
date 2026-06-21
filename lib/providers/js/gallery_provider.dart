@@ -24,10 +24,11 @@ Future<GalleryPageData> gallery(
   final engine = await ref.watch(jsEngineProvider.future);
 
   final result = await engine.eval(
-    code: '''
+    code:
+        '''
     (async () => {
       const { default: client } = await import('client');
-      return await client.getPage(${jsonEncode(url)}, $page);
+      return await client.fetchGallery(${jsonEncode(url)}, $page);
     })()
   ''',
   );

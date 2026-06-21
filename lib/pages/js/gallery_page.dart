@@ -205,7 +205,6 @@ class GalleryContentPage extends HookConsumerWidget {
       showAppBar: showAppBar,
       title: title,
       leading: showAppBar ? const BackIcon() : null,
-      //  showAppBar: showAppBar,
       body: _GalleryGrid(
         items: displayData.list,
         hasMore: displayData.hasMore,

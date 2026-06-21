@@ -236,8 +236,9 @@ Future<void> _detailWorker(_WorkerInit init) async {
       code:
           '''
       (async () => {
+        const dom = await import('dom');
         const { default: client } = await import('client');
-        return await client.getDetails(${jsonEncode(init.url)}, true);
+        return await client.fetchDetails(${jsonEncode(init.url)});
       })()
     ''',
     );
