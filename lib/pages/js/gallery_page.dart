@@ -9,6 +9,7 @@ import 'package:rohos_app/pages/js/setting_panel.dart' show SettingPanel;
 import 'package:rohos_app/providers/js/settings_provider.dart'
     show jsSourceProvider;
 import 'package:rohos_app/router.dart';
+import 'package:rohos_app/widgets/loading.dart' show Loading;
 
 import '../../models/plugin/gallery_item.dart';
 import '../../models/plugin/plugin_info.dart';
@@ -35,6 +36,13 @@ class GalleryPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final assets = ref.watch(jsSourceProvider);
+
+    // if (1 == 1) {
+    //   return Scaffold(
+    //     appBar: HosAppBar(leading: Icon(HMIcons.harmonyos), title: '图集'),
+    //     body: Center(child: Loading(size: 200)),
+    //   );
+    // }
 
     if (assets == null || assets == '') {
       return Scaffold(
@@ -394,7 +402,7 @@ class _GalleryGrid extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               child: Container(
                 color: Colors.black.withValues(alpha: 0.06),
-                child: const Center(child: Icon(HMIcons.loading, size: 36)),
+                child: const Center(child: Loading()),
               ),
             ),
           ),
@@ -528,9 +536,7 @@ class _GridItemCard extends StatelessWidget {
                     if (state.extendedImageLoadState == LoadState.loading) {
                       return Container(
                         color: theme.surfaceColor,
-                        child: const Center(
-                          child: Icon(HMIcons.loading, size: 32),
-                        ),
+                        child: const Center(child: Loading(size: 64)),
                       );
                     }
                     if (state.extendedImageLoadState == LoadState.failed) {

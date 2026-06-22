@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart' show useState;
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:rohos_app/providers/js/settings_provider.dart';
+import 'package:rohos_app/router.dart' show router;
 import 'package:styled_widget/styled_widget.dart';
 
 class SettingPanel extends HookConsumerWidget {
@@ -23,6 +24,7 @@ class SettingPanel extends HookConsumerWidget {
     return SafeArea(
       child: Scaffold(
         appBar: HosAppBar(
+          height: 56,
           backgroundColor: HarmonyTheme.of(context).surfaceColor,
           title: '设置',
           leading: SizedBox.shrink(),
@@ -30,7 +32,6 @@ class SettingPanel extends HookConsumerWidget {
         body: ListView.separated(
           padding: EdgeInsets.all(16),
           itemCount: items.length,
-
           itemBuilder: (BuildContext context, int index) {
             final item = items[index];
             return Row(
@@ -38,17 +39,17 @@ class SettingPanel extends HookConsumerWidget {
                     SizedBox(width: 12),
                     Text(
                           (item['title'] ?? "${index + 1}").substring(0, 1),
-                          style: TextStyle(color: Colors.white, fontSize: 23),
+                          style: TextStyle(color: Colors.white, fontSize: 18),
                         )
                         .fontFamily('HarmonyOs Sans SC')
                         .center()
-                        .width(66)
-                        .height(66)
+                        .width(36)
+                        .height(36)
                         .backgroundColor(theme.accentColor)
                         .clipRRect(all: 12),
                     SizedBox(width: 12),
                     Text(item['title'] ?? '')
-                        .fontSize(24)
+                        .fontSize(14)
                         .fontWeight(FontWeight.bold)
                         .fontFamily('HarmonyOs Sans SC')
                         .expanded(),
@@ -92,6 +93,7 @@ class SettingPanel extends HookConsumerWidget {
                       if (Navigator.of(context).canPop()) {
                         Navigator.of(context).pop();
                       }
+                      router.go('/js_gallery');
                     },
                   ),
                 ),

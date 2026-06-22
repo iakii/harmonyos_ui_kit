@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:hm_icon/hm_icon.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:rohos_app/widgets/loading.dart' show Loading;
 
 import '../../models/plugin/gallery_item.dart';
 import '../../providers/js/detail_provider.dart';
@@ -149,36 +150,27 @@ class _DetailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = HarmonyTheme.of(context);
+    // final theme = HarmonyTheme.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Text(item.cover ?? '-'),
         if (item.cover != null)
           ExtendedImage.network(
             item.cover!,
-            // mode: ExtendedImageMode.gesture,
-            // heroBuilderForSlidingPage: (widget) {
-            //   return Scaffold(body: widget);
+            // headers: {
+            //   "referrerpolicy": "unsafe-url",
+            //   "referer": 'https://www.kaizty.com/',
             // },
             fit: BoxFit.cover,
             cache: true,
             loadStateChanged: (state) {
               if (state.extendedImageLoadState == LoadState.loading) {
-                return Container(
-                  height: 200,
-                  color: theme.surfaceColor,
-                  child: const Center(child: Icon(HMIcons.loading, size: 32)),
-                );
+                return Loading(size: 32);
               }
               if (state.extendedImageLoadState == LoadState.failed) {
-                return Container(
-                  height: 200,
-                  color: theme.surfaceColor,
-                  child: const Center(
-                    child: Icon(HMIcons.artGallery, size: 32),
-                  ),
-                );
+                return SizedBox.shrink();
               }
               return null; // 默认显示图片
             },
