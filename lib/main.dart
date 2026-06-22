@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:rohos_app/services/perfs.dart' show perfs;
 
 import 'app.dart';
 
@@ -15,6 +16,7 @@ Future<void> main() async {
 
   // 在 runApp 之前初始化 Rust FFI，避免组件树中的 FutureProvider 竞态
   // await RustLib.init();
+  await perfs.init();
 
   runApp(const ProviderScope(child: MyApp()));
 }

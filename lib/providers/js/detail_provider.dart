@@ -6,6 +6,8 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:js_runtime/js_runtime.dart';
 import 'package:logger/logger.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:rohos_app/providers/js/settings_provider.dart'
+    show jsSourceProvider;
 
 import '../../models/plugin/gallery_item.dart';
 
@@ -112,7 +114,8 @@ class DetailLoad extends _$DetailLoad {
     Isolate? isolate; // 局部引用，finally 中兜底 kill
 
     try {
-      final jsSource = await rootBundle.loadString('assets/js/meitule.js');
+      final assets = ref.watch(jsSourceProvider);
+      final jsSource = await rootBundle.loadString(assets ?? '');
       if (_controller.isClosed) return;
 
       _receivePort = ReceivePort();

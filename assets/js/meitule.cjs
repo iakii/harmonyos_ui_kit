@@ -87,17 +87,37 @@ class Client {
       }
 
       // 遍历每个 a.list-img，从其 innerHtml 中提取 img 信息
-      const links = JSON.parse(dom.querySelectorAll(html, "a.list-img"));
+      const links = JSON.parse(dom.querySelectorAll(html, "li.list-item"));
 
       const results = links.map((linkEl) => {
         const imgRaw = dom.querySelector(linkEl.innerHtml, "img");
+        const numRaw = dom.querySelector(linkEl.innerHtml, "div.list-num");
         const imgTag = imgRaw !== null ? JSON.parse(imgRaw) : null;
         const cover = (imgTag?.attrs?.find((a) => a[0] === "data-src")?.[1] || "");
-        return {
-          link: base + (linkEl.attrs.find((a) => a[0] === "href")?.[1] || ""),
+        const tagsRaw = JSON.parse(dom.querySelectorAll(linkEl.innerHtml, "dd")) ?? [];
+        const href =  JSON.parse(dom.querySelector(linkEl.innerHtml, "a.list-img")) || null;
+
+        const tags = tagsRaw.map((tagEl) => {
+          const a = JSON.parse(dom.querySelector(tagEl?.innerHtml, "a")) || null;
+          const href = a?.attrs?.find((a) => a[0] === "href")?.[1] || "";
+          return {
+            href: base + href,
+            title: a?.text || "",
+            to: "gallery",
+          };
+
+        });
+
+        console.log(linkEl)
+
+        const result = {
+          link: base + (href?.attrs?.find((a) => a[0] === "href")?.[1] || ""),
           cover: cover,
-          title: imgTag?.attrs?.find((a) => a[0] === "alt")?.[1] || "",
+          title: `【${JSON.parse(numRaw).text}】${imgTag?.attrs?.find((a) => a[0] === "alt")?.[1] || ""}`,
+          tags,
         };
+        console.log("result:", result);
+        return result;
       });
       const totalPages = await this._parsePageSize(html, dom);
       return JSON.stringify({

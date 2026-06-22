@@ -6,11 +6,14 @@ class GalleryItem {
   // 跳转类型，默认为 "page"，表示打开详情页面；如果是 "gallery"，则打开图集页面。
   final String to;
 
+  final List<DetailItem> tags;
+
   const GalleryItem({
     required this.link,
     required this.cover,
     required this.title,
     required this.to,
+    required this.tags,
   });
 
   factory GalleryItem.fromJson(Map<String, dynamic> json) => GalleryItem(
@@ -18,6 +21,11 @@ class GalleryItem {
     cover: json['cover'] as String? ?? '',
     title: json['title'] as String? ?? '',
     to: json['to'] as String? ?? 'page',
+    tags:
+        (json['tags'] as List<dynamic>?)
+            ?.map((e) => DetailItem.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [],
   );
 }
 
@@ -52,13 +60,15 @@ class DetailItem {
   final String? cover;
   final String? href;
   final String? title;
+  final String? to;
 
-  const DetailItem({this.cover, this.href, this.title});
+  const DetailItem({this.cover, this.href, this.title, this.to});
 
   factory DetailItem.fromJson(Map<String, dynamic> json) => DetailItem(
     cover: json['cover'] as String?,
     href: json['href'] as String?,
     title: json['title'] as String?,
+    to: json['to'] as String?,
   );
 }
 

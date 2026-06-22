@@ -52,6 +52,16 @@ dependencies:
   hm_icon:
     path: packages/hm_icon
   extended_image: ^10.0.1
+  styled_widget: ^0.4.1
+  shared_preferences:
+    git:
+      url: https://gitcode.com/openharmony-tpc/flutter_packages.git
+      ref: master
+      path: packages/shared_preferences/shared_preferences
+  day: ^0.8.0
+  path_provider: ^2.1.0
+  path: ^1.9.1
+  flutter_riverpod: ^2.6.1
 
 dependency_overrides:
   path_provider:

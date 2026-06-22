@@ -7,8 +7,8 @@ function waitTime(duration = 300) {
 }
 
 /**
- *  @description: 美图乐妹子
- *  @website: https://www.meitula.org
+ *  @description: kaizty
+ *  @website: https://www.kaizty.com
  *   class BaseClient {
  *      info:{
  *        type: string;
@@ -26,18 +26,12 @@ class Client {
   info = {
     type: "photo",
     version: "1.0.0",
-    website: "https://www.meitula.org",
-    name: "美图乐妹子",
+    website: "https://www.kaizty.com",
+    name: "Kaizty",
     menus: [
       { label: "首页", path: "" },
-      { label: "最新", path: "/i" },
-      { label: "周榜", path: "/week" },
-      { label: "月榜", path: "/month" },
-      { label: "年榜", path: "/year" },
-      { label: "最热", path: "/top" },
-      { label: "模特", path: "/model" },
-      // { label: "机构", path: "/page/jigou" },
-      { label: "标签", path: "/photo" },
+      { label: "最热", path: "/hot" },
+      // { label: "标签", path: "/photo" },
     ],
   };
 
@@ -46,63 +40,35 @@ class Client {
   }
   async fetchGallery(url, page = 1) {
     if (page != 1) {
-      url = `${url}/index_${page}.html`;
+      url = `${url}/?page=${page}`;
     }
     console.log("getPage 请求的url：", url);
     const base = this.info.website;
     try {
       const html = await fetch(url).then((response) => response.text());
       const dom = await import("dom");
-      const isModelPage = url.includes("/model");
-      if (isModelPage) {
-        // 模特列表页：遍历 ul > li，从每个 li 中提取信息
-        const lis = JSON.parse(dom.querySelectorAll(html, "div.list ul li"));
-        const results = lis.map((li) => {
-          const aRaw = dom.querySelector(li.innerHtml, "a.list-img");
-          const aTag = aRaw !== null ? JSON.parse(aRaw) : null;
-          const imgRaw = dom.querySelector(li.innerHtml, "img");
-          const imgTag = imgRaw !== null ? JSON.parse(imgRaw) : null;
-          const spanRaw = dom.querySelector(li.innerHtml, "div.list-num span");
-          const spanTag = spanRaw !== null ? JSON.parse(spanRaw) : null;
-
-          const href = aTag?.attrs?.find((a) => a[0] === "href")?.[1] || "";
-          const src =
-            imgTag?.attrs?.find((a) => a[0] === "data-src")?.[1] || "";
-          const alt = imgTag?.attrs?.find((a) => a[0] === "alt")?.[1] || "";
-          const count = spanTag?.text || "";
-
-          return {
-            link: base + href,
-            cover: base + src,
-            title: alt ? `${alt} (${count})` : count,
-            to: "gallery",
-          };
-        });
-        const totalPages = await this._parsePageSize(html, dom);
-        return JSON.stringify({
-          list: results,
-          totalPage: totalPages,
-          current: page,
-        });
-      }
-
+      console.log('请求到数据', html.length)
       // 遍历每个 a.list-img，从其 innerHtml 中提取 img 信息
-      const links = JSON.parse(dom.querySelectorAll(html, "a.list-img"));
-
+      const links = JSON.parse(dom.querySelectorAll(html, "div.thumb-view"));
       const results = links.map((linkEl) => {
-        const imgRaw = dom.querySelector(linkEl.innerHtml, "img");
+        const imgRaw = dom.querySelector(linkEl.innerHtml, "img.xld");
+        console.log(0, imgRaw, linkEl)
         const imgTag = imgRaw !== null ? JSON.parse(imgRaw) : null;
-        const cover = (imgTag?.attrs?.find((a) => a[0] === "data-src")?.[1] || "");
+        const cover = (imgTag?.attrs?.find((a) => a[0] === "src")?.[1] || "");
+
+        const href = JSON.parse(dom.querySelector(linkEl.innerHtml, 'a.denomination'))
         return {
-          link: base + (linkEl.attrs.find((a) => a[0] === "href")?.[1] || ""),
+          link: base + (href.attrs.find((a) => a[0] === "href")?.[1] || ""),
           cover: cover,
           title: imgTag?.attrs?.find((a) => a[0] === "alt")?.[1] || "",
         };
       });
-      const totalPages = await this._parsePageSize(html, dom);
+
+      console.log(333, results)
+      // const totalPages = await this._parsePageSize(html, dom);
       return JSON.stringify({
         list: results,
-        totalPage: totalPages,
+        totalPage: Number.MAX_VALUE,
         current: page,
       });
     } catch (error) {
@@ -112,16 +78,38 @@ class Client {
 
   async fetchDetails(url, parsePage = true) {
     // 创建 URL 对象
-    const items = await this._parse(url, parsePage);
+    const dom = await import("dom");
+    const html = await fetch(url).then((response) => response.text());
+
+    console.log(`请求${url} 获得数据`, html.length)
+
+    const contentme = JSON.parse(dom.querySelector(html, 'div.contentme'))
+
+    console.log(111, contentme)
+
+    const image = JSON.parse(dom.querySelectorAll(contentme.innerHtml, 'img'))
+
+    const list = image.map(img => {
+
+      console.log(222, JSON.stringify(img))
+
+      return {
+        cover: img.attrs.find((a) => a[0] === "src")?.[1],
+        href: "",
+        title: "",
+      }
+    })
+
+    // console.log(222, image)
+
     return JSON.stringify({
-      list: items,
+      list,
       current: 1,
     });
   }
 
   async _parse(url, parsePage = true) {
     const dom = await import("dom");
-
     const html = await fetch(url).then((response) => response.text());
     // 获取 div.content 容器，再从其 innerHtml 中查询子元素
     const contentRaw = dom.querySelector(html, "div.content");

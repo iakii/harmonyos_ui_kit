@@ -98,10 +98,10 @@ macos-release:
 		@fastforge package --platform macos --targets dmg --skip-clean
 
 hap:
-		@flutter build hap --release --target-platform ohos-arm64
-# 		@dart pub global activate fastforge
-# 		@fastforge package --platform ohos --targets hap --build-target-platform ohos-arm64 --skip-clean
-# 		--release --aot --target-platform=android-arm64
+# 		@flutter build hap --release --target-platform ohos-arm64
+		@dart pub global activate fastforge
+		@fastforge package --platform ohos --targets hap --build-target-platform ohos-arm64 --skip-clean
+		--release --aot --target-platform=android-arm64
 
 # ============================================================
 # 环境配置

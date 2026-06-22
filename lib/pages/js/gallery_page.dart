@@ -5,6 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:hm_icon/hm_icon.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:rohos_app/pages/js/setting_panel.dart' show SettingPanel;
+import 'package:rohos_app/providers/js/settings_provider.dart'
+    show jsSourceProvider;
+import 'package:rohos_app/router.dart';
 
 import '../../models/plugin/gallery_item.dart';
 import '../../models/plugin/plugin_info.dart';
@@ -19,24 +23,67 @@ import '../../widgets/async_value_widget.dart';
 class GalleryPage extends HookConsumerWidget {
   const GalleryPage({super.key});
 
+  void showSetting(BuildContext context) {
+    showHosBottomSheet(
+      context: context,
+      builder: (context) {
+        return SettingPanel();
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final assets = ref.watch(jsSourceProvider);
+
+    if (assets == null) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: HosAppBar(
+          leading: Icon(HMIcons.harmonyos),
+          actions: [
+            IconButton(
+              icon: const Icon(HMIcons.squareGrid2x2CheckmarkTopleftFilled),
+              onPressed: () => showSetting(context),
+            ),
+          ],
+          title: '未配置资源',
+        ),
+      );
+    }
+
     final pluginInfoAsync = ref.watch(pluginInfoProvider);
     final selectedTabIndex = useState(0);
 
-    final title = pluginInfoAsync.valueOrNull?.name ?? '图集';
+    // final title = pluginInfoAsync.valueOrNull?.name ?? '图集';
 
-    return HosPage(
-      leading: const BackIcon(),
-      title: title,
-      body: AsyncValueWidget<PluginInfo>(
-        value: pluginInfoAsync,
-        error: (err, _) =>
-            HosErrorState(message: err.toString(), onRetry: null),
-        data: (pluginInfo) => _GalleryBody(
-          pluginInfo: pluginInfo,
-          selectedTabIndex: selectedTabIndex,
-        ),
+    // return HosPage(
+    //   // backgroundColor: HarmonyTheme.of(context).backgroundColor,
+    // actions: [
+    //   IconButton(
+    //     icon: const Icon(HMIcons.icSinglePage),
+    //     onPressed: () => router.push('/icons'),
+    //   ),
+    // ],
+    // leading: Icon(HMIcons.harmonyos, size: 24),
+    //   title: title,
+    //   showAppBar: true,
+    //   body: AsyncValueWidget<PluginInfo>(
+    //     value: pluginInfoAsync,
+    //     error: (err, _) =>
+    //         HosErrorState(message: err.toString(), onRetry: null),
+    //     data: (pluginInfo) => _GalleryBody(
+    //       pluginInfo: pluginInfo,
+    //       selectedTabIndex: selectedTabIndex,
+    //     ),
+    //   ),
+    // );
+    return AsyncValueWidget<PluginInfo>(
+      value: pluginInfoAsync,
+      error: (err, _) => HosErrorState(message: err.toString(), onRetry: null),
+      data: (pluginInfo) => _GalleryBody(
+        pluginInfo: pluginInfo,
+        selectedTabIndex: selectedTabIndex,
       ),
     );
   }
@@ -56,21 +103,45 @@ class _GalleryBody extends HookConsumerWidget {
   final PluginInfo pluginInfo;
   final ValueNotifier<int> selectedTabIndex;
 
+  void showSetting(BuildContext context) {
+    showHosBottomSheet(
+      context: context,
+      builder: (context) {
+        return SettingPanel();
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final menus = pluginInfo.menus;
     final website = pluginInfo.website;
-
     // 当前选中菜单对应的完整 URL
     final currentMenu = menus.isNotEmpty ? menus[selectedTabIndex.value] : null;
     final currentUrl = currentMenu != null
         ? '$website${currentMenu.path}'
         : website;
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: HosAppBar(
+        leading: Icon(HMIcons.harmonyos),
+        actions: [
+          IconButton(
+            icon: const Icon(HMIcons.houseFill),
+            onPressed: () => router.go('/'),
+          ),
 
-    return Column(
-      children: [
-        // ── 菜单 TabBar（与内容区解耦）──
-        if (menus.isNotEmpty)
+          IconButton(
+            icon: const Icon(HMIcons.squareGrid2x2CheckmarkTopleftFilled),
+            onPressed: () => showSetting(context),
+          ),
+        ],
+        title: pluginInfo.name,
+      ),
+      body: Stack(
+        children: [
+          GalleryContentPage(url: currentUrl),
+
           _GalleryMenuBar(
             menus: menus,
             selectedIndex: selectedTabIndex.value,
@@ -78,11 +149,8 @@ class _GalleryBody extends HookConsumerWidget {
               selectedTabIndex.value = i;
             },
           ),
-        const SizedBox(height: 8),
-
-        // ── 图集内容区（仅依赖 url）──
-        Expanded(child: GalleryContentPage(url: currentUrl)),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -179,31 +247,53 @@ class GalleryContentPage extends HookConsumerWidget {
 
     // 首次加载（无缓存数据）
     if (displayData == null && galleryAsync.isLoading) {
-      return const Center(child: HosLoading(message: '加载中…'));
+      return HosPage(
+        showAppBar: showAppBar,
+        title: title,
+        leading: showAppBar ? const BackIcon() : null,
+        body: const Center(child: HosLoading(message: '加载中…')),
+      );
     }
 
     // 出错且无缓存数据
     if (displayData == null && galleryAsync.hasError) {
-      return HosErrorState(
-        message: galleryAsync.error.toString(),
-        onRetry: () =>
-            ref.invalidate(galleryProvider(url: url, page: currentPage.value)),
+      return HosPage(
+        showAppBar: showAppBar,
+        title: title,
+        leading: showAppBar ? const BackIcon() : null,
+        body: HosErrorState(
+          message: galleryAsync.error.toString(),
+          onRetry: () => ref.invalidate(
+            galleryProvider(url: url, page: currentPage.value),
+          ),
+        ),
       );
     }
 
     // 极端情况：无数据可用
     if (displayData == null) {
-      return const HosEmptyState(message: '暂无数据');
+      return HosPage(
+        showAppBar: showAppBar,
+        title: title,
+        leading: showAppBar ? const BackIcon() : null,
+        body: const HosEmptyState(message: '暂无数据'),
+      );
     }
 
     // 空列表（非加载中）
     if (displayData.list.isEmpty && !isTransitioning) {
-      return const HosEmptyState(message: '暂无图片');
+      return HosPage(
+        showAppBar: showAppBar,
+        title: title,
+        leading: showAppBar ? const BackIcon() : null,
+        body: const HosEmptyState(message: '暂无图片'),
+      );
     }
 
     return HosPage(
       showAppBar: showAppBar,
       title: title,
+      backgroundColor: showAppBar ? null : Colors.transparent,
       leading: showAppBar ? const BackIcon() : null,
       body: _GalleryGrid(
         items: displayData.list,
@@ -273,99 +363,133 @@ class _GalleryGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = HarmonyTheme.of(context);
 
-    return Column(
+    return Stack(
       children: [
-        // ── 网格 + 加载遮罩 ──
-        Expanded(
-          child: Stack(
-            children: [
-              // 网格内容（切换分页时保持不变，不再闪烁）
-              GridView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 4 / 3,
-                  // mainAxisExtent: 100,
-                ),
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  return _GridItemCard(item: item);
-                },
+        // 网格内容（切换分页时保持不变，不再闪烁）
+        ListView(
+          children: [
+            SizedBox(height: 40),
+            GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              padding: const EdgeInsets.all(12),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 3 / 4,
+                // mainAxisExtent: 100,
               ),
-              // 加载遮罩（半透明 + 居中转圈，显示在上层）
-              if (isLoading)
-                Positioned.fill(
-                  child: AnimatedOpacity(
-                    opacity: 1.0,
-                    duration: const Duration(milliseconds: 200),
-                    child: Container(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      child: const Center(
-                        child: Icon(HMIcons.loading, size: 36),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return _GridItemCard(item: item);
+              },
+            ),
+          ],
         ),
-        // ── 分页控件 ──
-        if (totalPage > 1)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                HosTextButton(
-                  onPressed: currentPage > 1 && !isLoading ? onPrevPage : null,
-                  child: const Text('上一页'),
-                ),
-                const SizedBox(width: 12),
-
-                // 页码区（加载中显示小转圈）
-                SizedBox(
-                  width: 80,
-                  child: isLoading
-                      ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                '$currentPage/$totalPage',
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.typography.caption?.copyWith(
-                                  color: theme.textSecondaryColor,
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      : Text(
-                          '$currentPage / $totalPage',
-                          textAlign: TextAlign.center,
-                          style: theme.typography.caption,
-                        ),
-                ),
-
-                const SizedBox(width: 12),
-                HosTextButton(
-                  onPressed: hasMore && !isLoading ? onNextPage : null,
-                  child: const Text('下一页'),
-                ),
-              ],
+        // 加载遮罩（半透明 + 居中转圈，显示在上层）
+        if (isLoading)
+          Positioned.fill(
+            child: AnimatedOpacity(
+              opacity: 1.0,
+              duration: const Duration(milliseconds: 200),
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.06),
+                child: const Center(child: Icon(HMIcons.loading, size: 36)),
+              ),
             ),
           ),
-        SizedBox(height: 120),
+        // ── 分页控件 ──
+        if (totalPage > 1)
+          Pagination(
+            theme: theme,
+            currentPage: currentPage,
+            isLoading: isLoading,
+            onPrevPage: onPrevPage,
+            totalPage: totalPage,
+            hasMore: hasMore,
+            onNextPage: onNextPage,
+          ),
       ],
+    );
+  }
+}
+
+class Pagination extends StatelessWidget {
+  const Pagination({
+    super.key,
+    required this.theme,
+    required this.currentPage,
+    required this.isLoading,
+    required this.onPrevPage,
+    required this.totalPage,
+    required this.hasMore,
+    required this.onNextPage,
+  });
+
+  final HarmonyThemeData theme;
+  final int currentPage;
+  final bool isLoading;
+  final VoidCallback onPrevPage;
+  final int totalPage;
+  final bool hasMore;
+  final VoidCallback onNextPage;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Container(
+        width: 48,
+        height: 136,
+        decoration: BoxDecoration(
+          color: theme.surfaceColor.withValues(alpha: 0.9),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(24),
+            bottomLeft: Radius.circular(24),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            HosTextButton(
+              enabled: currentPage > 1 && !isLoading,
+              onPressed: currentPage > 1 && !isLoading ? onPrevPage : null,
+              child: Icon(HMIcons.chevronLeftCircle, size: 32),
+            ),
+
+            // 页码区（加载中显示小转圈）
+            SizedBox(
+              width: 80,
+              child: isLoading
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(strokeWidth: 1),
+                        ),
+                      ],
+                    )
+                  : null,
+              // : Text(
+              //     '$currentPage / $totalPage',
+              //     textAlign: TextAlign.center,
+              //     style: theme.typography.caption,
+              //   ),
+            ),
+
+            HosTextButton(
+              enabled: hasMore && !isLoading,
+              onPressed: hasMore && !isLoading ? onNextPage : null,
+              child: Icon(HMIcons.chevronRightCircle, size: 32),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -427,11 +551,67 @@ class _GridItemCard extends StatelessWidget {
             // 标题
             Padding(
               padding: const EdgeInsets.all(8),
-              child: Text(
-                item.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.typography.caption,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.typography.caption?.copyWith(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: "HarmonyOs Sans SC",
+                    ),
+                  ),
+                  if (item.tags.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Wrap(
+                        spacing: 4,
+                        runSpacing: 2,
+                        children: item.tags
+                            .map(
+                              (tag) => InkWell(
+                                onTap: () {
+                                  context.push(
+                                    tag.to == 'gallery'
+                                        ? "/js_gallery_list"
+                                        : '/js_gallery_detail',
+                                    extra: {
+                                      'title': tag.title ?? '',
+                                      'url': tag.href ?? '',
+                                    },
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: theme.accentColor.withValues(
+                                      alpha: 0.08,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    tag.title ?? '',
+                                    style: theme.typography.overline?.copyWith(
+                                      fontSize: 12,
+                                      fontFamily: "HarmonyOs Sans SC",
+                                      color: theme.accentColor.withValues(
+                                        alpha: 0.8,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                ],
               ),
             ),
           ],

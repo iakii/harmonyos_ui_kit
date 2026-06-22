@@ -127,7 +127,7 @@ class _DetailList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      padding: EdgeInsets.only(left: 12, right: 12, top: 12, bottom: 24),
+      // padding: EdgeInsets.only(left: 12, right: 12, top: 12, bottom: 24),
       itemCount: items.length,
       itemBuilder: (context, index) =>
           _DetailCard(item: items[index], index: index, total: items.length),
@@ -151,77 +151,39 @@ class _DetailCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = HarmonyTheme.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: HosCard(
-        padding: EdgeInsets.zero,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (item.cover != null)
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
-                child: ExtendedImage.network(
-                  item.cover!,
-                  fit: BoxFit.cover,
-                  cache: true,
-                  loadStateChanged: (state) {
-                    if (state.extendedImageLoadState == LoadState.loading) {
-                      return Container(
-                        height: 200,
-                        color: theme.surfaceColor,
-                        child: const Center(
-                          child: Icon(HMIcons.loading, size: 32),
-                        ),
-                      );
-                    }
-                    if (state.extendedImageLoadState == LoadState.failed) {
-                      return Container(
-                        height: 200,
-                        color: theme.surfaceColor,
-                        child: const Center(
-                          child: Icon(HMIcons.artGallery, size: 32),
-                        ),
-                      );
-                    }
-                    return null; // 默认显示图片
-                  },
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (item.title != null)
-                    Text(item.title!, style: theme.typography.body),
-                  if (item.href != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      item.href!,
-                      style: theme.typography.caption?.copyWith(
-                        color: theme.accentColor.normal,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-
-                  HosOutlinedButton(
-                    onPressed: () {},
-                    child: Text(
-                      'Index: ${index + 1} / $total',
-                      style: theme.typography.caption,
-                    ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (item.cover != null)
+          ExtendedImage.network(
+            item.cover!,
+            // mode: ExtendedImageMode.gesture,
+            // heroBuilderForSlidingPage: (widget) {
+            //   return Scaffold(body: widget);
+            // },
+            fit: BoxFit.cover,
+            cache: true,
+            loadStateChanged: (state) {
+              if (state.extendedImageLoadState == LoadState.loading) {
+                return Container(
+                  height: 200,
+                  color: theme.surfaceColor,
+                  child: const Center(child: Icon(HMIcons.loading, size: 32)),
+                );
+              }
+              if (state.extendedImageLoadState == LoadState.failed) {
+                return Container(
+                  height: 200,
+                  color: theme.surfaceColor,
+                  child: const Center(
+                    child: Icon(HMIcons.artGallery, size: 32),
                   ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+                );
+              }
+              return null; // 默认显示图片
+            },
+          ),
+      ],
     );
   }
 }

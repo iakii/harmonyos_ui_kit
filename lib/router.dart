@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart' hide HarmonyOSPage;
+import 'package:rohos_app/pages/js/layout.dart' show GalleryLayout;
 import 'pages/harmony.dart' show HarmonyOSPage;
 import 'pages/js_parse.dart' show JsParsePage;
 import 'pages/glass_kit.dart' show GlassKitPage;
@@ -14,7 +15,7 @@ import 'pages/layout.dart' show AppLayout;
 ///
 /// 使用 GoRouter ShellRoute，所有页面包裹在 AppLayout 中。
 final router = GoRouter(
-  initialLocation: '/js_parse',
+  initialLocation: '/js_gallery',
   errorBuilder: (context, state) => HosPage(
     title: 'Page Not Found',
     body: Column(
@@ -50,30 +51,37 @@ final router = GoRouter(
           path: '/icons',
           builder: (context, state) => const IconPreviewPage(),
         ),
+      ],
+    ),
+    ShellRoute(
+      routes: [
         GoRoute(
           path: '/js_gallery',
           builder: (context, state) => const GalleryPage(),
           routes: [],
         ),
+        GoRoute(
+          path: '/js_gallery_detail',
+          builder: (context, state) => DetailPage(
+            url: (state.extra as Map<String, dynamic>)['url'] as String,
+            title:
+                (state.extra as Map<String, dynamic>)['title'] as String? ?? '',
+          ),
+        ),
+        GoRoute(
+          path: '/js_gallery_list',
+          builder: (context, state) {
+            return GalleryContentPage(
+              url: (state.extra as Map<String, dynamic>)['url'] as String,
+              title: (state.extra as Map<String, dynamic>)['title'] as String,
+              showAppBar: true,
+            );
+          },
+        ),
       ],
+      builder: (context, state, child) => GalleryLayout(child: child),
     ),
-    GoRoute(
-      path: '/js_gallery_detail',
-      builder: (context, state) => DetailPage(
-        url: (state.extra as Map<String, dynamic>)['url'] as String,
-        title: (state.extra as Map<String, dynamic>)['title'] as String? ?? '',
-      ),
-    ),
-    GoRoute(
-      path: '/js_gallery_list',
-      builder: (context, state) {
-        return GalleryContentPage(
-          url: (state.extra as Map<String, dynamic>)['url'] as String,
-          title: (state.extra as Map<String, dynamic>)['title'] as String,
-          showAppBar: true,
-        );
-      },
-    ),
+
     GoRoute(
       path: '/immersive',
       builder: (context, state) => const ImmersivePage(),
