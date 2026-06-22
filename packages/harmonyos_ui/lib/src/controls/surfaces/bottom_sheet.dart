@@ -39,7 +39,7 @@ Future<T?> showHosBottomSheet<T>({
     builder: (context) {
       return SafeArea(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: MainAxisSize.max,
           children: [
             if (showDragHandle)
               Center(
@@ -58,10 +58,12 @@ Future<T?> showHosBottomSheet<T>({
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
                 child: Text(
                   title,
-                  style: theme.typography.title2?.copyWith(color: theme.textColor),
+                  style: theme.typography.title2?.copyWith(
+                    color: theme.textColor,
+                  ),
                 ),
               ),
-            Flexible(child: builder(context)),
+            Flexible(flex: 1, child: builder(context)),
           ],
         ),
       );

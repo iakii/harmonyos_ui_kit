@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
+import 'package:styled_widget/styled_widget.dart';
 
 class BackIcon extends StatelessWidget {
   const BackIcon({super.key});
@@ -20,15 +21,15 @@ class BackIcon extends StatelessWidget {
           ),
         ],
       ),
-      child: IconButton(
-        iconSize: 20,
-        splashRadius: 20,
-        icon: const Icon(Icons.arrow_back_ios_new),
-        onPressed: () {
-          Navigator.of(context).canPop() ? Navigator.of(context).pop() : null;
-          // Navigator.of(context).pop();
-        },
-      ),
+      child: const Icon(Icons.arrow_back_ios_new)
+          .clipRRect(all: 43)
+          .gestures(
+            onTap: () {
+              Navigator.of(context).canPop()
+                  ? Navigator.of(context).pop()
+                  : null;
+            },
+          ),
     );
   }
 }
