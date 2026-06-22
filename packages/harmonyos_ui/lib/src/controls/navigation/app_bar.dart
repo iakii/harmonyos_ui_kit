@@ -143,7 +143,11 @@ class HosAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     Widget bar = Container(
       height: height,
-      padding: const EdgeInsets.only(left: 12, right: 16, top: 36),
+      padding: EdgeInsets.only(
+        left: 12,
+        right: 16,
+        top: height > 56 ? height - 56 : 0,
+      ),
       decoration: BoxDecoration(
         color: effectiveBgColor,
         border: bottomBorderWidth > 0
@@ -161,6 +165,8 @@ class HosAppBar extends StatelessWidget implements PreferredSizeWidget {
         middle: title != null
             ? Text(
                 title!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: theme.typography.title2?.copyWith(
                   color: theme.textColor,
                   fontWeight: FontWeight.w600,
