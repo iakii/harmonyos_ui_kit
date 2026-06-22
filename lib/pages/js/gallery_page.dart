@@ -260,7 +260,7 @@ class GalleryContentPage extends HookConsumerWidget {
         showAppBar: showAppBar,
         title: title,
         leading: showAppBar ? const BackIcon() : null,
-        body: const Center(child: HosLoading(message: '加载中…')),
+        body: const Center(child: Loading(size: 64)),
       );
     }
 
@@ -405,7 +405,7 @@ class _GalleryGrid extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               child: Container(
                 color: Colors.black.withValues(alpha: 0.06),
-                child: const Center(child: Loading()),
+                child: const Center(child: Loading(size: 64)),
               ),
             ),
           ),
@@ -539,7 +539,7 @@ class _GridItemCard extends StatelessWidget {
                     if (state.extendedImageLoadState == LoadState.loading) {
                       return Container(
                         color: theme.surfaceColor,
-                        child: const Center(child: Loading(size: 64)),
+                        child: const Center(child: Loading(size: 48)),
                       );
                     }
                     if (state.extendedImageLoadState == LoadState.failed) {

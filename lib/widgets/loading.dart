@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/material.dart' show Colors;
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 
 /// 3D 立体环绕 Loading 指示器。
@@ -56,7 +57,9 @@ class _LoadingState extends State<Loading> with SingleTickerProviderStateMixin {
                       size: Size(100, 100),
                       painter: _CircleRingPainter(
                         animationValue: _controller.value,
-                        color: widget.color ?? theme.accentColor,
+                        color:
+                            widget.color ??
+                            (theme.isLight ? theme.accentColor : Colors.white),
                         size: 100,
                       ),
                     ),
