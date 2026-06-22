@@ -79,7 +79,15 @@ class GalleryPage extends HookConsumerWidget {
 
     return AsyncValueWidget<PluginInfo>(
       value: pluginInfoAsync,
-      error: (err, _) => HosErrorState(message: err.toString(), onRetry: null),
+      error: (err, _) => HosPage(
+        showAppBar: true,
+        title: '图集',
+        leading: Icon(HMIcons.harmonyos),
+        body: HosErrorState(
+          message: err.toString(),
+          onRetry: () => ref.refresh(pluginInfoProvider),
+        ),
+      ),
       data: (pluginInfo) => _GalleryBody(
         pluginInfo: pluginInfo,
         selectedTabIndex: selectedTabIndex,

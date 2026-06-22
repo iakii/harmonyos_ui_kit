@@ -44,6 +44,7 @@ class Client {
   get pluginInfo() {
     return JSON.stringify(this.info);
   }
+
   async fetchGallery(url, page = 1) {
     if (page != 1) {
       url = `${url}/index_${page}.html`;

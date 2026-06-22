@@ -14,6 +14,7 @@ class SettingPanel extends HookConsumerWidget {
     final items = [
       {'title': '美图乐', 'assets': "assets/js/meitule.cjs"},
       {'title': 'Kaizty', 'assets': "assets/js/kaizty.cjs"},
+      {'title': 'Wallspic', 'assets': "assets/js/wallspic.cjs"},
     ];
 
     final theme = HarmonyTheme.of(context);

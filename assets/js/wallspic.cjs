@@ -1,5 +1,10 @@
-
-const client = new Client();
+function waitTime(duration = 300) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, duration);
+  });
+}
 class Client {
   info = {
     website: "https://wallspic.com/cn",
@@ -8,6 +13,10 @@ class Client {
     version: "1.0.0",
     menus: [
       { "path": "/", "label": "最新" },
+      {
+        "path": "/album/popular",
+        "label": "人气",
+      },
       {
         "path": "/topic/background_images",
         "label": "背景图片",
@@ -54,13 +63,6 @@ class Client {
     ],
   }
 
-  search(keywords) {
-    return fetch(`https://wallspic.com/cn/api/v1/w/?q=${keywords}`).then((response) => response.json());
-  }
-
-  settings = {
-
-  }
 
   get pluginInfo() {
     return JSON.stringify(this.info);
@@ -72,9 +74,64 @@ class Client {
    * @param {number} page 分页默认1
    * @returns
    */
-  fetchGallery(path, page = 1) {
-    return fetch(`https://wallspic.com/cn${path}?page=${page}`).then((response) => response.json());
+  async fetchGallery(path, page = 1) {
+    console.log("getPage 请求的url：", `${path}?page=${page}`);
+    const html = await fetch(`${path}?page=${page}`).then((response) => response.text());
+    const dom = await import("dom");
+    const scriptsEls = JSON.parse(dom.querySelectorAll(html, "script"));
+    const scripts = scriptsEls.map(el => el.textContent || el.innerHTML || "").join("\n");
+
+    const regExp = /window\.mainAdaptiveGallery\s*=\s*(\{.*?\})\s*;/;
+    const match = scriptsEls[6].text.match(regExp);
+    let data = null;
+    if (match && match[1]) {
+      try {
+        data = JSON.parse(match[1]);
+      } catch (e) {
+        console.error("JSON解析失败:", e);
+      }
+    }
+    // console.log("x", JSON.stringify(data, null, 4));
+
+    const list = data ? data.list.map(x => {
+      return {
+        link: x?.original?.link,
+        cover: x?.thumbnail?.link,
+        title: x?.labels?.title,
+        // tags,
+      }
+    }) || [] : [];
+
+    // console.log("list", JSON.stringify(list, null, 4));
+
+    return JSON.stringify({
+      list,
+      totalPage: Number.MAX_VALUE,
+      currentPage: page,
+    })
   }
+
+  async fetchDetails(url) {
+    console.log("getDetail 请求的url：", url);
+    // await waitTime(300);
+    const html = await fetch(url).then((response) => response.text());
+    const dom = await import("dom");
+    const scriptsEls = JSON.parse(dom.querySelector(html, "div.wallpaper__buttons"));
+    const title = JSON.parse(dom.querySelector(html, "h1.wallpaper__title"));
+    const aTag = JSON.parse(dom.querySelector(scriptsEls.innerHtml, "a.wallpaper__download"));
+    const src =
+      aTag?.attrs?.find((a) => a[0] === "href")?.[1] || "";
+    const item = {
+      cover: src,
+      href: url,
+      title: title?.text || "",
+    };
+    return JSON.stringify({
+      list: [item],
+      current: 1,
+    });
+  }
+
 }
 
-export default client;
+export default new Client();
