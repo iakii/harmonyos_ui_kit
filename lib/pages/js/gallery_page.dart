@@ -36,7 +36,7 @@ class GalleryPage extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final assets = ref.watch(jsSourceProvider);
 
-    if (assets == null) {
+    if (assets == null || assets == '') {
       return Scaffold(
         backgroundColor: Colors.transparent,
         appBar: HosAppBar(
@@ -49,35 +49,33 @@ class GalleryPage extends HookConsumerWidget {
           ],
           title: '未配置资源',
         ),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(HMIcons.artGallery, size: 64),
+              const SizedBox(height: 16),
+              const Text('请先配置 JS 源文件'),
+              const SizedBox(height: 8),
+              HosTextButton(
+                onPressed: () => showSetting(context),
+                child: const Text(
+                  '去设置',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontFamily: "HarmonyOs Sans SC",
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
     final pluginInfoAsync = ref.watch(pluginInfoProvider);
     final selectedTabIndex = useState(0);
 
-    // final title = pluginInfoAsync.valueOrNull?.name ?? '图集';
-
-    // return HosPage(
-    //   // backgroundColor: HarmonyTheme.of(context).backgroundColor,
-    // actions: [
-    //   IconButton(
-    //     icon: const Icon(HMIcons.icSinglePage),
-    //     onPressed: () => router.push('/icons'),
-    //   ),
-    // ],
-    // leading: Icon(HMIcons.harmonyos, size: 24),
-    //   title: title,
-    //   showAppBar: true,
-    //   body: AsyncValueWidget<PluginInfo>(
-    //     value: pluginInfoAsync,
-    //     error: (err, _) =>
-    //         HosErrorState(message: err.toString(), onRetry: null),
-    //     data: (pluginInfo) => _GalleryBody(
-    //       pluginInfo: pluginInfo,
-    //       selectedTabIndex: selectedTabIndex,
-    //     ),
-    //   ),
-    // );
     return AsyncValueWidget<PluginInfo>(
       value: pluginInfoAsync,
       error: (err, _) => HosErrorState(message: err.toString(), onRetry: null),

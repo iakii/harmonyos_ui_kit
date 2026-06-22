@@ -3,7 +3,6 @@ import 'package:flutter_hooks/flutter_hooks.dart' show useState;
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:rohos_app/providers/js/settings_provider.dart';
-import 'package:rohos_app/services/date.dart';
 import 'package:styled_widget/styled_widget.dart';
 
 class SettingPanel extends HookConsumerWidget {
@@ -81,14 +80,32 @@ class SettingPanel extends HookConsumerWidget {
           height: 64,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: HosButton(
-              child: Center(child: Text('确定')),
-              onPressed: () {
-                ref
-                    .read(jsSourceProvider.notifier)
-                    .set(defaultAssets.value ?? '');
-                if (Navigator.of(context).canPop()) Navigator.of(context).pop();
-              },
+            child: Row(
+              children: [
+                Expanded(
+                  child: HosButton(
+                    child: Center(child: Text('确定')),
+                    onPressed: () {
+                      ref
+                          .read(jsSourceProvider.notifier)
+                          .set(defaultAssets.value ?? '');
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      }
+                    },
+                  ),
+                ),
+                SizedBox(width: 8),
+                HosOutlinedButton(
+                  child: Center(child: Text('清除')),
+                  onPressed: () {
+                    ref.read(jsSourceProvider.notifier).clear();
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    }
+                  },
+                ),
+              ],
             ),
           ),
         ),

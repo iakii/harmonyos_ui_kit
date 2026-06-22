@@ -10,7 +10,9 @@ import 'package:rohos_app/services/perfs.dart';
 /// // 写入
 /// ref.read(jsSourceProvider.notifier).set('assets/js/meitule.cjs');
 /// ```
-final jsSourceProvider = NotifierProvider<JsSourceNotifier, String?>(JsSourceNotifier.new);
+final jsSourceProvider = NotifierProvider<JsSourceNotifier, String?>(
+  JsSourceNotifier.new,
+);
 
 class JsSourceNotifier extends Notifier<String?> {
   @override
@@ -20,5 +22,10 @@ class JsSourceNotifier extends Notifier<String?> {
   void set(String value) {
     state = value;
     perfs.putString(perfs.KEY_JS, value);
+  }
+
+  void clear() {
+    state = '';
+    perfs.putString(perfs.KEY_JS, '');
   }
 }
