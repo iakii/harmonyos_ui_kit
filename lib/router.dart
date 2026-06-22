@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart' hide HarmonyOSPage;
 import 'package:rohos_app/pages/js/layout.dart' show GalleryLayout;
+import 'package:rohos_app/pages/loading_page.dart' show LoadingPage;
 import 'pages/harmony.dart' show HarmonyOSPage;
 import 'pages/js_parse.dart' show JsParsePage;
 import 'pages/glass_kit.dart' show GlassKitPage;
@@ -53,6 +54,7 @@ final router = GoRouter(
         ),
       ],
     ),
+
     ShellRoute(
       routes: [
         GoRoute(
@@ -77,6 +79,10 @@ final router = GoRouter(
               showAppBar: true,
             );
           },
+        ),
+        GoRoute(
+          path: '/loading',
+          builder: (context, state) => const LoadingPage(),
         ),
       ],
       builder: (context, state, child) => GalleryLayout(child: child),

@@ -37,13 +37,6 @@ class GalleryPage extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final assets = ref.watch(jsSourceProvider);
 
-    // if (1 == 1) {
-    //   return Scaffold(
-    //     appBar: HosAppBar(leading: Icon(HMIcons.harmonyos), title: '图集'),
-    //     body: Center(child: Loading(size: 200)),
-    //   );
-    // }
-
     if (assets == null || assets == '') {
       return Scaffold(
         backgroundColor: Colors.transparent,
@@ -127,11 +120,21 @@ class _GalleryBody extends HookConsumerWidget {
     final currentUrl = currentMenu != null
         ? '$website${currentMenu.path}'
         : website;
+
+    final theme = HarmonyTheme.of(context);
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: HosAppBar(
         leading: Icon(HMIcons.harmonyos),
         actions: [
+          IconButton(
+            icon: Loading(
+              size: 36,
+              color: theme.isLight ? Colors.black : Colors.white,
+            ),
+            onPressed: () => router.push('/loading'),
+          ),
+
           IconButton(
             icon: const Icon(HMIcons.houseFill),
             onPressed: () => router.go('/'),

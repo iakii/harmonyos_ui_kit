@@ -1,7 +1,6 @@
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
-import 'package:hm_icon/hm_icon.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:rohos_app/widgets/loading.dart' show Loading;
 

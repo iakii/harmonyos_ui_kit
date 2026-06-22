@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- 半透明背景 -->
+  <rect width="128" height="128" fill="rgba(0,0,0,0.1)"/>
+
+  <!-- 整体上下弹跳 -->
+  <g>
+    <animateTransform attributeName="transform" type="translate"
+      values="0,0; 0,-10; 0,0" dur="2s" repeatCount="indefinite"
+      calcMode="spline" keyTimes="0;0.5;1"
+      keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"/>
+
+    <!-- 圆环 -->
+    <circle cx="64" cy="64" r="25.6" fill="none" stroke="red"
+            stroke-opacity="1" stroke-width="6" stroke-linecap="round"/>
+
+    <!--
+      3D 环绕：圆点沿椭圆轨道顺时针旋转（from 135° → to -225°），
+      同时 r / opacity 随 sin(θ) 做深度缩放（近大远小，0.6x~1.4x）。
+      残影通过 begin 负偏移实现（间隔 = 0.35rad / π × 1s ≈ 0.111s）。
+    -->
+
+    <!-- === 残影第 9（最远）=== base_r=2.1 base_op=0.18 === -->
+    <circle cx="89.6" cy="64" fill="red">
+      <animateTransform attributeName="transform" type="rotate"
+        from="135 64 64" to="-225 64 64" dur="2s" repeatCount="indefinite" begin="-1.003s"/>
+      <animate attributeName="r"
+        values="1.51; 1.26; 2.10; 2.94; 2.10; 1.51" dur="2s" repeatCount="indefinite"
+        begin="-1.003s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+      <animate attributeName="opacity"
+        values="0.13; 0.11; 0.18; 0.25; 0.18; 0.13" dur="2s" repeatCount="indefinite"
+        begin="-1.003s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+    </circle>
+
+    <!-- === 残影第 8 === base_r=2.5 base_op=0.27 === -->
+    <circle cx="89.6" cy="64" fill="red">
+      <animateTransform attributeName="transform" type="rotate"
+        from="135 64 64" to="-225 64 64" dur="2s" repeatCount="indefinite" begin="-0.891s"/>
+      <animate attributeName="r"
+        values="1.79; 1.50; 2.50; 3.50; 2.50; 1.79" dur="2s" repeatCount="indefinite"
+        begin="-0.891s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+      <animate attributeName="opacity"
+        values="0.19; 0.16; 0.27; 0.38; 0.27; 0.19" dur="2s" repeatCount="indefinite"
+        begin="-0.891s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+    </circle>
+
+    <!-- === 残影第 7 === base_r=2.8 base_op=0.36 === -->
+    <circle cx="89.6" cy="64" fill="red">
+      <animateTransform attributeName="transform" type="rotate"
+        from="135 64 64" to="-225 64 64" dur="2s" repeatCount="indefinite" begin="-0.780s"/>
+      <animate attributeName="r"
+        values="2.01; 1.68; 2.80; 3.92; 2.80; 2.01" dur="2s" repeatCount="indefinite"
+        begin="-0.780s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+      <animate attributeName="opacity"
+        values="0.26; 0.22; 0.36; 0.50; 0.36; 0.26" dur="2s" repeatCount="indefinite"
+        begin="-0.780s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+    </circle>
+
+    <!-- === 残影第 6 === base_r=3.1 base_op=0.45 === -->
+    <circle cx="89.6" cy="64" fill="red">
+      <animateTransform attributeName="transform" type="rotate"
+        from="135 64 64" to="-225 64 64" dur="2s" repeatCount="indefinite" begin="-0.668s"/>
+      <animate attributeName="r"
+        values="2.22; 1.86; 3.10; 4.34; 3.10; 2.22" dur="2s" repeatCount="indefinite"
+        begin="-0.668s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+      <animate attributeName="opacity"
+        values="0.32; 0.27; 0.45; 0.63; 0.45; 0.32" dur="2s" repeatCount="indefinite"
+        begin="-0.668s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+    </circle>
+
+    <!-- === 残影第 5 === base_r=3.4 base_op=0.55 === -->
+    <circle cx="89.6" cy="64" fill="red">
+      <animateTransform attributeName="transform" type="rotate"
+        from="135 64 64" to="-225 64 64" dur="2s" repeatCount="indefinite" begin="-0.557s"/>
+      <animate attributeName="r"
+        values="2.44; 2.04; 3.40; 4.76; 3.40; 2.44" dur="2s" repeatCount="indefinite"
+        begin="-0.557s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+      <animate attributeName="opacity"
+        values="0.39; 0.33; 0.55; 0.77; 0.55; 0.39" dur="2s" repeatCount="indefinite"
+        begin="-0.557s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+    </circle>
+
+    <!-- === 残影第 4 === base_r=3.7 base_op=0.64 === -->
+    <circle cx="89.6" cy="64" fill="red">
+      <animateTransform attributeName="transform" type="rotate"
+        from="135 64 64" to="-225 64 64" dur="2s" repeatCount="indefinite" begin="-0.446s"/>
+      <animate attributeName="r"
+        values="2.65; 2.22; 3.70; 5.18; 3.70; 2.65" dur="2s" repeatCount="indefinite"
+        begin="-0.446s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+      <animate attributeName="opacity"
+        values="0.46; 0.38; 0.64; 0.90; 0.64; 0.46" dur="2s" repeatCount="indefinite"
+        begin="-0.446s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+    </circle>
+
+    <!-- === 残影第 3 === base_r=4.0 base_op=0.73 === -->
+    <circle cx="89.6" cy="64" fill="red">
+      <animateTransform attributeName="transform" type="rotate"
+        from="135 64 64" to="-225 64 64" dur="2s" repeatCount="indefinite" begin="-0.334s"/>
+      <animate attributeName="r"
+        values="2.87; 2.40; 4.00; 5.60; 4.00; 2.87" dur="2s" repeatCount="indefinite"
+        begin="-0.334s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+      <animate attributeName="opacity"
+        values="0.52; 0.44; 0.73; 1.00; 0.73; 0.52" dur="2s" repeatCount="indefinite"
+        begin="-0.334s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+    </circle>
+
+    <!-- === 残影第 2 === base_r=4.4 base_op=0.82 === -->
+    <circle cx="89.6" cy="64" fill="red">
+      <animateTransform attributeName="transform" type="rotate"
+        from="135 64 64" to="-225 64 64" dur="2s" repeatCount="indefinite" begin="-0.223s"/>
+      <animate attributeName="r"
+        values="3.16; 2.64; 4.40; 6.16; 4.40; 3.16" dur="2s" repeatCount="indefinite"
+        begin="-0.223s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+      <animate attributeName="opacity"
+        values="0.59; 0.49; 0.82; 1.00; 0.82; 0.59" dur="2s" repeatCount="indefinite"
+        begin="-0.223s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+    </circle>
+
+    <!-- === 残影第 1 === base_r=4.7 base_op=0.91 === -->
+    <circle cx="89.6" cy="64" fill="red">
+      <animateTransform attributeName="transform" type="rotate"
+        from="135 64 64" to="-225 64 64" dur="2s" repeatCount="indefinite" begin="-0.111s"/>
+      <animate attributeName="r"
+        values="3.37; 2.82; 4.70; 6.58; 4.70; 3.37" dur="2s" repeatCount="indefinite"
+        begin="-0.111s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+      <animate attributeName="opacity"
+        values="0.65; 0.55; 0.91; 1.00; 0.91; 0.65" dur="2s" repeatCount="indefinite"
+        begin="-0.111s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+    </circle>
+
+    <!-- === 主圆点 === base_r=5.0 base_op=1.0 === -->
+    <circle cx="89.6" cy="64" fill="red">
+      <animateTransform attributeName="transform" type="rotate"
+        from="135 64 64" to="-225 64 64" dur="2s" repeatCount="indefinite" begin="0s"/>
+      <animate attributeName="r"
+        values="3.59; 3.00; 5.00; 7.00; 5.00; 3.59" dur="2s" repeatCount="indefinite"
+        begin="0s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+      <animate attributeName="opacity"
+        values="0.72; 0.60; 1.00; 1.00; 1.00; 0.72" dur="2s" repeatCount="indefinite"
+        begin="0s" keyTimes="0;0.125;0.375;0.625;0.875;1"/>
+    </circle>
+  </g>
+</svg>

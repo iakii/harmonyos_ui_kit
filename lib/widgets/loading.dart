@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 
 /// 3D 立体环绕 Loading 指示器。
@@ -9,9 +8,9 @@ import 'package:harmonyos_ui/harmonyos_ui.dart';
 class Loading extends StatefulWidget {
   /// [color] 圆环/圆点/残影的颜色，默认白色。
   /// [size] 组件尺寸（宽高相等），默认 128。
-  const Loading({super.key, this.color = Colors.white, this.size = 128});
+  const Loading({super.key, this.color, this.size = 128});
 
-  final Color color;
+  final Color? color;
   final double size;
 
   @override
@@ -45,7 +44,6 @@ class _LoadingState extends State<Loading> with SingleTickerProviderStateMixin {
       child: FittedBox(
         child: Stack(
           children: [
-            // Container(color: widget.baclgroundColor.withValues(alpha: 0.5)),
             Center(
               child: AnimatedBuilder(
                 animation: _controller,
@@ -58,7 +56,7 @@ class _LoadingState extends State<Loading> with SingleTickerProviderStateMixin {
                       size: Size(100, 100),
                       painter: _CircleRingPainter(
                         animationValue: _controller.value,
-                        color: theme.accentColor,
+                        color: widget.color ?? theme.accentColor,
                         size: 100,
                       ),
                     ),
