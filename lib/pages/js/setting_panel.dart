@@ -13,7 +13,20 @@ class SettingPanel extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final items = [
       {'title': '美图乐', 'assets': "assets/js/meitule.cjs"},
-      {'title': '妹子图', 'assets': "assets/js/meizitu.cjs"},
+      {'title': '肥臀美女图', 'assets': "assets/js/ftmeinv.cjs"},
+      {'title': '高清图库', 'assets': "assets/js/gqtuku.cjs"},
+      {'title': '特色美女图', 'assets': "assets/js/tsmnt.cjs"},
+      {'title': '福利私房图', 'assets': "assets/js/flsft.cjs"},
+      {'title': '尤物美图', 'assets': "assets/js/ywmeitu.cjs"},
+      {'title': '模特美女图', 'assets': "assets/js/mtmnt.cjs"},
+      {'title': '漂亮网红图', 'assets': "assets/js/plwht.cjs"},
+      {'title': '摄影妹子图', 'assets': "assets/js/symzt.cjs"},
+      {'title': '丝袜妹子图', 'assets': "assets/js/swmzt.cjs"},
+
+      {'title': '高清网红图', 'assets': "assets/js/gqwht.cjs"},
+      {'title': '模特美女', 'assets': "assets/js/mtmeinv.cjs"},
+      {'title': '尤物私房图', 'assets': "assets/js/ywsft.cjs"},
+
       {'title': '微图坊', 'assets': "assets/js/v2ph.cjs"},
       {'title': 'Kaizty', 'assets': "assets/js/kaizty.cjs"},
       {'title': 'Wallspic', 'assets': "assets/js/wallspic.cjs"},

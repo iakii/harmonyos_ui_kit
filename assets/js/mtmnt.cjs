@@ -4,9 +4,9 @@ class Client {
   info = {
     type: "photo",
     version: "1.0.0",
-    "website": "http://www.ftmeinv.com",
-    "name": "肥臀美女图",
-    "icon": "http://www.ftmeinv.com/favicon.ico",
+    "website": "http://www.mtmnt.com",
+    "name": "模特美女图",
+    "icon": "http://www.mtmnt.com/favicon.ico",
     "menus": [
       { "label": "首页", "path": "" },
       { "label": "性感美女", "path": "/fei/tungirlm/1_1.html" },
@@ -17,7 +17,7 @@ class Client {
       { "label": "高清套图", "path": "/fei/tungirlm/24_1.html" },
       { "label": "无圣光", "path": "/fei/tungirlm/25_1.html" },
       { "label": "标签", "path": "/photo/" },
-    ],
+    ]
   }
 
   get pluginInfo() {
