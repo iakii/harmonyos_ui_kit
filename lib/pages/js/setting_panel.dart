@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart' show useState;
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:rohos_app/providers/js/config_provider.dart';
 import 'package:rohos_app/providers/js/settings_provider.dart';
 import 'package:rohos_app/router.dart' show router;
 import 'package:styled_widget/styled_widget.dart';
@@ -11,26 +12,7 @@ class SettingPanel extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final items = [
-      {'title': '美图乐', 'assets': "assets/js/meitule.cjs"},
-      {'title': '肥臀美女图', 'assets': "assets/js/ftmeinv.cjs"},
-      {'title': '高清图库', 'assets': "assets/js/gqtuku.cjs"},
-      {'title': '特色美女图', 'assets': "assets/js/tsmnt.cjs"},
-      {'title': '福利私房图', 'assets': "assets/js/flsft.cjs"},
-      {'title': '尤物美图', 'assets': "assets/js/ywmeitu.cjs"},
-      {'title': '模特美女图', 'assets': "assets/js/mtmnt.cjs"},
-      {'title': '漂亮网红图', 'assets': "assets/js/plwht.cjs"},
-      {'title': '摄影妹子图', 'assets': "assets/js/symzt.cjs"},
-      {'title': '丝袜妹子图', 'assets': "assets/js/swmzt.cjs"},
-
-      {'title': '高清网红图', 'assets': "assets/js/gqwht.cjs"},
-      {'title': '模特美女', 'assets': "assets/js/mtmeinv.cjs"},
-      {'title': '尤物私房图', 'assets': "assets/js/ywsft.cjs"},
-
-      {'title': '微图坊', 'assets': "assets/js/v2ph.cjs"},
-      {'title': 'Kaizty', 'assets': "assets/js/kaizty.cjs"},
-      {'title': 'Wallspic', 'assets': "assets/js/wallspic.cjs"},
-    ];
+    final config = ref.watch(jsConfigProvider.future);
 
     final theme = HarmonyTheme.of(context);
 
@@ -45,52 +27,69 @@ class SettingPanel extends HookConsumerWidget {
           title: '设置',
           leading: SizedBox.shrink(),
         ),
-        body: ListView.separated(
-          padding: EdgeInsets.all(16),
-          itemCount: items.length,
-          itemBuilder: (BuildContext context, int index) {
-            final item = items[index];
-            return Row(
-                  children: [
-                    SizedBox(width: 12),
-                    Text(
-                          (item['title'] ?? "${index + 1}").substring(0, 1),
-                          style: TextStyle(color: Colors.white, fontSize: 18),
-                        )
-                        .fontFamily('HarmonyOs Sans SC')
-                        .center()
-                        .width(36)
-                        .height(36)
-                        .backgroundColor(theme.accentColor)
-                        .clipRRect(all: 12),
-                    SizedBox(width: 12),
-                    Text(item['title'] ?? '')
-                        .fontSize(14)
-                        .fontWeight(FontWeight.bold)
-                        .fontFamily('HarmonyOs Sans SC')
-                        .expanded(),
+        body: FutureBuilder(
+          future: config,
+          builder: (context, asyncSnapshot) {
+            if (asyncSnapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            } else if (asyncSnapshot.hasError) {
+              return Center(child: Text('加载配置失败: ${asyncSnapshot.error}'));
+            } else if (!asyncSnapshot.hasData) {
+              return Center(child: Text('未获取到配置数据'));
+            }
+            final jsConfig = asyncSnapshot.data!;
 
-                    HosRadio(
-                      selected: defaultAssets.value == item['assets'],
-                      onChanged: () {
-                        defaultAssets.value = item['assets'];
+            return ListView.separated(
+              padding: EdgeInsets.all(16),
+              itemCount: jsConfig.sites.length,
+              itemBuilder: (BuildContext context, int index) {
+                final item = jsConfig.sites[index];
+                return Row(
+                      children: [
+                        SizedBox(width: 12),
+                        Text(
+                              (item.title).substring(0, 1),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                              ),
+                            )
+                            .fontFamily('HarmonyOs Sans SC')
+                            .center()
+                            .width(36)
+                            .height(36)
+                            .backgroundColor(theme.accentColor)
+                            .clipRRect(all: 12),
+                        SizedBox(width: 12),
+                        Text(item.title)
+                            .fontSize(14)
+                            .fontWeight(FontWeight.bold)
+                            .fontFamily('HarmonyOs Sans SC')
+                            .expanded(),
+
+                        HosRadio(
+                          selected: defaultAssets.value == item.assets,
+                          onChanged: () {
+                            defaultAssets.value = item.assets;
+                          },
+                        ),
+                        SizedBox(width: 12),
+                      ],
+                    )
+                    .padding(vertical: 8)
+                    .ripple()
+                    .backgroundColor(theme.surfaceColor)
+                    .clipRRect(all: 12)
+                    .gestures(
+                      onTap: () {
+                        defaultAssets.value = item.assets;
                       },
-                    ),
-                    SizedBox(width: 12),
-                  ],
-                )
-                .padding(vertical: 8)
-                .ripple()
-                .backgroundColor(theme.surfaceColor)
-                .clipRRect(all: 12)
-                .gestures(
-                  onTap: () {
-                    defaultAssets.value = item['assets'];
-                  },
-                );
-          },
-          separatorBuilder: (BuildContext context, int index) {
-            return SizedBox(height: 12);
+                    );
+              },
+              separatorBuilder: (BuildContext context, int index) {
+                return SizedBox(height: 12);
+              },
+            );
           },
         ),
         bottomNavigationBar: SizedBox(

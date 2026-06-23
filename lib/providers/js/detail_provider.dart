@@ -2,12 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
 
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:js_runtime/js_runtime.dart';
 import 'package:logger/logger.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:rohos_app/providers/js/settings_provider.dart'
-    show jsSourceProvider;
+import 'package:rohos_app/providers/js/config_provider.dart';
 
 import '../../models/plugin/gallery_item.dart';
 
@@ -62,10 +60,12 @@ class _WorkerInit {
   final String jsSource;
   final String url;
   final SendPort sendPort;
+  final String name;
   const _WorkerInit({
     required this.jsSource,
     required this.url,
     required this.sendPort,
+    required this.name,
   });
 }
 
@@ -113,17 +113,18 @@ class DetailLoad extends _$DetailLoad {
     _controller.add(DetailLoadState.initial);
     Isolate? isolate; // 局部引用，finally 中兜底 kill
 
+    final config = await ref.watch(jsConfigProvider.future);
+
     try {
-      final assets = ref.watch(jsSourceProvider);
-      final jsSource = await rootBundle.loadString(assets ?? '');
       if (_controller.isClosed) return;
 
       _receivePort = ReceivePort();
       isolate = await Isolate.spawn(
         _detailWorker,
         _WorkerInit(
-          jsSource: jsSource,
+          jsSource: config.jsContent,
           url: url,
+          name: config.name,
           sendPort: _receivePort!.sendPort,
         ),
         debugName: 'DetailWorker',
@@ -206,8 +207,8 @@ Future<void> _detailWorker(_WorkerInit init) async {
 
   final engine = JsEngine.create(
     runtimeOptions: JsRuntimeOptions(
-      builtins: JsBuiltinOptions.web(),
-      info: 'meitule-detail',
+      builtins: JsBuiltinOptions.all(),
+      info: init.name,
     ),
     modules: [JsModule(name: 'client', source: init.jsSource)],
   );
