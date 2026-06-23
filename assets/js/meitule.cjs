@@ -26,6 +26,7 @@ class Client {
   info = {
     type: "photo",
     version: "1.0.0",
+    icon: "https://www.meitula.org/favicon.ico",
     website: "https://www.meitula.org",
     name: "美图乐妹子",
     menus: [

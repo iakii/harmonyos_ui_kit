@@ -27,6 +27,7 @@ class Client {
     type: "photo",
     version: "1.0.0",
     website: "https://www.kaizty.com",
+    icon: "https://www.kaizty.com/favicon.ico",
     name: "Kaizty",
     menus: [
       { label: "首页", path: "" },

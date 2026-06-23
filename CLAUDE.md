@@ -99,6 +99,15 @@ rohos_app/
 
 不再使用 `dart:ffi` 直接调用或 `ffigen` 生成绑定的旧方案。
 
+### JS 内置模块
+
+JS 运行时自动注册以下模块，JS 中可直接 `await import()` 使用：
+
+- **`dom`** — HTML 解析 + CSS 选择器（`querySelectorAll`、`querySelector`、`getElementsByTagName`、`getElementById`）
+- **`encoding`** — 字符编码转码（`decode`、`encode`、`detect`、`labels`），支持 GBK/Big5/Shift_JIS 等
+
+详见 `packages/js_runtime/CLAUDE.md`。
+
 ### JS Eval 调用模式
 
 **推荐模式** — `engine.register()` + `engine.eval()`（FRB dart_callback，同步 JS↔Dart）:

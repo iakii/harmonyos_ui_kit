@@ -2,6 +2,8 @@ import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:rohos_app/providers/js/plugin_info_provider.dart';
+import 'package:rohos_app/services/logger.dart';
 import 'package:rohos_app/widgets/loading.dart' show Loading;
 
 import '../../models/plugin/gallery_item.dart';
@@ -149,8 +151,6 @@ class _DetailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final theme = HarmonyTheme.of(context);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -158,12 +158,15 @@ class _DetailCard extends StatelessWidget {
         if (item.cover != null)
           ExtendedImage.network(
             item.cover!,
-            // headers: {
-            //   "referrerpolicy": "unsafe-url",
-            //   "referer": 'https://www.kaizty.com/',
-            // },
+            headers: {
+              "referrerpolicy": "unsafe-url",
+              "referer": item.cover ?? "",
+              'user-agent':
+                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36',
+            },
+            handleLoadingProgress: true,
             fit: BoxFit.cover,
-            cache: true,
+            cache: false,
             loadStateChanged: (state) {
               if (state.extendedImageLoadState == LoadState.loading) {
                 return Loading(size: 32);

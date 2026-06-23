@@ -11,6 +11,7 @@ class Client {
     name: "Wallspic",
     type: "photo",
     version: "1.0.0",
+    icon: "https://wallspic.com/static/images/favicon/apple-touch-icon.png",
     menus: [
       { "path": "/", "label": "最新" },
       {
