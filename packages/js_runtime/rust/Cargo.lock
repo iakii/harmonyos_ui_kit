@@ -1637,6 +1637,7 @@ dependencies = [
  "boa_parser",
  "boa_runtime",
  "boa_string",
+ "encoding_rs",
  "flutter_rust_bridge",
  "scraper",
  "serde",

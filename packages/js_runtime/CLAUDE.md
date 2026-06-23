@@ -59,7 +59,8 @@ js_runtime/
 │       │   ├── internal.rs        # RuntimeState, init_context, NativeFunction 工厂
 │       │   ├── worker.rs          # 工作线程：WorkerCmd + 全局 WORKERS 注册表
 │       │   └── dart_callbacks.rs  # FRB dart_callback 全局注册表 + call_blocking
-│       ├── dom.rs                 # DOM 解析模块（scraper）
+│       ├── dom.rs                 # DOM 解析 JS 模块（scraper）
+│       ├── encoding.rs            # 字符编码转码 JS 模块（encoding_rs）
 │       └── frb_generated.rs       # FRB 自动生成（勿手动编辑）
 ├── cargokit/                      # 跨平台 Cargo 构建胶水（CMake/Gradle/Pod）
 ├── ohos/                          # HarmonyOS 原生工程（CMake + cargokit）
@@ -130,6 +131,37 @@ await engine.eval(code: 'postMessage("hello")');
   // ... 处理其他 JsError 变体
 }
 ```
+
+### JS 内置模块
+
+JS 运行时在 `init_context()` 中自动注册以下 synthetic module，可通过 `await import()` 在 JS 中直接使用：
+
+**DOM 模块**（`rust/src/dom.rs`）:
+```js
+const dom = await import('dom');
+dom.querySelectorAll(html, css);      // → JSON 字符串
+dom.querySelector(html, css);         // → JSON 字符串 | null
+dom.getElementsByTagName(html, tag);  // → JSON 字符串
+dom.getElementById(html, id);         // → JSON 字符串 | null
+```
+
+**Encoding 转码模块**（`rust/src/encoding.rs`）:
+```js
+const enc = await import('encoding');
+enc.decode([0xc4, 0xe3, 0xba, 0xc3], 'gbk');  // → "你好"
+JSON.parse(enc.encode('你好', 'gbk'));          // → [196, 227, 186, 195]
+enc.detect(bytes);                               // → "UTF-8" | "UTF-16LE" | "UTF-16BE" | null
+JSON.parse(enc.labels());                        // → ["UTF-8", "GBK", "Big5", ...]
+```
+
+支持的编码：UTF-8、UTF-16LE、UTF-16BE、GBK、gb18030、Big5、EUC-JP、ISO-2022-JP、Shift_JIS、EUC-KR、windows-1250/1251/1252、ISO-8859-1/15、KOI8-R、IBM866 等。
+底层由 `encoding_rs`（Firefox 编码库）提供，`Encoding::for_label()` 支持别名匹配（如 `gb2312` → GBK）。
+
+**添加新 JS 模块的模式**:
+1. 创建 `rust/src/xxx.rs`，实现 `pub fn register_xxx_module(context: &mut Context) -> Result<(), String>`
+2. 在 `rust/src/lib.rs` 添加 `mod xxx;`
+3. 在 `rust/src/js_runtime/internal.rs` 的 `init_context()` 中调用 `register_xxx_module()`
+4. 模块通过 `MapModuleLoader` 注册为 synthetic module，JS 端 `await import('xxx')` 即可导入
 
 ## 修改 Rust API 流程
 

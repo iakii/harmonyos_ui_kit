@@ -242,6 +242,9 @@ pub(crate) fn init_context(max_memory: u64, runtime_id: u64) -> Result<RuntimeSt
     if let Err(e) = crate::dom::register_dom_module(&mut context) {
         eprintln!("Warning: {e}");
     }
+    if let Err(e) = crate::encoding::register_encoding_module(&mut context) {
+        eprintln!("Warning: {e}");
+    }
     if let Err(e) = register_timers(&mut context) {
         eprintln!("Warning: {e}");
     }
