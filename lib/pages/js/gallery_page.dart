@@ -6,8 +6,8 @@ import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:hm_icon/hm_icon.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:rohos_app/pages/js/setting_panel.dart' show SettingPanel;
-import 'package:rohos_app/providers/js/settings_provider.dart'
-    show jsSourceProvider;
+import 'package:rohos_app/providers/js/config_provider.dart'
+    show jsConfigProvider;
 import 'package:rohos_app/router.dart';
 import 'package:rohos_app/widgets/loading.dart' show Loading;
 
@@ -35,7 +35,9 @@ class GalleryPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final assets = ref.watch(jsSourceProvider);
+    final assets = ref.watch(
+      jsConfigProvider.select((selector) => selector.value?.name),
+    ); //.valueOrNull?.name;
 
     if (assets == null || assets == '') {
       return Scaffold(
