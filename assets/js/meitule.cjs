@@ -96,30 +96,36 @@ class Client {
         const imgTag = imgRaw !== null ? JSON.parse(imgRaw) : null;
         const cover = (imgTag?.attrs?.find((a) => a[0] === "data-src")?.[1] || "");
         const tagsRaw = JSON.parse(dom.querySelectorAll(linkEl.innerHtml, "dd")) ?? [];
-        const href =  JSON.parse(dom.querySelector(linkEl.innerHtml, "a.list-img")) || null;
+        const href = JSON.parse(dom.querySelector(linkEl.innerHtml, "a.list-img")) || null;
 
         const tags = tagsRaw.map((tagEl) => {
           const a = JSON.parse(dom.querySelector(tagEl?.innerHtml, "a")) || null;
           const href = a?.attrs?.find((a) => a[0] === "href")?.[1] || "";
+          // if (href.startsWith('http')) {
+          //   return;
+          // }
           return {
             href: base + href,
             title: a?.text || "",
             to: "gallery",
           };
 
-        });
+        }).filter(Boolean);
 
-        console.log(linkEl)
+        // console.log(linkEl)
 
+        const href = href?.attrs?.find((a) => a[0] === "href")?.[1] || "";
+        console.log("href:", href);
+        if (href.startsWith('http') && href.indexOf(base) === -1) return null;
         const result = {
-          link: base + (href?.attrs?.find((a) => a[0] === "href")?.[1] || ""),
+          link: href.startsWith('https') ? href : base + href,
           cover: cover,
           title: `【${JSON.parse(numRaw).text}】${imgTag?.attrs?.find((a) => a[0] === "alt")?.[1] || ""}`,
           tags,
         };
-        console.log("result:", result);
+        // console.log("result:", result);
         return result;
-      });
+      }).filter(Boolean);
       const totalPages = await this._parsePageSize(html, dom);
       return JSON.stringify({
         list: results,
@@ -211,7 +217,12 @@ class Client {
         return match ? parseInt(match[1], 10) : null;
       })
       .filter((n) => n !== null);
-
+    if (pageLinks.length > 0 && numbers.length === 0) {
+      const lastPageLink = pageLinks[pageLinks.length - 1];
+      if (lastPageLink) {
+        return parseInt(lastPageLink.text, 10);
+      }
+    }
     return numbers.length > 0 ? Math.max(...numbers) : 1;
   }
 }

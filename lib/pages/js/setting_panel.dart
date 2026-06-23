@@ -13,6 +13,7 @@ class SettingPanel extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final items = [
       {'title': '美图乐', 'assets': "assets/js/meitule.cjs"},
+      {'title': '妹子图', 'assets': "assets/js/meizitu.cjs"},
       {'title': 'Kaizty', 'assets': "assets/js/kaizty.cjs"},
       {'title': 'Wallspic', 'assets': "assets/js/wallspic.cjs"},
     ];

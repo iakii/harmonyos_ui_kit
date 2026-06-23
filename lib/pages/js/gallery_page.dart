@@ -522,10 +522,14 @@ class _GridItemCard extends StatelessWidget {
     final theme = HarmonyTheme.of(context);
 
     return GestureDetector(
-      onTap: () => context.push(
-        item.to == 'gallery' ? '/js_gallery_list' : '/js_gallery_detail',
-        extra: {"title": item.title, 'url': item.link},
-      ),
+      onTap: () {
+        if (item.link.isEmpty || item.to == 'none') return;
+
+        context.push(
+          item.to == 'gallery' ? '/js_gallery_list' : '/js_gallery_detail',
+          extra: {"title": item.title, 'url': item.link},
+        );
+      },
       child: HosCard(
         margin: EdgeInsets.zero,
         padding: EdgeInsets.zero,
@@ -589,6 +593,12 @@ class _GridItemCard extends StatelessWidget {
                             .map(
                               (tag) => InkWell(
                                 onTap: () {
+                                  if (tag.to == 'none' ||
+                                      tag.href == null ||
+                                      tag.href == '') {
+                                    return;
+                                  }
+
                                   context.push(
                                     tag.to == 'gallery'
                                         ? "/js_gallery_list"

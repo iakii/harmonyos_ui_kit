@@ -78,20 +78,40 @@ class Client {
     console.log("getPage 请求的url：", `${path}?page=${page}`);
     const html = await fetch(`${path}?page=${page}`).then((response) => response.text());
     const dom = await import("dom");
-    const scriptsEls = JSON.parse(dom.querySelectorAll(html, "script"));
-    const scripts = scriptsEls.map(el => el.textContent || el.innerHTML || "").join("\n");
+    const scripts = JSON.parse(dom.querySelectorAll(html, "script"));
 
-    const regExp = /window\.mainAdaptiveGallery\s*=\s*(\{.*?\})\s*;/;
-    const match = scriptsEls[6].text.match(regExp);
+
     let data = null;
-    if (match && match[1]) {
-      try {
-        data = JSON.parse(match[1]);
-      } catch (e) {
-        console.error("JSON解析失败:", e);
+    // 人气
+    if (path.includes("/album/popular")) {
+      data = JSON.parse(scripts[2].text);
+      const totalPages = this._parsePageSize(scripts, dom);
+      return JSON.stringify({
+        list: data ? data.map(x => {
+          return {
+            link: x?.contentUrl,
+            cover: x?.thumbnail?.contentUrl,
+            title: x?.description,
+            tags: [
+              { title: "日期：" + x.datePublished, to: "none" },
+            ]
+          }
+        }) : [],
+        totalPage: totalPages,
+        currentPage: page,
+      })
+    } else {
+      const script = scripts.find(script => script.text.includes("window.mainAdaptiveGallery"));
+      const regExp = /window\.mainAdaptiveGallery\s*=\s*(\{.*?\})\s*;/;
+      const match = script.text.match(regExp);
+      if (match && match[1]) {
+        try {
+          data = JSON.parse(match[1]);
+        } catch (e) {
+          console.error("JSON解析失败:", e);
+        }
       }
     }
-    // console.log("x", JSON.stringify(data, null, 4));
 
     const list = data ? data.list.map(x => {
       return {
@@ -99,19 +119,53 @@ class Client {
         cover: x?.thumbnail?.link,
         title: x?.labels?.title,
         // tags,
+        tags: [
+          { title: `分辨率：${x.original.width}x${x.original.height}`, to: "none" },
+        ]
       }
     }) || [] : [];
-
-    // console.log("list", JSON.stringify(list, null, 4));
-
+    const totalPages = this._parsePageSize(scripts, dom);
     return JSON.stringify({
       list,
-      totalPage: Number.MAX_VALUE,
+      totalPage: totalPages,
       currentPage: page,
     })
   }
 
+  _parsePageSize(scripts, dom) {
+
+    const script = scripts.find(script => script.text.includes("window.mainGalleryTarget"));
+
+    let data = null
+    const regExp = /window\.mainGalleryTarget\s*=\s*(\{.*?\})\s*;/;
+    const match = script.text.match(regExp);
+    if (match && match[1]) {
+      try {
+        data = JSON.parse(match[1]);
+      } catch (e) {
+        console.error("JSON解析失败:", e);
+      }
+    }
+    console.log("script:", data.pages);
+    return data?.pages || 1;
+
+  }
+
   async fetchDetails(url) {
+
+    if (url.endsWith(".png") || url.endsWith(".jpg") || url.endsWith(".jpeg") || url.endsWith(".webp")) {
+      return JSON.stringify({
+        list: [
+          {
+            cover: url,
+            href: url,
+            title: "",
+          }
+        ],
+        current: 1,
+      });
+    }
+
     console.log("getDetail 请求的url：", url);
     // await waitTime(300);
     const html = await fetch(url).then((response) => response.text());
