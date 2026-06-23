@@ -6,9 +6,9 @@ class MenuItem {
   const MenuItem({required this.label, required this.path});
 
   factory MenuItem.fromJson(Map<String, dynamic> json) => MenuItem(
-        label: json['label'] as String? ?? '',
-        path: json['path'] as String? ?? '',
-      );
+    label: json['label'] as String? ?? '',
+    path: json['path'] as String? ?? '',
+  );
 
   Map<String, dynamic> toJson() => {'label': label, 'path': path};
 }
@@ -20,6 +20,8 @@ class PluginInfo {
   final String website;
   final String name;
   final List<MenuItem> menus;
+  final String? icon;
+  final Map<String, dynamic>? headers;
 
   const PluginInfo({
     required this.type,
@@ -27,16 +29,21 @@ class PluginInfo {
     required this.website,
     required this.name,
     required this.menus,
+    this.icon,
+    this.headers,
   });
 
   factory PluginInfo.fromJson(Map<String, dynamic> json) => PluginInfo(
-        type: json['type'] as String? ?? '',
-        version: json['version'] as String? ?? '',
-        website: json['website'] as String? ?? '',
-        name: json['name'] as String? ?? '',
-        menus: (json['menus'] as List<dynamic>?)
-                ?.map((e) => MenuItem.fromJson(e as Map<String, dynamic>))
-                .toList() ??
-            [],
-      );
+    type: json['type'] as String? ?? '',
+    version: json['version'] as String? ?? '',
+    website: json['website'] as String? ?? '',
+    name: json['name'] as String? ?? '',
+    icon: json['icon'] as String?,
+    headers: json['headers'] as Map<String, dynamic>?,
+    menus:
+        (json['menus'] as List<dynamic>?)
+            ?.map((e) => MenuItem.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [],
+  );
 }

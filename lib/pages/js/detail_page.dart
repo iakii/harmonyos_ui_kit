@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:rohos_app/providers/js/plugin_info_provider.dart';
-import 'package:rohos_app/services/logger.dart';
 import 'package:rohos_app/widgets/loading.dart' show Loading;
 
 import '../../models/plugin/gallery_item.dart';
@@ -138,7 +137,7 @@ class _DetailList extends StatelessWidget {
 }
 
 /// 单张详情卡片。
-class _DetailCard extends StatelessWidget {
+class _DetailCard extends ConsumerWidget {
   const _DetailCard({
     required this.item,
     required this.index,
@@ -150,7 +149,10 @@ class _DetailCard extends StatelessWidget {
   final int total;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final headers = ref.read(
+      pluginInfoProvider.select((selector) => selector.value?.headers ?? {}),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -163,6 +165,7 @@ class _DetailCard extends StatelessWidget {
               "referer": item.cover ?? "",
               'user-agent':
                   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36',
+              ...headers,
             },
             handleLoadingProgress: true,
             fit: BoxFit.cover,

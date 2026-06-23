@@ -512,15 +512,18 @@ class Pagination extends StatelessWidget {
 }
 
 /// 单个网格卡片：封面图 + 标题。
-class _GridItemCard extends StatelessWidget {
+class _GridItemCard extends ConsumerWidget {
   const _GridItemCard({required this.item});
 
   final GalleryItem item;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = HarmonyTheme.of(context);
 
+    final headers = ref.read(
+      pluginInfoProvider.select((selector) => selector.value?.headers ?? {}),
+    );
     return GestureDetector(
       onTap: () {
         if (item.link.isEmpty || item.to == 'none') return;
@@ -546,7 +549,13 @@ class _GridItemCard extends StatelessWidget {
                   // 'https://cdn.pixabay.com/photo/2016/05/31/11/26/baby-1426651_1280.jpg', //
                   item.cover,
                   fit: BoxFit.cover,
-                  cache: true,
+                  headers: {
+                    "referer": item.cover,
+                    "referrerpolicy": "unsafe-url",
+                    ...headers,
+                  },
+                  handleLoadingProgress: true,
+                  cache: false,
                   loadStateChanged: (state) {
                     if (state.extendedImageLoadState == LoadState.loading) {
                       return Container(
