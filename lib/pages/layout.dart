@@ -45,6 +45,7 @@ class _AppLayoutState extends State<AppLayout> {
         items: [
           HosBottomNavItem(icon: HMIcons.harmonyos, label: '鸿蒙'),
           HosBottomNavItem(icon: HMIcons.house, label: 'JS脚本'),
+          HosBottomNavItem(icon: HMIcons.newMovie, label: 'Rust Daily'),
           HosBottomNavItem(icon: HMIcons.galleryOrg, label: '图集'),
           HosBottomNavItem(icon: HMIcons.dynamicShakeShot, label: '动态'),
         ],
@@ -54,7 +55,7 @@ class _AppLayoutState extends State<AppLayout> {
             _selectedIndex = i;
           });
 
-          final route = ['/', '/js_parse', '/js_gallery', '/webF'][i];
+          final route = ['/', '/js_parse', '/rust', '/js_gallery', '/webF'][i];
           if (ModalRoute.of(context)?.settings.name != route) {
             context.go(route);
           }

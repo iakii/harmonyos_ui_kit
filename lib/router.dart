@@ -4,6 +4,7 @@ import 'package:rohos_app/pages/js/layout.dart' show GalleryLayout;
 import 'package:rohos_app/pages/loading_page.dart' show LoadingPage;
 import 'package:rohos_app/pages/dynamic_html_view_page.dart'
     show DynamicHtml2ViewPage;
+import 'package:rohos_app/pages/rust_daily.dart' show RustDailyPage;
 import 'pages/harmony.dart' show HarmonyOSPage;
 import 'pages/js_parse.dart' show JsParsePage;
 import 'pages/glass_kit.dart' show GlassKitPage;
@@ -18,7 +19,7 @@ import 'pages/layout.dart' show AppLayout;
 ///
 /// 使用 GoRouter ShellRoute，所有页面包裹在 AppLayout 中。
 final router = GoRouter(
-  initialLocation: '/webF',
+  // initialLocation: '/rust',
   errorBuilder: (context, state) => HosPage(
     title: 'Page Not Found',
     body: Column(
@@ -93,6 +94,15 @@ final router = GoRouter(
     GoRoute(
       path: '/webF',
       builder: (context, state) => const DynamicHtml2ViewPage(),
+    ),
+    GoRoute(
+      path: '/rust',
+      builder: (context, state) {
+        if (state.extra == null) {
+          return const RustDailyPage();
+        }
+        return RustDailyPage(url: (state.extra) as String?);
+      },
     ),
     GoRoute(
       path: '/immersive',

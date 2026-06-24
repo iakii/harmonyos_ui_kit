@@ -16,6 +16,7 @@ import '../../models/plugin/plugin_info.dart';
 import '../../providers/js/gallery_provider.dart';
 import '../../providers/js/plugin_info_provider.dart';
 import '../../widgets/async_value_widget.dart';
+import '../../widgets/staggered_grid_view/staggered_grid_view.dart';
 
 /// 图集展示页。
 ///
@@ -323,6 +324,7 @@ class GalleryContentPage extends HookConsumerWidget {
       backgroundColor: showAppBar ? null : Colors.transparent,
       leading: showAppBar ? const BackIcon() : null,
       body: _GalleryGrid(
+        showAppBar: showAppBar,
         items: displayData.list,
         hasMore: displayData.hasMore,
         currentPage: currentPage.value,
@@ -376,6 +378,7 @@ class _GalleryGrid extends StatelessWidget {
     required this.isLoading,
     required this.onPrevPage,
     required this.onNextPage,
+    this.showAppBar = false,
   });
 
   final List<GalleryItem> items;
@@ -385,6 +388,7 @@ class _GalleryGrid extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onPrevPage;
   final VoidCallback onNextPage;
+  final bool showAppBar;
 
   @override
   Widget build(BuildContext context) {
@@ -395,23 +399,23 @@ class _GalleryGrid extends StatelessWidget {
         // 网格内容（切换分页时保持不变，不再闪烁）
         ListView(
           children: [
-            SizedBox(height: 40),
-            GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
+            showAppBar ? SizedBox.shrink() : SizedBox(height: 56),
+            StaggeredGridView.countBuilder(
+              // controller: _controller,
+              crossAxisCount: 3,
+              addRepaintBoundaries: false,
+              addAutomaticKeepAlives: false,
               shrinkWrap: true,
-              padding: const EdgeInsets.all(12),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 3 / 4,
-                // mainAxisExtent: 100,
-              ),
+              physics: const NeverScrollableScrollPhysics(),
+              // padding:   EdgeInsets,
               itemCount: items.length,
-              itemBuilder: (context, index) {
+              itemBuilder: (BuildContext context, int index) {
                 final item = items[index];
                 return _GridItemCard(item: item);
               },
+              staggeredTileBuilder: (index) => const StaggeredTile.fit(1),
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
             ),
           ],
         ),
@@ -547,27 +551,25 @@ class _GridItemCard extends ConsumerWidget {
         margin: EdgeInsets.zero,
         padding: EdgeInsets.zero,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          // crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // 封面图（自带 HosLoading 加载动画）
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
-                child: ExtendedImage.network(
-                  // 'https://cdn.pixabay.com/photo/2016/05/31/11/26/baby-1426651_1280.jpg', //
-                  item.cover,
-                  fit: BoxFit.cover,
-                  headers: {
-                    "referer": item.cover,
-                    "referrerpolicy": "unsafe-url",
-                    ...headers,
-                  },
-                  handleLoadingProgress: true,
-                  // cache: false,
-                  loadStateChanged: imageLoadState,
-                ),
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
+              child: ExtendedImage.network(
+                // 'https://cdn.pixabay.com/photo/2016/05/31/11/26/baby-1426651_1280.jpg', //
+                item.cover,
+                fit: BoxFit.cover,
+                headers: {
+                  "referer": item.cover,
+                  "referrerpolicy": "unsafe-url",
+                  ...headers,
+                },
+                handleLoadingProgress: true,
+                // cache: false,
+                loadStateChanged: imageLoadState,
               ),
             ),
             // 标题

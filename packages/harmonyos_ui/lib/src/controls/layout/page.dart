@@ -29,6 +29,7 @@ class HosPage extends StatelessWidget {
     this.appBarHeight = 92.0,
     this.immersiveAppBar = true,
     this.showAppBar = false,
+    this.extendBodyBehindAppBar = false,
   });
 
   /// Title shown in the app bar.
@@ -65,6 +66,7 @@ class HosPage extends StatelessWidget {
 
   /// Whether to show the app bar.
   final bool showAppBar;
+  final bool extendBodyBehindAppBar;
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +102,7 @@ class HosPage extends StatelessWidget {
       // persistentFooterButtons: [
       //   HosButton(child: Text('test'), onPressed: () {}),
       // ],
-      // extendBodyBehindAppBar: immersiveAppBar,
+      extendBodyBehindAppBar: extendBodyBehindAppBar,
       body: Stack(
         fit: StackFit.passthrough,
         children: [bodyWidget, bottomWidget],

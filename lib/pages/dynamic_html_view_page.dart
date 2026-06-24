@@ -144,6 +144,7 @@ class _DynamicHtml2ViewPageState extends State<DynamicHtml2ViewPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = HarmonyTheme.of(context);
     final title = _info['title'] as String? ?? 'WebF Page';
     return HosPage(
       title: title,
@@ -209,9 +210,21 @@ class _DynamicHtml2ViewPageState extends State<DynamicHtml2ViewPage> {
                 controller: _controller,
                 children: [
                   kHtml.isEmpty
-                      ? Center(child: const Loading())
+                      ? Center(child: const Loading(size: 64))
                       : HtmlWidget(
                           kHtml,
+                          textStyle: TextStyle(
+                            fontSize: 18,
+                            height: 1.5,
+                            color: theme.accentColor,
+                          ),
+                          onTapUrl: (url) {
+                            debugPrint('onTapUrl: $url');
+                            return true;
+                          },
+                          onLoadingBuilder:
+                              (context, element, loadingProgress) =>
+                                  const Loading(size: 64),
                           customWidgetBuilder: customWidgetBuilder,
                         ),
                 ],
