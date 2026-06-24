@@ -173,7 +173,7 @@ class _DynamicHtml2ViewPageState extends State<DynamicHtml2ViewPage> {
                       child: SingleChildScrollView(
                         child: CodeField(
                           // lineNumbers: false,
-                          gutterStyle: GutterStyle(margin: 0),
+                          gutterStyle: GutterStyle(showLineNumbers: false),
                           wrap: true,
                           controller: _codeController,
                           textStyle: const TextStyle(
