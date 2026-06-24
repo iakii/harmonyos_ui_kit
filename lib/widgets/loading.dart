@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 
+import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart' show Colors;
 import 'package:harmonyos_ui/harmonyos_ui.dart';
+import 'package:hm_icon/hm_icon.dart';
 
 /// 3D 立体环绕 Loading 指示器。
 ///
@@ -26,7 +28,7 @@ class _LoadingState extends State<Loading> with SingleTickerProviderStateMixin {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 1),
     )..repeat();
   }
 
@@ -170,4 +172,21 @@ class _CircleRingPainter extends CustomPainter {
       oldDelegate.animationValue != animationValue ||
       oldDelegate.color != color ||
       oldDelegate.size != size;
+}
+
+Widget imageLoadState(ExtendedImageState state) {
+  switch (state.extendedImageLoadState) {
+    case LoadState.loading:
+      return SizedBox(
+        height: 200,
+        child: const Center(child: Loading(size: 48)),
+      );
+    case LoadState.completed:
+      return state.completedWidget;
+    case LoadState.failed:
+      return SizedBox(
+        height: 200,
+        child: const Center(child: Icon(HMIcons.artGallery, size: 32)),
+      );
+  }
 }
