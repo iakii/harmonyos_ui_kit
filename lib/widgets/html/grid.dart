@@ -31,7 +31,7 @@ class HtmlGridView extends StatelessWidget {
       addAutomaticKeepAlives: false,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.only(top: 8, left: 8, right: 8),
+      // padding:   EdgeInsets,
       itemCount: srcs.length,
       itemBuilder: (BuildContext context, int index) {
         final item = srcs[index];
@@ -68,8 +68,8 @@ class HtmlGridView extends StatelessWidget {
             );
       },
       staggeredTileBuilder: (index) => const StaggeredTile.fit(1),
-      mainAxisSpacing: 8,
-      crossAxisSpacing: 8,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
     );
   }
 }

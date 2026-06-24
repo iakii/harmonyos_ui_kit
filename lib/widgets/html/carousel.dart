@@ -24,14 +24,19 @@ class HtmlCarouselView extends StatelessWidget {
 
     final theme = HarmonyTheme.of(context);
 
-    return CarouselSlider(
-      options: CarouselOptions(
-        autoPlay: true,
-        autoPlayAnimationDuration: const Duration(milliseconds: 500),
-        autoPlayInterval: const Duration(seconds: 2),
-        enlargeCenterPage: true,
+    return Container(
+      height: 156,
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 24),
+      child: CarouselSlider(
+        options: CarouselOptions(
+          autoPlay: true,
+          autoPlayAnimationDuration: const Duration(seconds: 1),
+          autoPlayInterval: const Duration(seconds: 3),
+          enlargeCenterPage: true,
+        ),
+        items: srcs.map((src) => _toItem(src, theme)).toList(growable: false),
       ),
-      items: srcs.map((src) => _toItem(src, theme)).toList(growable: false),
     );
   }
 
@@ -39,8 +44,7 @@ class HtmlCarouselView extends StatelessWidget {
     child: ExtendedImage.network(
       src,
       fit: BoxFit.cover,
-      height: 280,
-      width: double.infinity - 80,
+      width: double.infinity,
       loadStateChanged: imageLoadState,
     ).clipRRect(all: 8),
   );

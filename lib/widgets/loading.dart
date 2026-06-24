@@ -28,7 +28,7 @@ class _LoadingState extends State<Loading> with SingleTickerProviderStateMixin {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 1),
+      duration: const Duration(milliseconds: 1500),
     )..repeat();
   }
 
@@ -45,17 +45,16 @@ class _LoadingState extends State<Loading> with SingleTickerProviderStateMixin {
       width: widget.size,
       height: widget.size,
       child: FittedBox(
-        child: Stack(
-          children: [
-            Center(
-              child: AnimatedBuilder(
-                animation: _controller,
-                builder: (context, child) {
-                  final bounceY =
-                      math.sin(_controller.value * 2 * math.pi) * 10;
-                  return Transform.translate(
-                    offset: Offset(0, bounceY),
-                    child: CustomPaint(
+        child: Center(
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              final bounceY = math.sin(_controller.value * 2 * math.pi) * 10;
+              return Transform.translate(
+                offset: Offset(0, bounceY),
+                child: Stack(
+                  children: [
+                    CustomPaint(
                       size: Size(100, 100),
                       painter: _CircleRingPainter(
                         animationValue: _controller.value,
@@ -65,11 +64,18 @@ class _LoadingState extends State<Loading> with SingleTickerProviderStateMixin {
                         size: 100,
                       ),
                     ),
-                  );
-                },
-              ),
-            ),
-          ],
+                    // Icon(
+                    //   HMIcons.harmonyos,
+                    //   size: widget.size * 0.5,
+                    //   color:
+                    //       widget.color ??
+                    //       (theme.isLight ? theme.accentColor : Colors.white),
+                    // ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
