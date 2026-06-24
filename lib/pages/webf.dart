@@ -1,9 +1,15 @@
-import 'dart:ui';
+import 'dart:convert' show jsonDecode;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
-import 'package:carousel_slider/carousel_slider.dart';
+import 'package:hm_icon/hm_icon.dart';
+import 'package:js_runtime/js_runtime.dart';
+import 'package:rohos_app/widgets/html/custom_widget_builder.dart'
+    show customWidgetBuilder;
+import 'package:rohos_app/widgets/loading.dart';
+import 'package:rohos_app/widgets/scrollbar.dart' show CustomScrollBehaviour;
 
 class WebFPage extends StatefulWidget {
   const WebFPage({super.key});
@@ -13,6 +19,30 @@ class WebFPage extends StatefulWidget {
 }
 
 class _WebFPageState extends State<WebFPage> {
+  late final JsEngine engine;
+  Map<String, dynamic> _info = {};
+  List<Map<String, String>> _menus = [];
+  int _currentMenuIndex = 0;
+
+  @override
+  void initState() {
+    initEngine();
+    super.initState();
+  }
+
+  initEngine() async {
+    final code = await rootBundle.loadString('assets/views/hadaka.js');
+    engine = JsEngine.create(
+      runtimeOptions: JsRuntimeOptions(
+        builtins: JsBuiltinOptions.all(), // Console + Fetch
+        info: 'test',
+      ),
+      modules: [JsModule(name: 'client', source: code)],
+    );
+
+    runCode();
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -20,124 +50,128 @@ class _WebFPageState extends State<WebFPage> {
 
   @override
   void dispose() {
+    engine.close();
+    _controller.dispose();
     super.dispose();
   }
 
   final _controller = ScrollController();
+  String kHtml = '';
 
-  @override
-  Widget build(BuildContext context) {
-    return HosPage(
-      title: 'WebF Page',
-      showAppBar: true,
-      body: ScrollConfiguration(
-        behavior: CustomScrollBehaviour(),
-        child: SingleChildScrollView(
-          controller: _controller,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: HtmlWidget(
-              kHtml,
-              customWidgetBuilder: (e) {
-                if (!e.classes.contains('carousel')) {
-                  return null;
-                }
+  /// 递归格式化 [JsValue] 为可读字符串。
+  String fmtVal(JsValue v) => v.when(
+    none: () => 'null',
+    boolean: (b) => b.toString(),
+    integer: (i) => i.toString(),
+    float: (f) => f.toString(),
+    bigInt: (s) => s,
+    string: (s) => s,
+    bytes: (b) => '<bytes: ${b.length} bytes>',
+    array: (arr) => '[${arr.map(fmtVal).join(', ')}]',
+    object: (obj) =>
+        '{${obj.map((e) => '${e.$1}: ${fmtVal(e.$2)}').join(', ')}}',
+    date: (d) =>
+        DateTime.fromMillisecondsSinceEpoch(d.toInt()).toIso8601String(),
+    symbol: (s) => 'Symbol($s)',
+  );
 
-                final srcs = <String>[];
-                for (final child in e.children) {
-                  for (final grandChild in child.children) {
-                    if (grandChild.attributes case {'src': final String src}) {
-                      srcs.add(src);
-                    }
-                  }
-                }
+  Future<void> runCode() async {
+    try {
+      // 构造请求 URL：首次调用使用默认值，后续使用解析后的 info
+      final website = _info['website'] as String? ?? 'https://legs.a-hadaka.jp';
+      final menu = _currentMenuIndex < _menus.length
+          ? _menus[_currentMenuIndex]
+          : null;
+      final path = menu?['value'] ?? menu?['path'] ?? '/';
+      final url = '$website$path';
+      final page = _currentMenuIndex + 1;
+      final output = await engine.eval(
+        code:
+            """
+            (async function() {
+                const {default:client} = await import('client');
+                const info = JSON.parse(client.info);
+                const html = await client.render('$url', $page);
+                return JSON.stringify({info: info, html: html});
+            })()
+        """,
+      );
+      final result = jsonDecode(fmtVal(output));
 
-                return CarouselSlider(
-                  options: CarouselOptions(
-                    autoPlay: true,
-                    autoPlayAnimationDuration: const Duration(
-                      milliseconds: 500,
-                    ),
-                    autoPlayInterval: const Duration(seconds: 2),
-                    enlargeCenterPage: true,
-                  ),
-                  items: srcs.map(_toItem).toList(growable: false),
-                );
-              },
-              onTapImage: (src) {
-                print('onTapImage: ${src.sources}');
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+      setState(() {
+        if (result case {'info': final Map<String, dynamic> info}) {
+          _info = info;
+          _menus =
+              (info['menus'] as List?)
+                  ?.map((e) => Map<String, String>.from(e as Map))
+                  .toList() ??
+              [];
+        }
+        kHtml = result['html'] as String? ?? '';
+      });
 
-  static Widget _toItem(String src) =>
-      Center(child: Image.network(src, fit: BoxFit.cover, width: 1000));
-}
-
-class CustomScrollBehaviour extends MaterialScrollBehavior {
-  const CustomScrollBehaviour();
-
-  @override
-  Widget buildScrollbar(
-    BuildContext context,
-    Widget child,
-    ScrollableDetails details,
-  ) {
-    switch (getPlatform(context)) {
-      case TargetPlatform.linux:
-      case TargetPlatform.macOS:
-      case TargetPlatform.windows:
-      case TargetPlatform.ohos:
-        return Scrollbar(
-          controller: details.controller,
-          radius: Radius.zero,
-          thickness: 0,
-          child: child,
-        );
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.iOS:
-        return child;
+      debugPrint('runCode: html length = ${kHtml.length}, menus = $_menus');
+    } on JsError catch (e) {
+      final isCancelled = e.whenOrNull(cancelled: (_) => true) ?? false;
+      if (isCancelled) return;
+      debugPrint('runCode: JsError: $e');
+    } catch (e) {
+      debugPrint('runCode: error: $e');
     }
   }
 
+  Future<void> _onMenuTap(int index) async {
+    if (index == _currentMenuIndex) return;
+    setState(() {
+      _currentMenuIndex = index;
+      kHtml = ''; // 切菜单时先清空内容，显示 Loading
+    });
+    await runCode();
+  }
+
   @override
-  Set<PointerDeviceKind> get dragDevices => {
-    PointerDeviceKind.touch,
-    PointerDeviceKind.mouse,
-    PointerDeviceKind.trackpad,
-    // PointerDeviceKind.invertedStylus,
-    // PointerDeviceKind.stylus,
-  };
+  Widget build(BuildContext context) {
+    final title = _info['title'] as String? ?? 'WebF Page';
+    return HosPage(
+      title: title,
+      showAppBar: true,
+      actions: [
+        IconButton(
+          icon: const Icon(HMIcons.figureRun),
+          onPressed: () async {
+            runCode();
+          },
+        ),
+      ],
+      body: Column(
+        children: [
+          // 菜单导航标签
+          if (_menus.isNotEmpty)
+            HosTabBar(
+              tabs: _menus.map((m) => m['label'] as String).toList(),
+              selectedIndex: _currentMenuIndex,
+              onChanged: _onMenuTap,
+            ),
+
+          Expanded(
+            child: ScrollConfiguration(
+              behavior: CustomScrollBehaviour(),
+              child: SingleChildScrollView(
+                controller: _controller,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: kHtml.isEmpty
+                      ? Center(child: const Loading())
+                      : HtmlWidget(
+                          kHtml,
+                          customWidgetBuilder: customWidgetBuilder,
+                        ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
-
-const kHtml = '''
-<h1>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam ac metus urna. Proin mollis dictum faucibus. Sed tellus leo, aliquam nec gravida sit amet, feugiat nec orci. Nulla eget neque bibendum, gravida elit eget, volutpat purus. Nullam convallis eros neque, ac rhoncus felis pretium a. Maecenas et pulvinar risus. Duis consequat ac magna a ornare. Fusce eget ante efficitur, fermentum turpis id, ullamcorper neque. Duis sed tellus tellus.</h1>
-
-  <img style="border-radius:12px" src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&fit=crop&w=1600&height=900" />
-
-<div class="carousel">
-  <div class="image">
-    <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&fit=crop&w=1600&height=900" />
-  </div>
-  <div class="image">
-    <img src="https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&fit=crop&w=1600&height=900" />
-  </div>
-  <div class="image">
-    <img src="https://images.unsplash.com/photo-1494256997604-768d1f608cac?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&fit=crop&w=1600&height=900" />
-  </div>
-  <div class="image">
-    <img src="https://images.unsplash.com/photo-1515002246390-7bf7e8f87b54?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&fit=crop&w=1600&height=900" />
-  </div>
-  <div class="image">
-    <img src="https://images.unsplash.com/photo-1519052537078-e6302a4968d4?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&fit=crop&w=1600&height=900" />
-  </div>
-</div>
-<p>Proin in ex sed ipsum ullamcorper laoreet at eget elit. In euismod vehicula orci, luctus fermentum eros egestas at. Proin est tortor, egestas id sodales at, feugiat a lacus. Nulla bibendum sed purus vitae auctor. Maecenas vitae erat velit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Suspendisse mattis ex eget mauris lobortis, ut tincidunt arcu fringilla. Suspendisse ultrices ex tortor, at lobortis felis elementum at. Nunc laoreet sed dui nec gravida. Proin non ipsum augue.</p>
-<p>Proin in ex sed ipsum ullamcorper laoreet at eget elit. In euismod vehicula orci, luctus fermentum eros egestas at. Proin est tortor, egestas id sodales at, feugiat a lacus. Nulla bibendum sed purus vitae auctor. Maecenas vitae erat velit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Suspendisse mattis ex eget mauris lobortis, ut tincidunt arcu fringilla. Suspendisse ultrices ex tortor, at lobortis felis elementum at. Nunc laoreet sed dui nec gravida. Proin non ipsum augue.</p>
-<p>Proin in ex sed ipsum ullamcorper laoreet at eget elit. In euismod vehicula orci, luctus fermentum eros egestas at. Proin est tortor, egestas id sodales at, feugiat a lacus. Nulla bibendum sed purus vitae auctor. Maecenas vitae erat velit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Suspendisse mattis ex eget mauris lobortis, ut tincidunt arcu fringilla. Suspendisse ultrices ex tortor, at lobortis felis elementum at. Nunc laoreet sed dui nec gravida. Proin non ipsum augue.</p><p>Proin in ex sed ipsum ullamcorper laoreet at eget elit. In euismod vehicula orci, luctus fermentum eros egestas at. Proin est tortor, egestas id sodales at, feugiat a lacus. Nulla bibendum sed purus vitae auctor. Maecenas vitae erat velit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Suspendisse mattis ex eget mauris lobortis, ut tincidunt arcu fringilla. Suspendisse ultrices ex tortor, at lobortis felis elementum at. Nunc laoreet sed dui nec gravida. Proin non ipsum augue.</p><p>Proin in ex sed ipsum ullamcorper laoreet at eget elit. In euismod vehicula orci, luctus fermentum eros egestas at. Proin est tortor, egestas id sodales at, feugiat a lacus. Nulla bibendum sed purus vitae auctor. Maecenas vitae erat velit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Suspendisse mattis ex eget mauris lobortis, ut tincidunt arcu fringilla. Suspendisse ultrices ex tortor, at lobortis felis elementum at. Nunc laoreet sed dui nec gravida. Proin non ipsum augue.</p><p>Proin in ex sed ipsum ullamcorper laoreet at eget elit. In euismod vehicula orci, luctus fermentum eros egestas at. Proin est tortor, egestas id sodales at, feugiat a lacus. Nulla bibendum sed purus vitae auctor. Maecenas vitae erat velit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Suspendisse mattis ex eget mauris lobortis, ut tincidunt arcu fringilla. Suspendisse ultrices ex tortor, at lobortis felis elementum at. Nunc laoreet sed dui nec gravida. Proin non ipsum augue.</p><p>Proin in ex sed ipsum ullamcorper laoreet at eget elit. In euismod vehicula orci, luctus fermentum eros egestas at. Proin est tortor, egestas id sodales at, feugiat a lacus. Nulla bibendum sed purus vitae auctor. Maecenas vitae erat velit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Suspendisse mattis ex eget mauris lobortis, ut tincidunt arcu fringilla. Suspendisse ultrices ex tortor, at lobortis felis elementum at. Nunc laoreet sed dui nec gravida. Proin non ipsum augue.</p><p>Proin in ex sed ipsum ullamcorper laoreet at eget elit. In euismod vehicula orci, luctus fermentum eros egestas at. Proin est tortor, egestas id sodales at, feugiat a lacus. Nulla bibendum sed purus vitae auctor. Maecenas vitae erat velit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Suspendisse mattis ex eget mauris lobortis, ut tincidunt arcu fringilla. Suspendisse ultrices ex tortor, at lobortis felis elementum at. Nunc laoreet sed dui nec gravida. Proin non ipsum augue.</p><p>Proin in ex sed ipsum ullamcorper laoreet at eget elit. In euismod vehicula orci, luctus fermentum eros egestas at. Proin est tortor, egestas id sodales at, feugiat a lacus. Nulla bibendum sed purus vitae auctor. Maecenas vitae erat velit. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Suspendisse mattis ex eget mauris lobortis, ut tincidunt arcu fringilla. Suspendisse ultrices ex tortor, at lobortis felis elementum at. Nunc laoreet sed dui nec gravida. Proin non ipsum augue.</p>
-''';
