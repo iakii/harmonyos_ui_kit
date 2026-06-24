@@ -9,7 +9,7 @@ import 'package:rohos_app/pages/js/setting_panel.dart' show SettingPanel;
 import 'package:rohos_app/providers/js/config_provider.dart'
     show jsConfigProvider;
 import 'package:rohos_app/router.dart';
-import 'package:rohos_app/widgets/loading.dart' show Loading;
+import 'package:rohos_app/widgets/loading.dart' show Loading, imageLoadState;
 
 import '../../models/plugin/gallery_item.dart';
 import '../../models/plugin/plugin_info.dart';
@@ -557,24 +557,8 @@ class _GridItemCard extends ConsumerWidget {
                     ...headers,
                   },
                   handleLoadingProgress: true,
-                  cache: false,
-                  loadStateChanged: (state) {
-                    if (state.extendedImageLoadState == LoadState.loading) {
-                      return Container(
-                        color: theme.surfaceColor,
-                        child: const Center(child: Loading(size: 48)),
-                      );
-                    }
-                    if (state.extendedImageLoadState == LoadState.failed) {
-                      return Container(
-                        color: theme.surfaceColor,
-                        child: const Center(
-                          child: Icon(HMIcons.artGallery, size: 32),
-                        ),
-                      );
-                    }
-                    return null; // 默认显示图片
-                  },
+                  // cache: false,
+                  loadStateChanged: imageLoadState,
                 ),
               ),
             ),
