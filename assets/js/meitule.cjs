@@ -91,42 +91,45 @@ class Client {
       // 遍历每个 a.list-img，从其 innerHtml 中提取 img 信息
       const links = JSON.parse(dom.querySelectorAll(html, "li.list-item"));
 
-      const results = links.map((linkEl) => {
-        const imgRaw = dom.querySelector(linkEl.innerHtml, "img");
-        const numRaw = dom.querySelector(linkEl.innerHtml, "div.list-num");
-        const imgTag = imgRaw !== null ? JSON.parse(imgRaw) : null;
-        const cover = (imgTag?.attrs?.find((a) => a[0] === "data-src")?.[1] || "");
-        const tagsRaw = JSON.parse(dom.querySelectorAll(linkEl.innerHtml, "dd")) ?? [];
-        const href = JSON.parse(dom.querySelector(linkEl.innerHtml, "a.list-img")) || null;
+      const results = links
+        .map((linkEl) => {
+          const imgRaw = dom.querySelector(linkEl.innerHtml, "img");
+          const numRaw = dom.querySelector(linkEl.innerHtml, "div.list-num");
+          const imgTag = imgRaw !== null ? JSON.parse(imgRaw) : null;
+          const cover =
+            imgTag?.attrs?.find((a) => a[0] === "data-src")?.[1] || "";
+          const tagsRaw =
+            JSON.parse(dom.querySelectorAll(linkEl.innerHtml, "dd")) ?? [];
+          const hrefRaw =
+            JSON.parse(dom.querySelector(linkEl.innerHtml, "a.list-img")) ||
+            null;
 
-        const tags = tagsRaw.map((tagEl) => {
-          const a = JSON.parse(dom.querySelector(tagEl?.innerHtml, "a")) || null;
-          const href = a?.attrs?.find((a) => a[0] === "href")?.[1] || "";
-          // if (href.startsWith('http')) {
-          //   return;
-          // }
-          return {
-            href: base + href,
-            title: a?.text || "",
-            to: "gallery",
+          const tags = tagsRaw
+            .map((tagEl) => {
+              const a =
+                JSON.parse(dom.querySelector(tagEl?.innerHtml, "a")) || null;
+              const href = a?.attrs?.find((a) => a[0] === "href")?.[1] || "";
+              return {
+                href: base + href,
+                title: a?.text || "",
+                to: "gallery",
+              };
+            })
+            .filter(Boolean);
+
+          const href = hrefRaw?.attrs?.find((a) => a[0] === "href")?.[1] || "";
+          console.log("href:", href);
+          if (href.startsWith("http") && href.indexOf(base) === -1) return null;
+          const result = {
+            link: href.startsWith("https") ? href : base + href,
+            cover: cover,
+            title: `【${JSON.parse(numRaw).text}】${imgTag?.attrs?.find((a) => a[0] === "alt")?.[1] || ""}`,
+            tags,
           };
-
-        }).filter(Boolean);
-
-        // console.log(linkEl)
-
-        const href = href?.attrs?.find((a) => a[0] === "href")?.[1] || "";
-        console.log("href:", href);
-        if (href.startsWith('http') && href.indexOf(base) === -1) return null;
-        const result = {
-          link: href.startsWith('https') ? href : base + href,
-          cover: cover,
-          title: `【${JSON.parse(numRaw).text}】${imgTag?.attrs?.find((a) => a[0] === "alt")?.[1] || ""}`,
-          tags,
-        };
-        // console.log("result:", result);
-        return result;
-      }).filter(Boolean);
+          // console.log("result:", result);
+          return result;
+        })
+        .filter(Boolean);
       const totalPages = await this._parsePageSize(html, dom);
       return JSON.stringify({
         list: results,
@@ -211,10 +214,13 @@ class Client {
     const pageLinks = JSON.parse(
       dom.querySelectorAll(html, "li.page-item a.page-link"),
     );
-    const numbers = pageLinks.filter((el) => el.text === '尾页')
+    const numbers = pageLinks
+      .filter((el) => el.text === "尾页")
       .map((el) => {
         const href = el.attrs.find((a) => a[0] === "href")?.[1] || "";
-        const match = href.includes('/tags/') ? href.match(/(\d+)\.html/) : href.match(/_(\d+)\.html/);
+        const match = href.includes("/tags/")
+          ? href.match(/(\d+)\.html/)
+          : href.match(/_(\d+)\.html/);
         return match ? parseInt(match[1], 10) : null;
       })
       .filter((n) => n !== null);

@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart' hide HarmonyOSPage;
 import 'package:rohos_app/pages/js/layout.dart' show GalleryLayout;
 import 'package:rohos_app/pages/loading_page.dart' show LoadingPage;
+import 'package:rohos_app/pages/webf.dart';
 import 'pages/harmony.dart' show HarmonyOSPage;
 import 'pages/js_parse.dart' show JsParsePage;
 import 'pages/glass_kit.dart' show GlassKitPage;
@@ -16,7 +17,7 @@ import 'pages/layout.dart' show AppLayout;
 ///
 /// 使用 GoRouter ShellRoute，所有页面包裹在 AppLayout 中。
 final router = GoRouter(
-  initialLocation: '/js_gallery',
+  initialLocation: '/webF',
   errorBuilder: (context, state) => HosPage(
     title: 'Page Not Found',
     body: Column(
@@ -88,6 +89,7 @@ final router = GoRouter(
       builder: (context, state, child) => GalleryLayout(child: child),
     ),
 
+    GoRoute(path: '/webF', builder: (context, state) => const WebFPage()),
     GoRoute(
       path: '/immersive',
       builder: (context, state) => const ImmersivePage(),

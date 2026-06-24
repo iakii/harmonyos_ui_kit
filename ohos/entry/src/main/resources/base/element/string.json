@@ -11,6 +11,10 @@
     {
       "name": "EntryAbility_label",
       "value": "rohos_app"
+    },
+    {
+      "name": "network_reason",
+      "value": "使用网络"
     }
   ]
 }
