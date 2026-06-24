@@ -26,11 +26,13 @@ Future<T?> showHosDialog<T>({
   Widget? contentWidget,
   List<Widget>? actions,
   bool barrierDismissible = true,
+  bool useRootNavigator = true,
 }) {
   final theme = HarmonyTheme.of(context);
 
   return showDialog<T>(
     context: context,
+    useRootNavigator: useRootNavigator,
     barrierDismissible: barrierDismissible,
     builder: (context) => Dialog(
       backgroundColor: theme.surfaceColor,
