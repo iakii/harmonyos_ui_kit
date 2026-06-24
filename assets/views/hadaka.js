@@ -42,14 +42,14 @@ class Index {
     const gridImages = images.slice(5).join("\n");
 
     return `
-     <div style="padding:16px;">
+     <div style="padding:12px;">
         <div class="carousel">
           ${carouselImages}
         </div>
+        <div style="height:12px;"></div>
         <div class="grid">
          ${gridImages}
         </div>
-
      </div>
     `
 

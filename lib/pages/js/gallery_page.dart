@@ -26,6 +26,7 @@ class GalleryPage extends HookConsumerWidget {
 
   void showSetting(BuildContext context) {
     showHosBottomSheet(
+      isScrollControlled: true,
       context: context,
       builder: (context) {
         return SettingPanel();
@@ -90,6 +91,12 @@ class GalleryPage extends HookConsumerWidget {
           onRetry: () => ref.refresh(pluginInfoProvider),
         ),
       ),
+      loading: HosPage(
+        showAppBar: true,
+        title: '图集',
+        leading: Icon(HMIcons.harmonyos),
+        body: const Center(child: Loading(size: 64)),
+      ),
       data: (pluginInfo) => _GalleryBody(
         pluginInfo: pluginInfo,
         selectedTabIndex: selectedTabIndex,
@@ -114,6 +121,7 @@ class _GalleryBody extends HookConsumerWidget {
 
   void showSetting(BuildContext context) {
     showHosBottomSheet(
+      isScrollControlled: true,
       context: context,
       builder: (context) {
         return SettingPanel();

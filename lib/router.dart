@@ -2,7 +2,8 @@ import 'package:go_router/go_router.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart' hide HarmonyOSPage;
 import 'package:rohos_app/pages/js/layout.dart' show GalleryLayout;
 import 'package:rohos_app/pages/loading_page.dart' show LoadingPage;
-import 'package:rohos_app/pages/webf.dart';
+import 'package:rohos_app/pages/dynamic_html_view_page.dart'
+    show DynamicHtml2ViewPage;
 import 'pages/harmony.dart' show HarmonyOSPage;
 import 'pages/js_parse.dart' show JsParsePage;
 import 'pages/glass_kit.dart' show GlassKitPage;
@@ -89,7 +90,10 @@ final router = GoRouter(
       builder: (context, state, child) => GalleryLayout(child: child),
     ),
 
-    GoRoute(path: '/webF', builder: (context, state) => const WebFPage()),
+    GoRoute(
+      path: '/webF',
+      builder: (context, state) => const DynamicHtml2ViewPage(),
+    ),
     GoRoute(
       path: '/immersive',
       builder: (context, state) => const ImmersivePage(),
