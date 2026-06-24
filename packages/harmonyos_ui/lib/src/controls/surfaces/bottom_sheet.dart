@@ -36,6 +36,9 @@ Future<T?> showHosBottomSheet<T>({
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
+    constraints: BoxConstraints(
+      maxHeight: MediaQuery.of(context).size.height * 0.9,
+    ),
     builder: (context) {
       return SafeArea(
         child: Column(
