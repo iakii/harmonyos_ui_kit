@@ -39,9 +39,7 @@ class _IconPreviewPageState extends State<IconPreviewPage> {
       } else {
         _filtered
           ..clear()
-          ..addAll(allHMIcons.where(
-            (e) => e.name.toLowerCase().contains(q),
-          ));
+          ..addAll(allHMIcons.where((e) => e.name.toLowerCase().contains(q)));
       }
     });
   }
@@ -108,25 +106,36 @@ class _IconPreviewPageState extends State<IconPreviewPage> {
               ? Center(
                   child: Text(
                     '无匹配图标',
-                    style: TextStyle(color: colorScheme.onSurface.withAlpha(100)),
+                    style: TextStyle(
+                      color: colorScheme.onSurface.withAlpha(100),
+                    ),
                   ),
                 )
-              : GridView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  itemCount: _filtered.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 6,
-                    mainAxisSpacing: 4,
-                    crossAxisSpacing: 4,
-                    childAspectRatio: 1,
-                  ),
-                  itemBuilder: (context, index) {
-                    final entry = _filtered[index];
-                    return _IconTile(
-                      entry: entry,
-                      onTap: () => _onTap(entry),
-                    );
-                  },
+              : ListView(
+                  children: [
+                    GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      itemCount: _filtered.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 6,
+                            mainAxisSpacing: 4,
+                            crossAxisSpacing: 4,
+                            childAspectRatio: 1,
+                          ),
+                      itemBuilder: (context, index) {
+                        final entry = _filtered[index];
+                        return _IconTile(
+                          entry: entry,
+                          onTap: () => _onTap(entry),
+                        );
+                      },
+                    ),
+
+                    SizedBox(height: 128),
+                  ],
                 ),
         ),
       ],
@@ -145,7 +154,8 @@ class _IconTile extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Tooltip(
-      message: '${entry.name}\nU+${entry.codePoint.toRadixString(16).toUpperCase().padLeft(5, '0')}',
+      message:
+          '${entry.name}\nU+${entry.codePoint.toRadixString(16).toUpperCase().padLeft(5, '0')}',
       child: Material(
         color: Colors.transparent,
         child: InkWell(

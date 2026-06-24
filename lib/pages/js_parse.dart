@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:js_runtime/js_runtime.dart';
 import 'package:logger/logger.dart' show Logger;
 import 'package:signals/signals_flutter.dart';
@@ -9,44 +10,36 @@ import 'package:signals/signals_flutter.dart';
 /// JS 解析页面 —— 展示 js_runtime 的 JavaScript 执行能力。
 ///
 /// 使用 [signals] 进行状态管理，替代 hooks + riverpod。
-class JsParsePage extends StatefulWidget {
+class JsParsePage extends ConsumerStatefulWidget {
   const JsParsePage({super.key});
 
   @override
-  State<JsParsePage> createState() => _JsParsePageState();
+  ConsumerState<JsParsePage> createState() => _JsParsePageState();
 }
 
-class _JsParsePageState extends State<JsParsePage> {
+class _JsParsePageState extends ConsumerState<JsParsePage> {
   // ─── Controllers ────────────────────────────────────────────
   final codeController = TextEditingController(
     text: '''
-// 👇 meitule.js 图集解析示例
-(async function() {
-    const { default: client } = await import('client');
+// 示例 JavaScript 代码
+(async function(){
+  const a = 1;
+  const b = 2;
+  // 发送消息给 Dart，会弹出通知
+  showMessage(`Hello from JS! a=\${a}, b=\${b}`);
+  // 发送请求
+  const response = await fetch('https://jsonplaceholder.typicode.com/todos/1');
+  const data = await response.json();
+  showMessage(`Fetched data: \${JSON.stringify(data, null, 4)}`);
 
-    // 1. 获取插件信息（pluginInfo 是 getter，返回 JSON 字符串）
-    const info = JSON.parse(client.pluginInfo);
-    console.log('插件名称:', info.name);
+  // 解析dom示例
+  const htmlString = '<div><p>Hello, <strong>World!</strong></p></div>';
+  const dom= await import("dom");
+  const pDom = dom.querySelector(htmlString, 'p');
+  const p = JSON.parse(pDom);
+  showMessage(`Parsed DOM: \${JSON.stringify(p, null, 4)}`);
 
-    // 通过 postMessage 将数据传给 Dart 端的 listData
-    postMessage('pluginInfo', JSON.stringify(info));
-
-    // 2. 解析 HTML 获取图片列表（离线测试）
-    var mockHtml = '<a class="list-img" href="/photo/123.html"><img data-src="https://example.com/1.jpg" alt="写真集 A"></a>';
-    mockHtml += '<li class="page-item"><a class="page-link" href="index_3.html"></a></li>';
-
- console.log('step:', 2);
-    // 3. 在线获取图片列表（需要 JS 运行时支持 fetch）:
-    var result = await client.fetchGallery('https://www.meitula.org/', 1);
-     console.log('step:', 3);
-    postMessage('pageResult', result);
-     console.log('step:', 4);
-
-    // 4. 处理结果并回传给 Dart 端
-    // const sumRes= await sum(1,2);
-    // console.log('sum(1,2) =', sumRes);
-
-    return JSON.stringify({ name: info.name, result, mockHtml});
+  return JSON.stringify({a, b,'a+b':a+b, data, p, response:data}, null, 4);
 })()
 ''',
   );
@@ -56,13 +49,16 @@ class _JsParsePageState extends State<JsParsePage> {
 
   // ─── Signals（响应式状态）─────────────────────────────────────
   final listData = signal<List<String>>([]);
-  final isRunning = signal(false);
-  final result = signal<String?>(null);
-  final error = signal<String?>(null);
-  final memInfo = signal('');
-  final version = signal('');
 
-  // ─── Formatters ──────────────────────────────────────────────
+  final isRunning = signal(false);
+
+  final result = signal<String?>(null);
+
+  final error = signal<String?>(null);
+
+  final memInfo = signal('');
+
+  final version = signal('');
 
   /// 递归格式化 [JsValue] 为可读字符串。
   String fmtVal(JsValue v) => v.when(
@@ -91,7 +87,6 @@ class _JsParsePageState extends State<JsParsePage> {
   }
 
   // ─── Lifecycle ───────────────────────────────────────────────
-
   @override
   void initState() {
     super.initState();
@@ -107,17 +102,11 @@ class _JsParsePageState extends State<JsParsePage> {
 
   Future<void> _initRuntime() async {
     try {
-      final jsFiles = await DefaultAssetBundle.of(
-        context,
-      ).loadString('assets/js/meitule.js');
-
       _jsRuntime = JsEngine.create(
         runtimeOptions: JsRuntimeOptions(
           builtins: JsBuiltinOptions.all(),
           info: "parser=esbuild",
-          // memoryLimit: BigInt.from(100 * 1024 * 1024),
         ),
-        modules: [JsModule(name: 'client', source: jsFiles)],
       );
 
       await _jsRuntime.register(
@@ -136,6 +125,16 @@ class _JsParsePageState extends State<JsParsePage> {
           return jsonEncode(null);
         },
       );
+      await _jsRuntime.register(
+        name: 'showMessage',
+        func: (String argsJson) async {
+          final args = jsonDecode(argsJson) as List;
+          debugPrint('Received from JS:  data=$args');
+          final message = args[0] as String? ?? '';
+          showHosToast(context: context, message: message);
+          return jsonEncode(null);
+        },
+      );
 
       version.value = 'JsRuntime (built-in)';
     } catch (e) {
@@ -145,10 +144,8 @@ class _JsParsePageState extends State<JsParsePage> {
   }
 
   // ─── Actions ─────────────────────────────────────────────────
-
   Future<void> runCode() async {
     final engine = _jsRuntime;
-
     final code = codeController.text.trim();
     if (code.isEmpty) {
       error.value = '请输入 JavaScript 代码';
@@ -182,7 +179,6 @@ class _JsParsePageState extends State<JsParsePage> {
   }
 
   // ─── Build ───────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     // Watch 包裹的内容会在任意 signal 变化时自动重建
@@ -192,171 +188,153 @@ class _JsParsePageState extends State<JsParsePage> {
       return HosPage(
         leading: const BackIcon(),
         title: 'JS 解析',
-        body: SingleChildScrollView(
+        body: ListView(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 版本信息
-              if (version.value.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(version.value, style: theme.typography.caption),
-                ),
+          children: [
+            // 版本信息
+            if (version.value.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(version.value, style: theme.typography.caption),
+              ),
 
-              // 内存信息
-              if (memInfo.value.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          memInfo.value,
-                          style: theme.typography.caption,
+            // 内存信息
+            if (memInfo.value.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        memInfo.value,
+                        style: theme.typography.caption,
+                      ),
+                    ),
+                    HosTextButton(
+                      onPressed: _releaseMemory,
+                      child: const Text('释放内存'),
+                    ),
+                  ],
+                ),
+              ),
+
+            // 代码输入区
+            HosTextInput(
+              controller: codeController,
+              placeholder: '输入 JavaScript 代码',
+              maxLines: 10,
+              minLines: 10,
+            ),
+            const SizedBox(height: 12),
+
+            // 运行按钮
+            HosButton(
+              onPressed: isRunning.value ? null : runCode,
+              child: isRunning.value
+                  ? const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         ),
+                        SizedBox(width: 8),
+                        Text('执行中...'),
+                      ],
+                    )
+                  : const Text('运行'),
+            ),
+            const SizedBox(height: 12),
+            // 错误提示
+            if (error.value != null) ...[
+              HosCard(
+                margin: EdgeInsets.zero,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '错误',
+                      style: TextStyle(
+                        color: HarmonyColors.errorColor,
+                        fontWeight: FontWeight.w600,
                       ),
-                      HosTextButton(
-                        onPressed: _releaseMemory,
-                        child: const Text('释放内存'),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 8),
+                    SelectableText(
+                      error.value!,
+                      style: TextStyle(color: HarmonyColors.errorColor),
+                    ),
+                  ],
                 ),
-
-              // 代码输入区
-              HosTextInput(
-                controller: codeController,
-                placeholder: '输入 JavaScript 代码',
-                maxLines: 10,
-                minLines: 10,
               ),
               const SizedBox(height: 12),
+            ],
 
-              const SizedBox(height: 16),
-              // 运行按钮
-              HosButton(
-                onPressed: isRunning.value ? null : runCode,
-                child: isRunning.value
-                    ? const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Text('执行中...'),
-                        ],
-                      )
-                    : const Text('运行'),
-              ),
-
-              HosButton(
-                onPressed: () {
-                  _jsRuntime.cancelEval();
-                },
-                child: const Text('停止'),
-              ),
-
-              // 错误提示
-              if (error.value != null) ...[
-                HosCard(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '错误',
-                          style: TextStyle(
-                            color: HarmonyColors.errorColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        SelectableText(
-                          error.value!,
-                          style: TextStyle(color: HarmonyColors.errorColor),
-                        ),
-                      ],
+            // 执行结果
+            if (result.value != null)
+              HosCard(
+                margin: EdgeInsets.zero,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '执行结果',
+                      style: TextStyle(
+                        color: theme.accentColor.normal,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    SelectableText(result.value!),
+                  ],
                 ),
-                const SizedBox(height: 12),
-              ],
+              ),
 
-              // 执行结果
-              if (result.value != null)
-                HosCard(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            // JS → Dart 消息列表（__postMessage 传递的数据）
+            if (listData.value.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              HosCard(
+                margin: EdgeInsets.zero,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
                         Text(
-                          '执行结果',
+                          'JS 消息 (listData)',
                           style: TextStyle(
                             color: theme.accentColor.normal,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        SelectableText(result.value!),
-                      ],
-                    ),
-                  ),
-                ),
-
-              // JS → Dart 消息列表（__postMessage 传递的数据）
-              if (listData.value.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                HosCard(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'JS 消息 (listData)',
-                              style: TextStyle(
-                                color: theme.accentColor.normal,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const Spacer(),
-                            HosTextButton(
-                              onPressed: () => listData.value = [],
-                              child: const Text('清空'),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 8),
-                        ...listData.value.map(
-                          (msg) => Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: SelectableText(
-                              msg,
-                              style: theme.typography.caption,
-                            ),
-                          ),
+                        const Spacer(),
+                        HosTextButton(
+                          onPressed: () => listData.value = [],
+                          child: const Text('清空'),
                         ),
                       ],
                     ),
-                  ),
-                ),
-              ],
 
-              const SizedBox(height: 128),
+                    const SizedBox(height: 8),
+                    ...listData.value.map(
+                      (msg) => Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: SelectableText(
+                          msg,
+                          style: theme.typography.caption,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
-          ),
+            const SizedBox(height: 128),
+          ],
         ),
       );
     });

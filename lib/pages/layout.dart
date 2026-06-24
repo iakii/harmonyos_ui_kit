@@ -14,7 +14,7 @@ class AppLayout extends StatefulWidget {
 
 class _AppLayoutState extends State<AppLayout> {
   int _selectedIndex = 0;
-  bool _isImmersive = false;
+  bool _isImmersive = true;
   @override
   Widget build(BuildContext context) {
     return HosPage(
@@ -45,10 +45,8 @@ class _AppLayoutState extends State<AppLayout> {
         items: [
           HosBottomNavItem(icon: HMIcons.harmonyos, label: '鸿蒙'),
           HosBottomNavItem(icon: HMIcons.house, label: 'JS脚本'),
-          // HosBottomNavItem(icon: HMIcons.share, label: '玻璃套件'),
-          // HosBottomNavItem(icon: HMIcons.a10kRectangle, label: '沉浸式'),
-          // HosBottomNavItem(icon: HMIcons.glass, label: '毛玻璃'),
           HosBottomNavItem(icon: HMIcons.galleryOrg, label: '图集'),
+          HosBottomNavItem(icon: HMIcons.dynamicShakeShot, label: '动态'),
         ],
         selectedIndex: _selectedIndex,
         onChanged: (i) {
@@ -56,13 +54,7 @@ class _AppLayoutState extends State<AppLayout> {
             _selectedIndex = i;
           });
 
-          final route = [
-            '/',
-            '/js_parse',
-            // '/glass_kit',
-            // '/glass',
-            '/js_gallery',
-          ][i];
+          final route = ['/', '/js_parse', '/js_gallery', '/webF'][i];
           if (ModalRoute.of(context)?.settings.name != route) {
             context.go(route);
           }
