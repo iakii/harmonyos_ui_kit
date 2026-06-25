@@ -13,11 +13,7 @@ import 'package:rohos_app/presentation/widgets/loading.dart';
 ///
 /// 接收文章 [url] 和 [title]，通过 [rustDailyProvider] 获取 HTML 内容并渲染。
 class RustDailyDetailPage extends HookConsumerWidget {
-  const RustDailyDetailPage({
-    super.key,
-    required this.url,
-    this.title = '',
-  });
+  const RustDailyDetailPage({super.key, required this.url, this.title = ''});
 
   final String url;
   final String title;
@@ -43,27 +39,25 @@ class RustDailyDetailPage extends HookConsumerWidget {
       body: asyncData.isLoading && html.isEmpty
           ? const Center(child: Loading(size: 64))
           : asyncData.hasError && html.isEmpty
-              ? HosErrorState(
-                  message: asyncData.error.toString(),
-                  onRetry: () => ref.invalidate(rustDailyProvider(params)),
-                )
-              : ScrollConfiguration(
-                  behavior: const ScrollBehavior(),
-                  child: ListView(
-                    children: [
-                      HtmlWidget(
-                        html,
-                        textStyle: const TextStyle(fontSize: 15),
-                        onTapUrl: (_) => true,
-                        onLoadingBuilder:
-                            (context, element, loadingProgress) =>
-                                const Loading(size: 64),
-                        customWidgetBuilder: customWidgetBuilder,
-                      ),
-                      const SizedBox(height: 128),
-                    ],
+          ? HosErrorState(
+              message: asyncData.error.toString(),
+              onRetry: () => ref.invalidate(rustDailyProvider(params)),
+            )
+          : ScrollConfiguration(
+              behavior: const ScrollBehavior(),
+              child: ListView(
+                children: [
+                  HtmlWidget(
+                    html,
+                    textStyle: const TextStyle(fontSize: 15),
+                    onLoadingBuilder: (context, element, loadingProgress) =>
+                        const Loading(size: 64),
+                    customWidgetBuilder: customWidgetBuilder,
                   ),
-                ),
+                  const SizedBox(height: 128),
+                ],
+              ),
+            ),
     );
   }
 }

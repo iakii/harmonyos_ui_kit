@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_svg/svg.dart' show SvgPicture;
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:hm_icon/hm_icon.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -27,19 +28,33 @@ class RustDailyPage extends HookConsumerWidget {
     }, []);
 
     return HosPage(
-      title: 'Rust Daily',
+      title: 'Rust语言中文社区',
       showAppBar: true,
       leading: Navigator.of(context).canPop()
           ? const BackIcon()
-          : const Icon(HMIcons.harmonyos, size: 30),
+          : SvgPicture.network(
+              'https://rustcc.cn/img/rust-logo.svg',
+              width: 36,
+              height: 36,
+            ),
       actions: [
         IconButton(
           icon: const Icon(HMIcons.houseFill),
           onPressed: () => router.go('/'),
         ),
       ],
-      body: Column(
+      body: Stack(
         children: [
+          PageView(
+            controller: pageController.value,
+            onPageChanged: (i) => selectedTabIndex.value = i,
+            children: listTabs
+                .map(
+                  (tab) => RustDailyListTab(key: ValueKey(tab.key), tab: tab),
+                )
+                .toList(),
+          ),
+
           HosTabBar(
             tabs: listTabs.map((t) => t.label).toList(),
             icons: listTabs.map((t) => t.icon!).toList(),
@@ -52,15 +67,6 @@ class RustDailyPage extends HookConsumerWidget {
                 curve: Curves.easeInOut,
               );
             },
-          ),
-          Expanded(
-            child: PageView(
-              controller: pageController.value,
-              onPageChanged: (i) => selectedTabIndex.value = i,
-              children: listTabs
-                  .map((tab) => RustDailyListTab(key: ValueKey(tab.key), tab: tab))
-                  .toList(),
-            ),
           ),
         ],
       ),

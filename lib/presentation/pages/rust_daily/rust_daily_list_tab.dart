@@ -37,6 +37,15 @@ class _RustDailyListTabState extends ConsumerState<RustDailyListTab>
   List<String> _accumulatedItems = [];
   RustDailyPageData? _cachedData;
 
+  /// 最近一次错误，用于在 [InfiniteScrollView] 中显示错误页。
+  Object? _lastError;
+
+  // ── 加载状态 ──
+  /// 是否正在加载更多（上拉分页）。
+  ///
+  /// 供 [InfiniteScrollView.isLoadingMore] 驱动上拉加载完的动画结束回调。
+  bool _isLoadingMore = false;
+
   // ── 控制器 ──
   late final RefreshController _refreshController = RefreshController();
   late final ScrollController _scrollController = ScrollController();
@@ -84,6 +93,7 @@ class _RustDailyListTabState extends ConsumerState<RustDailyListTab>
     _currentPage = 1;
     _accumulatedItems = [];
     _cachedData = null;
+    _lastError = null;
     _refreshController.resetNoData();
   }
 
@@ -104,23 +114,36 @@ class _RustDailyListTabState extends ConsumerState<RustDailyListTab>
       tabKey: tab.key,
     );
 
-    final asyncData = ref.watch(rustDailyProvider(params));
-
     // ── Listener ──
+    // 通过 ref.listen 订阅 provider 状态变化，驱动数据累积和 UI 更新。
+    // 不再使用 ref.watch 隐式触发加载——初始加载交由 RefreshController 的
+    // requestRefresh() 触发，加载动画由下拉刷新指示器控制，无需额外加载态。
     ref.listen(rustDailyProvider(params), (prev, next) {
       final data = next.valueOrNull;
-      if (data == null) return;
+      if (data == null) {
+        if (next.hasError) {
+          _lastError = next.error;
+          // 加载更多出错时重置加载态，让 InfiniteScrollView 结束上拉动效
+          if (_currentPage > 1) _isLoadingMore = false;
+          if (mounted) setState(() {});
+        }
+        return;
+      }
 
+      _lastError = null;
       _cachedData = data;
 
       if (data.currentPage == 1) {
+        // 第 1 页：直接替换（刷新或首次加载）
         _accumulatedItems = data.liItems;
       } else {
+        // 后续页：追加到已有列表
         _accumulatedItems = [..._accumulatedItems, ...data.liItems];
+        _isLoadingMore = false; // 加载完成，InfiniteScrollView 检测到过渡后结束上拉动效
       }
-    });
 
-    final isLoading = asyncData.isLoading;
+      if (mounted) setState(() {});
+    });
 
     // ── 展示数据 ──
     final displayHtml = _accumulatedItems.isNotEmpty
@@ -128,28 +151,49 @@ class _RustDailyListTabState extends ConsumerState<RustDailyListTab>
         : '';
     final displayHasMore = _cachedData?.hasMore ?? false;
 
-    final hasError = asyncData.hasError && displayHtml.isEmpty;
-    final isLoadingMore = isLoading && _currentPage > 1;
+    // 无 ref.watch 后，错误状态通过 ref.listen 记录到 _lastError。
+    // 仅在数据为空时才展示错误页（已有数据时不覆盖）。
+    final hasError = _lastError != null && displayHtml.isEmpty;
 
     // ── 下拉刷新 ──
+    // 初始加载和手动下拉刷新都经过此路径。初始时由 initState 中的
+    // _refreshController.requestRefresh() 触发，自带下拉动画。
     Future<void> onRefresh() async {
       console.d("onRefresh: url=${tab.url}, tabKey=${tab.key}");
+      // 重置到第 1 页，清空累积数据
       _currentPage = 1;
       _accumulatedItems = [];
       _cachedData = null;
+      _lastError = null;
       _refreshController.resetNoData();
+      // 失效 provider 后重新读取，利用 Riverpod 缓存避免重复请求
       final p = rustDailyProvider(
         RustDailyParams(url: tab.url, type: 'list', page: 1, tabKey: tab.key),
       );
       ref.invalidate(p);
       await ref.read(p.future);
+      // InfiniteScrollView._onRefresh 等待此 Future 完成后自动调 refreshCompleted()
     }
 
     // ── 加载更多 ──
+    // 上拉触发的分页加载。翻页后通过 ref.invalidate 显式触发新 provider 实例，
+    // 而非依赖 ref.watch 隐式响应——因为本页面使用 ref.listen 替代 ref.watch。
     void onLoadMore() {
-      if (displayHasMore) {
-        setState(() => _currentPage++);
-      }
+      if (!displayHasMore) return;
+      setState(() {
+        _currentPage++;
+        _isLoadingMore = true; // InfiniteScrollView 据此展示上拉加载态
+      });
+      // 用新页码构造 provider key，失效后触发该实例的 build
+      final p = rustDailyProvider(
+        RustDailyParams(
+          url: widget.tab.url,
+          type: 'list',
+          page: _currentPage,
+          tabKey: widget.tab.key,
+        ),
+      );
+      ref.invalidate(p);
     }
 
     return Stack(
@@ -160,11 +204,12 @@ class _RustDailyListTabState extends ConsumerState<RustDailyListTab>
           onRefresh: onRefresh,
           onLoadMore: onLoadMore,
           hasMore: displayHasMore,
-          isLoadingMore: isLoadingMore,
+          isLoadingMore: _isLoadingMore,
           children: [
+            SizedBox(height: 28), // 顶部留空给 HosTabBar
             if (hasError)
               HosErrorState(
-                message: asyncData.error.toString(),
+                message: _lastError.toString(),
                 onRetry: () => ref.invalidate(rustDailyProvider(params)),
               ),
             if (displayHtml.isNotEmpty)
