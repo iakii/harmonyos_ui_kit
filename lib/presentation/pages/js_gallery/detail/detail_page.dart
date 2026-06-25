@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:rohos_app/core/utils/logger.dart' show console;
 import 'package:rohos_app/domain/entities/detail_accumulator_state.dart';
 import 'package:rohos_app/presentation/providers/js_gallery/detail_page_accumulator_provider.dart';
+import 'package:rohos_app/presentation/widgets/back_to_top_button.dart';
 import 'package:rohos_app/presentation/widgets/infinite_scroll_view.dart'
     show InfiniteScrollView;
 import 'detail_card.dart' show DetailCard;
@@ -13,7 +14,7 @@ import 'detail_loading_widget.dart' show DetailLoadingWidget;
 /// 通过 [DetailPageAccumulator] provider 管理分页累积数据，
 /// [InfiniteScrollView.paginated] 实现下拉刷新和上拉加载更多。
 /// 当响应包含 totalPage 或 nextPageUrl 时启用分页，否则为单次加载。
-class DetailPage extends ConsumerWidget {
+class DetailPage extends ConsumerStatefulWidget {
   const DetailPage({super.key, required this.url, this.title = '详情'});
 
   /// 图集详情链接（从 GoRouter state.extra 传入）。
@@ -23,15 +24,45 @@ class DetailPage extends ConsumerWidget {
   final String title;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncState = ref.watch(detailPageAccumulatorProvider(url));
+  ConsumerState<DetailPage> createState() => _DetailPageState();
+}
+
+class _DetailPageState extends ConsumerState<DetailPage> {
+  // ── 滚动控制 ──
+  late final ScrollController _scrollController = ScrollController();
+  bool _showBackToTop = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final visible = _scrollController.position.pixels > 500;
+    if (visible != _showBackToTop) {
+      setState(() => _showBackToTop = visible);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final asyncState = ref.watch(detailPageAccumulatorProvider(widget.url));
     final theme = HarmonyTheme.of(context);
 
-    void onRetry() => ref.refresh(detailPageAccumulatorProvider(url));
+    void onRetry() => ref.refresh(detailPageAccumulatorProvider(widget.url));
 
     return HosPage(
       leading: const BackIcon(),
-      title: title,
+      title: widget.title,
       backgroundColor: HarmonyTheme.of(context).surfaceColor,
       showAppBar: true,
       body: asyncState.when(
@@ -63,11 +94,13 @@ class DetailPage extends ConsumerWidget {
     }
 
     console.d('hasmore ${state.hasMore}');
+    console.d(state.items.map((e) => e.cover).toList());
 
     // 有数据（或正在加载中）→ 无限滚动
-    // 首页数据已在 provider build 中加载，autoLoad=false 避免重复触发
-    return InfiniteScrollView.paginated(
-      autoLoad: false,
+    // provider.build 只返回空状态，由 autoLoad 触发 refresh() 加载首页
+    final content = InfiniteScrollView.paginated(
+      controller: _scrollController,
+      autoLoad: true,
       itemCount: state.items.length,
       itemBuilder: (context, index) => DetailCard(
         item: state.items[index],
@@ -75,9 +108,9 @@ class DetailPage extends ConsumerWidget {
         total: state.items.length,
       ),
       onRefresh: () =>
-          ref.read(detailPageAccumulatorProvider(url).notifier).refresh(),
+          ref.read(detailPageAccumulatorProvider(widget.url).notifier).refresh(),
       onLoadMore: () =>
-          ref.read(detailPageAccumulatorProvider(url).notifier).loadNext(),
+          ref.read(detailPageAccumulatorProvider(widget.url).notifier).loadNext(),
       hasMore: state.hasMore,
       error: state.error != null && state.items.isNotEmpty ? state.error : null,
       headerItems: [
@@ -88,12 +121,25 @@ class DetailPage extends ConsumerWidget {
             child: HosErrorState(
               message: state.error.toString(),
               onRetry: () => ref
-                  .read(detailPageAccumulatorProvider(url).notifier)
+                  .read(detailPageAccumulatorProvider(widget.url).notifier)
                   .loadNext(),
             ),
           ),
       ],
       footerItems: const [SizedBox(height: 80)],
+    );
+
+    return Stack(
+      children: [
+        content,
+        // ── 回到顶部 ──
+        if (_showBackToTop)
+          Positioned(
+            right: 16,
+            bottom: 24,
+            child: BackToTopButton(scrollController: _scrollController),
+          ),
+      ],
     );
   }
 }

@@ -17,11 +17,13 @@ class _WorkerInit {
   final String url;
   final SendPort sendPort;
   final String name;
+  final int current;
   const _WorkerInit({
     required this.jsSource,
     required this.url,
     required this.sendPort,
     required this.name,
+    required this.current,
   });
 }
 
@@ -34,7 +36,8 @@ abstract class _Msg {
 
 /// 详情分页累积 Provider（按 URL）。
 ///
-/// [build] 时自动加载第一页数据，UI 通过 [AsyncValue.when] 展示加载/错误/数据状态。
+/// [build] 只获取 JS 配置，不加载数据。首页数据由 [InfiniteScrollView] 的
+/// [autoLoad] 触发 [refresh()] 来加载。UI 通过 [AsyncValue.when] 展示状态。
 /// [loadNext] 加载后续分页，[refresh] 重新加载首页。
 @riverpod
 class DetailPageAccumulator extends _$DetailPageAccumulator {
@@ -43,23 +46,10 @@ class DetailPageAccumulator extends _$DetailPageAccumulator {
     ref.onDispose(() {
       // isolate 会在 _loadSinglePage 的 finally 块中清理
     });
-    // build 时自动加载第一页数据
-    final config = await ref.watch(jsConfigProvider.future);
-    final detail = await _loadSinglePage(
-      url: url,
-      jsSource: config.jsContent,
-      name: config.name,
-    );
-    return DetailAccumulatorState(
-      items: detail.list,
-      currentPage: 1,
-      totalPage: detail.totalPage,
-      nextPageUrl: detail.nextPageUrl,
-      lastLoadedUrl: url,
-      isLoading: false,
-      error: null,
-      hasLoaded: true,
-    );
+    // 仅获取 JS 配置（确保可用），不加载第一页数据
+    // 第一页数据由 InfiniteScrollView 的 autoLoad 触发 refresh() 加载
+    await ref.watch(jsConfigProvider.future);
+    return DetailAccumulatorState.empty();
   }
 
   /// 加载下一页。
@@ -86,6 +76,7 @@ class DetailPageAccumulator extends _$DetailPageAccumulator {
         url: nextUrl,
         jsSource: config.jsContent,
         name: config.name,
+        current: current.currentPage + 1,
       );
 
       state = AsyncValue.data(
@@ -119,6 +110,7 @@ class DetailPageAccumulator extends _$DetailPageAccumulator {
         url: url,
         jsSource: config.jsContent,
         name: config.name,
+        current: 1,
       );
       state = AsyncValue.data(
         DetailAccumulatorState(
@@ -159,6 +151,7 @@ Future<GalleryDetail> _loadSinglePage({
   required String url,
   required String jsSource,
   required String name,
+  required int current,
 }) async {
   final receivePort = ReceivePort();
   final isolate = await Isolate.spawn(
@@ -167,6 +160,7 @@ Future<GalleryDetail> _loadSinglePage({
       jsSource: jsSource,
       url: url,
       name: name,
+      current: current,
       sendPort: receivePort.sendPort,
     ),
     debugName: 'DetailPageWorker',
@@ -224,7 +218,7 @@ Future<void> _pageWorker(_WorkerInit init) async {
       (async () => {
         const dom = await import('dom');
         const { default: client } = await import('client');
-        return await client.fetchDetails(${jsonEncode(init.url)});
+        return await client.fetchDetails(${jsonEncode(init.url)}, ${init.current});
       })()
     ''',
     );

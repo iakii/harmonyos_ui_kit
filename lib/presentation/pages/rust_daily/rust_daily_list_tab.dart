@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
-import 'package:hm_icon/hm_icon.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:rohos_app/domain/entities/rust_daily_page_data.dart';
@@ -13,6 +12,7 @@ import 'package:rohos_app/presentation/widgets/html/custom_widget_builder.dart'
     show customWidgetBuilder;
 import 'package:rohos_app/presentation/widgets/infinite_scroll_view.dart';
 import 'package:rohos_app/presentation/widgets/loading.dart';
+import 'package:rohos_app/presentation/widgets/back_to_top_button.dart';
 
 /// 单个 Tab 的列表页。
 ///
@@ -235,81 +235,10 @@ class _RustDailyListTabState extends ConsumerState<RustDailyListTab>
           Positioned(
             right: 16,
             bottom: 24,
-            child: _BackToTopButton(scrollController: _scrollController),
+            child: BackToTopButton(scrollController: _scrollController),
           ),
       ],
     );
   }
 }
 
-/// 返回顶部悬浮按钮。
-class _BackToTopButton extends StatefulWidget {
-  const _BackToTopButton({required this.scrollController});
-
-  final ScrollController scrollController;
-
-  @override
-  State<_BackToTopButton> createState() => _BackToTopButtonState();
-}
-
-class _BackToTopButtonState extends State<_BackToTopButton>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _animController;
-  late final Animation<double> _scaleAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-    _scaleAnim = CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeOutBack,
-    );
-    _animController.forward();
-  }
-
-  @override
-  void dispose() {
-    _animController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = HarmonyTheme.of(context);
-
-    return ScaleTransition(
-      scale: _scaleAnim,
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: theme.surfaceColor.withValues(alpha: 0.92),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: IconButton(
-          padding: EdgeInsets.zero,
-          iconSize: 20,
-          icon: const Icon(HMIcons.arrowshapeUpToLine),
-          onPressed: () {
-            widget.scrollController.animateTo(
-              0,
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeInOut,
-            );
-          },
-        ),
-      ),
-    );
-  }
-}

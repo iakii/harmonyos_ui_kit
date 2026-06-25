@@ -6,6 +6,54 @@ import 'package:rohos_app/presentation/widgets/loading.dart';
 import 'package:rohos_app/presentation/widgets/scrollbar.dart'
     show CustomScrollBehaviour;
 
+/// 无限滚动视图控制器，封装 [RefreshController] 的公开方法。
+///
+/// 由外部创建并通过 [InfiniteScrollView.viewController] 传入，
+/// 用于在 InfiniteScrollView 外部手动触发刷新/加载动画。
+class InfiniteScrollViewController {
+  RefreshController? _refreshController;
+
+  /// 由 [InfiniteScrollView] 内部调用，绑定实际的 [RefreshController]。
+  void _bind(RefreshController controller) {
+    _refreshController = controller;
+  }
+
+  /// 触发下拉刷新。
+  void requestRefresh({bool needMove = true}) {
+    _refreshController?.requestRefresh(needMove: needMove);
+  }
+
+  /// 标记刷新完成。
+  void refreshCompleted() {
+    _refreshController?.refreshCompleted();
+  }
+
+  /// 标记刷新失败。
+  void refreshFailed() {
+    _refreshController?.refreshFailed();
+  }
+
+  /// 标记加载完成（上拉加载更多）。
+  void loadComplete() {
+    _refreshController?.loadComplete();
+  }
+
+  /// 标记加载失败。
+  void loadFailed() {
+    _refreshController?.loadFailed();
+  }
+
+  /// 标记没有更多数据。
+  void loadNoData() {
+    _refreshController?.loadNoData();
+  }
+
+  /// 重置无数据状态（恢复允许加载更多）。
+  void resetNoData() {
+    _refreshController?.resetNoData();
+  }
+}
+
 /// 无限滚动列表视图。
 ///
 /// 提供两种模式：
@@ -49,6 +97,9 @@ class InfiniteScrollView extends StatefulWidget {
 
   /// 初始化时是否自动触发下拉刷新（children 模式）。
   final bool autoRequestRefresh;
+
+  /// 外部控制器，用于手动触发刷新/加载动画。
+  final InfiniteScrollViewController? viewController;
 
   // ═══════════════════════════════════════════════════════════════
   // paginated 模式参数（新版，自包含分页）
@@ -106,6 +157,7 @@ class InfiniteScrollView extends StatefulWidget {
     this.controller,
     this.refreshController,
     this.autoRequestRefresh = true,
+    this.viewController,
     required void Function() onLoadMore,
   }) : _mode = _InfiniteScrollMode.children,
        _onLoadMoreVoid = onLoadMore,
@@ -146,6 +198,7 @@ class InfiniteScrollView extends StatefulWidget {
     this.controller,
     this.contentSliverBuilder,
     this.autoLoad = true,
+    this.viewController,
   }) : _mode = _InfiniteScrollMode.paginated,
        _onLoadMoreAsync = onLoadMore,
        _onLoadMoreVoid = null,
@@ -204,6 +257,9 @@ class _InfiniteScrollViewState extends State<InfiniteScrollView>
         });
       }
     }
+
+    // 绑定外部 viewController 到内部 _refreshController
+    widget.viewController?._bind(_refreshController);
   }
 
   @override

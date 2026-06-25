@@ -30,8 +30,8 @@ class DetailCard extends ConsumerWidget {
       children: [
         if (item.cover != null)
           ExtendedImage.network(
-            // item.cover!,
-            'https://cdn.pixabay.com/photo/2016/05/31/11/26/baby-1426651_1280.jpg',
+            item.cover!,
+            // 'https://cdn.pixabay.com/photo/2016/05/31/11/26/baby-1426651_1280.jpg',
             headers: {
               "referrerpolicy": "unsafe-url",
               "referer": item.cover ?? "",

@@ -43,8 +43,8 @@ class GridItemCard extends ConsumerWidget {
                 top: Radius.circular(12),
               ),
               child: ExtendedImage.network(
-                // item.cover,
-                'https://cdn.pixabay.com/photo/2016/05/31/11/26/baby-1426651_1280.jpg',
+                item.cover,
+                // 'https://cdn.pixabay.com/photo/2016/05/31/11/26/baby-1426651_1280.jpg',
                 fit: BoxFit.cover,
                 headers: {
                   "referer": item.cover,

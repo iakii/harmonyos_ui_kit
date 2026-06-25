@@ -141,65 +141,68 @@ class Client {
     }
   }
 
-  async fetchDetails(url, page = 1) {
-    // 创建 URL 对象
+  async fetchDetails(url) {
+    // 如果没有指定 page，尝试从 URL 中提取页码（如 xxx_6.html → page=6）
+    const match = url.match(/_(\d+)\.html$/);
+    let page = match ? parseInt(match[1], 10) : 1;
     const items = await this._parse(url, page);
     return JSON.stringify(items);
   }
 
-  async _parse(url, page = 1,) {
+  async _parse(url, page = 1) {
     const dom = await import("dom");
 
-    const html = await fetch(url).then((response) => response.text());
-    // 获取 div.content 容器，再从其 innerHtml 中查询子元素
-    const contentRaw = dom.querySelector(html, "div.content");
-    const contentDiv = contentRaw !== null ? JSON.parse(contentRaw) : null;
+    // 归一化基础 URL，去掉可能存在的页码后缀（如 _6.html → .html）
+    const baseUrl = url.replace(/_\d+\.html$/, '.html');
 
-    let href = null;
-    let title = null;
-    let src = null;
-    const items = []
-    if (contentDiv) {
-      const aRaw = dom.querySelector(contentDiv.innerHtml, "a[href][title]");
-      const aTag = aRaw !== null ? JSON.parse(aRaw) : null;
-      if (aTag) {
-        href = aTag.attrs.find((a) => a[0] === "href")?.[1] || null;
-        title = aTag.attrs.find((a) => a[0] === "title")?.[1] || null;
-      }
+    // 构造当前页 URL 并获取内容
+    const currentUrl = page === 1 ? baseUrl : baseUrl.replace(".html", `_${page}.html`);
+    const html = await fetch(currentUrl).then((response) => response.text());
 
-      const imgRaw = dom.querySelector(contentDiv.innerHtml, "img[src]");
-      const imgTag = imgRaw !== null ? JSON.parse(imgRaw) : null;
-      if (imgTag) {
-        src = imgTag.attrs.find((a) => a[0] === "src")?.[1] || null;
-      }
+    // 从当前页提取 1 条 item
+    const items = [];
+    const item = this._extractItemFromHtml(html, dom);
+    if (item) items.push(item);
 
-      items.push({
-        cover: src,
-        href,
-        title,
-      });
-    }
+    // 获取总页数（只需从当前页解析一次即可）
     const totalPages = await this._parsePageSize(html, dom);
 
-    // for (let index = page + 1; index < page + 5; index++) {
-    //   console.log("获取第几页：", index, "总页数：", totalPages);
-    //   const pageUrl = `${url.replace(".html", `_${index}.html`)}`;
-    //   await waitTime();
-    //   const result = await this._parse(pageUrl, index);
-    //   items.push(...result);
-    //   // if (items.length % 5 == 0) {
-    //   //   postMessage(
-    //   //     "sendChannelDetails",
-    //   //     JSON.stringify({
-    //   //       list: items,
-    //   //       current: index,
-    //   //     }),
-    //   //   );
-    //   // }
-    // }
+    // 再加载后续 4 页，凑足 5 条一次性返回
+    for (let i = page + 1; i < page + 5; i++) {
+      if (i > totalPages) break;
+      const pageUrl = baseUrl.replace(".html", `_${i}.html`);
+      await waitTime();
+      const pageHtml = await fetch(pageUrl).then((r) => r.text());
+      const pageItem = this._extractItemFromHtml(pageHtml, dom);
+      if (pageItem) items.push(pageItem);
+    }
 
-    return { list: items, totalPage: totalPages, current: page };
-    // return { list: items, totalPage: Math.floor(totalPages / 5), current: page };
+    const result = { list: items, current: page + 5 };
+    // 如果还有更多页，构造 nextPageUrl
+    if (page + 5 <= totalPages) {
+      result.nextPageUrl = baseUrl.replace(".html", `_${page + 5}.html`);
+    }
+    console.log(result);
+    return result;
+  }
+
+  /** 从 HTML 中提取一条 item（cover / href / title） */
+  _extractItemFromHtml(html, dom) {
+    const contentRaw = dom.querySelector(html, "div.content");
+    const contentDiv = contentRaw !== null ? JSON.parse(contentRaw) : null;
+    if (!contentDiv) return null;
+
+    const aRaw = dom.querySelector(contentDiv.innerHtml, "a[href][title]");
+    const aTag = aRaw !== null ? JSON.parse(aRaw) : null;
+    const href = aTag?.attrs?.find((a) => a[0] === "href")?.[1] || null;
+    const title = aTag?.attrs?.find((a) => a[0] === "title")?.[1] || null;
+
+    const imgRaw = dom.querySelector(contentDiv.innerHtml, "img[src]");
+    const imgTag = imgRaw !== null ? JSON.parse(imgRaw) : null;
+    const src = imgTag?.attrs?.find((a) => a[0] === "src")?.[1] || null;
+
+    // 至少有一个有效字段才返回
+    return src || href ? { cover: src, href, title } : null;
   }
 
   async _parsePageSize(html, dom) {
