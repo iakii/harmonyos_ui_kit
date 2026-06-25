@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:harmonyos_ui/src/widgets/custome_scroll_behavior.dart'
+    show CustomScrollBehaviour;
 
 import '../../styles/theme.dart';
 
@@ -179,34 +181,40 @@ class _HosTabBarState extends State<HosTabBar> {
 
     return SizedBox(
       height: widget.chipHeight + ep.top + ep.bottom,
+      width: double.infinity,
       // color: theme.surfaceColor,
-      child: SingleChildScrollView(
-        controller: _scrollController,
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.symmetric(horizontal: ep.left),
-        child: Row(
-          children: List.generate(widget.tabs.length, (index) {
-            final bool isSelected = index == widget.selectedIndex;
-            return Padding(
-              padding: EdgeInsets.only(
-                right: index < widget.tabs.length - 1 ? widget.chipSpacing : 0,
-              ),
-              child: _HosTabChip(
-                label: widget.tabs[index],
-                icon: widget.icons != null && index < widget.icons!.length
-                    ? widget.icons![index]
-                    : null,
-                isSelected: isSelected,
-                chipHeight: widget.chipHeight,
-                chipPadding: ep,
-                borderRadius: _borderRadius,
-                showOutline: widget.showOutline,
-                theme: theme,
-                onTap: () => widget.onChanged(index),
-              ),
-            );
-          }),
+      child: ScrollConfiguration(
+        behavior: CustomScrollBehaviour(),
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          scrollDirection: Axis.horizontal,
+          // physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.symmetric(horizontal: ep.left),
+          child: Row(
+            children: List.generate(widget.tabs.length, (index) {
+              final bool isSelected = index == widget.selectedIndex;
+              return Padding(
+                padding: EdgeInsets.only(
+                  right: index < widget.tabs.length - 1
+                      ? widget.chipSpacing
+                      : 0,
+                ),
+                child: _HosTabChip(
+                  label: widget.tabs[index],
+                  icon: widget.icons != null && index < widget.icons!.length
+                      ? widget.icons![index]
+                      : null,
+                  isSelected: isSelected,
+                  chipHeight: widget.chipHeight,
+                  chipPadding: ep,
+                  borderRadius: _borderRadius,
+                  showOutline: widget.showOutline,
+                  theme: theme,
+                  onTap: () => widget.onChanged(index),
+                ),
+              );
+            }),
+          ),
         ),
       ),
     );
@@ -267,9 +275,7 @@ class _HosTabChip extends StatelessWidget {
               Icon(
                 icon,
                 size: _iconSize,
-                color: isSelected
-                    ? Colors.white
-                    : theme.textSecondaryColor,
+                color: isSelected ? Colors.white : theme.textSecondaryColor,
               ),
               const SizedBox(width: 4),
             ],

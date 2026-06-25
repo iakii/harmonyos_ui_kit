@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:harmonyos_ui/src/widgets/custome_scroll_behavior.dart'
+    show AppScrollBehaviour;
 
 import 'styles/theme.dart';
 
@@ -60,8 +62,8 @@ class HarmonyOSApp extends StatefulWidget {
     this.onUnknownRoute,
     this.navigatorObservers = const <NavigatorObserver>[],
     this.builder,
-  })  : _useRouter = false,
-        routerConfig = null;
+  }) : _useRouter = false,
+       routerConfig = null;
 
   /// Creates a HarmonyOS-styled application using a [Router].
   const HarmonyOSApp.router({
@@ -82,15 +84,15 @@ class HarmonyOSApp extends StatefulWidget {
     this.debugShowWidgetInspector = false,
     this.routerConfig,
     this.builder,
-  })  : _useRouter = true,
-        home = null,
-        routes = null,
-        navigatorKey = null,
-        initialRoute = null,
-        onGenerateRoute = null,
-        onGenerateInitialRoutes = null,
-        onUnknownRoute = null,
-        navigatorObservers = null;
+  }) : _useRouter = true,
+       home = null,
+       routes = null,
+       navigatorKey = null,
+       initialRoute = null,
+       onGenerateRoute = null,
+       onGenerateInitialRoutes = null,
+       onUnknownRoute = null,
+       navigatorObservers = null;
 
   // ------------------------------------------------------------------
   // Properties
@@ -182,16 +184,16 @@ class _HarmonyOSAppState extends State<HarmonyOSApp> {
   Widget build(BuildContext context) {
     // Determine effective theme
     final themeMode = widget.themeMode ?? ThemeMode.system;
-    final Brightness platformBrightness =
-        MediaQuery.platformBrightnessOf(context);
+    final Brightness platformBrightness = MediaQuery.platformBrightnessOf(
+      context,
+    );
 
     final HarmonyThemeData effectiveTheme;
     switch (themeMode) {
       case ThemeMode.system:
-        effectiveTheme =
-            platformBrightness == Brightness.dark
-                ? (widget.darkTheme ?? widget.theme ?? HarmonyThemeData.dark())
-                : (widget.theme ?? HarmonyThemeData.light());
+        effectiveTheme = platformBrightness == Brightness.dark
+            ? (widget.darkTheme ?? widget.theme ?? HarmonyThemeData.dark())
+            : (widget.theme ?? HarmonyThemeData.light());
         break;
       case ThemeMode.light:
         effectiveTheme = widget.theme ?? HarmonyThemeData.light();
@@ -220,13 +222,12 @@ class _HarmonyOSAppState extends State<HarmonyOSApp> {
         ? MaterialApp.router(
             routerConfig: widget.routerConfig,
             title: widget.title,
+            scrollBehavior: AppScrollBehaviour(),
             theme: materialTheme,
-            debugShowCheckedModeBanner:
-                widget.debugShowCheckedModeBanner,
+            debugShowCheckedModeBanner: widget.debugShowCheckedModeBanner,
             locale: widget.locale,
             localizationsDelegates: widget.localizationsDelegates,
-            localeListResolutionCallback:
-                widget.localeListResolutionCallback,
+            localeListResolutionCallback: widget.localeListResolutionCallback,
             localeResolutionCallback: widget.localeResolutionCallback,
             supportedLocales: widget.supportedLocales,
             showPerformanceOverlay: widget.showPerformanceOverlay,
@@ -237,12 +238,11 @@ class _HarmonyOSAppState extends State<HarmonyOSApp> {
         : MaterialApp(
             title: widget.title,
             theme: materialTheme,
-            debugShowCheckedModeBanner:
-                widget.debugShowCheckedModeBanner,
+            scrollBehavior: AppScrollBehaviour(),
+            debugShowCheckedModeBanner: widget.debugShowCheckedModeBanner,
             locale: widget.locale,
             localizationsDelegates: widget.localizationsDelegates,
-            localeListResolutionCallback:
-                widget.localeListResolutionCallback,
+            localeListResolutionCallback: widget.localeListResolutionCallback,
             localeResolutionCallback: widget.localeResolutionCallback,
             supportedLocales: widget.supportedLocales,
             showPerformanceOverlay: widget.showPerformanceOverlay,
@@ -254,8 +254,8 @@ class _HarmonyOSAppState extends State<HarmonyOSApp> {
             onGenerateRoute: widget.onGenerateRoute,
             onGenerateInitialRoutes: widget.onGenerateInitialRoutes,
             onUnknownRoute: widget.onUnknownRoute,
-            navigatorObservers: widget.navigatorObservers ??
-                const <NavigatorObserver>[],
+            navigatorObservers:
+                widget.navigatorObservers ?? const <NavigatorObserver>[],
             builder: (context, child) =>
                 _harmonyosBuilder(context, child, effectiveTheme),
           );
