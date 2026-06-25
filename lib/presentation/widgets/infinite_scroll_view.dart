@@ -230,6 +230,7 @@ class _InfiniteScrollViewState extends State<InfiniteScrollView>
       idleText: '加载完成',
       loadingText: '加载更多...',
       canLoadingText: '释放加载',
+      canLoadingIcon: Icon(HMIcons.chevronUp, color: accentColor),
       noDataText: '— 已加载全部 —',
       failedText: '加载失败',
       loadingIcon: Loading(size: 32, color: accentColor),
