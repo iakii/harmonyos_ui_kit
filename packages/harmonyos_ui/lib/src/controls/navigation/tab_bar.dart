@@ -170,7 +170,7 @@ class _HosTabBarState extends State<HosTabBar> {
   }
 
   double get _iconSize =>
-      (HarmonyTheme.maybeOf(context)?.typography.body?.fontSize ?? 14) + 2;
+      HarmonyTheme.maybeOf(context)?.typography.body?.fontSize ?? 14;
 
   @override
   Widget build(BuildContext context) {
@@ -261,24 +261,26 @@ class _HosTabChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             if (icon != null) ...[
               Icon(
                 icon,
                 size: _iconSize,
-                color: isSelected ? Colors.white : theme.textSecondaryColor,
+                color: isSelected
+                    ? Colors.white
+                    : theme.textSecondaryColor,
               ),
               const SizedBox(width: 4),
             ],
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: (theme.typography.body ?? const TextStyle()).copyWith(
-                  color: isSelected ? Colors.white : theme.textColor,
-                  fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-                ),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: (theme.typography.body ?? const TextStyle()).copyWith(
+                height: 1.0,
+                color: isSelected ? Colors.white : theme.textColor,
+                fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
               ),
             ),
           ],
@@ -293,6 +295,6 @@ class _HosTabChip extends StatelessWidget {
     return Border.all(color: theme.dividerColor, width: 1.0);
   }
 
-  /// Icon size — slightly smaller than body font size for visual balance.
-  double get _iconSize => (theme.typography.body?.fontSize ?? 14) + 2; // 16
+  /// Icon size — matches body font size for inline alignment with text.
+  double get _iconSize => theme.typography.body?.fontSize ?? 14;
 }
