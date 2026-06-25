@@ -171,7 +171,6 @@ class HosAppBar extends StatelessWidget implements PreferredSizeWidget {
                   color: theme.textColor,
                   fontWeight: FontWeight.w600,
                   fontSize: 24,
-                  fontFamily: "HarmonyOs Sans SC",
                 ),
               )
             : null,

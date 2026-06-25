@@ -2,11 +2,11 @@ import 'package:flutter/material.dart' show Colors;
 import 'package:go_router/go_router.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:rohos_app/providers/rust_bridge_provider.dart'
+import 'package:rohos_app/presentation/providers/init/rust_bridge_provider.dart'
     show rustLibInitProvider;
 
-import 'pages/splash_page.dart';
-import 'providers/theme_provider.dart';
+import 'presentation/pages/splash_page.dart';
+import 'core/theme/app_theme_provider.dart';
 import 'router.dart';
 
 /// 应用根组件。
@@ -32,10 +32,7 @@ class MyApp extends ConsumerWidget {
         errorMessage: error.toString(),
         onRetry: () => ref.invalidate(rustLibInitProvider),
       ),
-      data: (_) => _AppShell(
-        themeMode: themeMode,
-        showSplash: false,
-      ),
+      data: (_) => _AppShell(themeMode: themeMode, showSplash: false),
     );
   }
 }
@@ -63,8 +60,10 @@ class _AppShell extends StatelessWidget {
     return HarmonyOSApp.router(
       title: 'Rohos App',
       debugShowCheckedModeBanner: false,
-      theme: HarmonyThemeData.light(),
-      darkTheme: HarmonyThemeData.dark(),
+      theme: HarmonyThemeData.light().copyWith(fontFamily: 'HarmonyOS Sans SC'),
+      darkTheme: HarmonyThemeData.dark().copyWith(
+        fontFamily: 'HarmonyOS Sans SC',
+      ),
       themeMode: themeMode,
       routerConfig: showSplash ? _splashRouter(errorMessage, onRetry) : router,
     );
@@ -92,10 +91,7 @@ GoRouter _splashRouter(String? errorMessage, VoidCallback? onRetry) {
                     ),
                     const SizedBox(height: 16),
                     if (onRetry != null)
-                      HosButton(
-                        onPressed: onRetry,
-                        child: const Text('重试'),
-                      ),
+                      HosButton(onPressed: onRetry, child: const Text('重试')),
                   ],
                 ),
               ),

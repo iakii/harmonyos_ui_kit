@@ -25,6 +25,7 @@ class HarmonyTypography with Diagnosticable {
     required this.bodySmall,
     required this.caption,
     required this.overline,
+    this.fontFamilyFallback,
   });
 
   /// Extra-large headline. Typically 32px bold.
@@ -56,6 +57,13 @@ class HarmonyTypography with Diagnosticable {
 
   /// Overline / label text. Typically 10px medium, all-caps.
   final TextStyle? overline;
+
+  /// Fallback font family stack applied to all text styles.
+  ///
+  /// When set, each [TextStyle] in this typography will use this list
+  /// as its [TextStyle.fontFamilyFallback], providing platform-level
+  /// fallback when the primary font is missing certain glyphs.
+  final List<String>? fontFamilyFallback;
 
   // ------------------------------------------------------------------
   // Factory constructors
@@ -159,6 +167,7 @@ class HarmonyTypography with Diagnosticable {
     TextStyle? bodySmall,
     TextStyle? caption,
     TextStyle? overline,
+    List<String>? fontFamilyFallback,
   }) {
     return HarmonyTypography(
       headline1: headline1 ?? this.headline1,
@@ -171,6 +180,7 @@ class HarmonyTypography with Diagnosticable {
       bodySmall: bodySmall ?? this.bodySmall,
       caption: caption ?? this.caption,
       overline: overline ?? this.overline,
+      fontFamilyFallback: fontFamilyFallback ?? this.fontFamilyFallback,
     );
   }
 
@@ -189,36 +199,80 @@ class HarmonyTypography with Diagnosticable {
       bodySmall: other.bodySmall,
       caption: other.caption,
       overline: other.overline,
+      fontFamilyFallback: other.fontFamilyFallback,
     );
   }
 
-  /// Applies a color and font family to all text styles.
+  /// Applies a color, font family, and fallback font stack to all text styles.
   HarmonyTypography apply({
     Color? color,
     String? fontFamily,
+    List<String>? fontFamilyFallback,
     double fontSizeDelta = 0,
   }) {
+    final effectiveFallback = fontFamilyFallback ?? this.fontFamilyFallback;
     return HarmonyTypography(
       headline1: headline1?.apply(
-        color: color, fontFamily: fontFamily, fontSizeDelta: fontSizeDelta),
+        color: color,
+        fontFamily: fontFamily,
+        fontFamilyFallback: effectiveFallback,
+        fontSizeDelta: fontSizeDelta,
+      ),
       headline2: headline2?.apply(
-        color: color, fontFamily: fontFamily, fontSizeDelta: fontSizeDelta),
+        color: color,
+        fontFamily: fontFamily,
+        fontFamilyFallback: effectiveFallback,
+        fontSizeDelta: fontSizeDelta,
+      ),
       headline3: headline3?.apply(
-        color: color, fontFamily: fontFamily, fontSizeDelta: fontSizeDelta),
+        color: color,
+        fontFamily: fontFamily,
+        fontFamilyFallback: effectiveFallback,
+        fontSizeDelta: fontSizeDelta,
+      ),
       title1: title1?.apply(
-        color: color, fontFamily: fontFamily, fontSizeDelta: fontSizeDelta),
+        color: color,
+        fontFamily: fontFamily,
+        fontFamilyFallback: effectiveFallback,
+        fontSizeDelta: fontSizeDelta,
+      ),
       title2: title2?.apply(
-        color: color, fontFamily: fontFamily, fontSizeDelta: fontSizeDelta),
+        color: color,
+        fontFamily: fontFamily,
+        fontFamilyFallback: effectiveFallback,
+        fontSizeDelta: fontSizeDelta,
+      ),
       title3: title3?.apply(
-        color: color, fontFamily: fontFamily, fontSizeDelta: fontSizeDelta),
+        color: color,
+        fontFamily: fontFamily,
+        fontFamilyFallback: effectiveFallback,
+        fontSizeDelta: fontSizeDelta,
+      ),
       body: body?.apply(
-        color: color, fontFamily: fontFamily, fontSizeDelta: fontSizeDelta),
+        color: color,
+        fontFamily: fontFamily,
+        fontFamilyFallback: effectiveFallback,
+        fontSizeDelta: fontSizeDelta,
+      ),
       bodySmall: bodySmall?.apply(
-        color: color, fontFamily: fontFamily, fontSizeDelta: fontSizeDelta),
+        color: color,
+        fontFamily: fontFamily,
+        fontFamilyFallback: effectiveFallback,
+        fontSizeDelta: fontSizeDelta,
+      ),
       caption: caption?.apply(
-        color: color, fontFamily: fontFamily, fontSizeDelta: fontSizeDelta),
+        color: color,
+        fontFamily: fontFamily,
+        fontFamilyFallback: effectiveFallback,
+        fontSizeDelta: fontSizeDelta,
+      ),
       overline: overline?.apply(
-        color: color, fontFamily: fontFamily, fontSizeDelta: fontSizeDelta),
+        color: color,
+        fontFamily: fontFamily,
+        fontFamilyFallback: effectiveFallback,
+        fontSizeDelta: fontSizeDelta,
+      ),
+      fontFamilyFallback: effectiveFallback,
     );
   }
 
@@ -241,6 +295,7 @@ class HarmonyTypography with Diagnosticable {
         bodySmall: TextStyle.lerp(null, b.bodySmall, t),
         caption: TextStyle.lerp(null, b.caption, t),
         overline: TextStyle.lerp(null, b.overline, t),
+        fontFamilyFallback: t < 0.5 ? null : b.fontFamilyFallback,
       );
     }
     if (b == null) {
@@ -255,6 +310,7 @@ class HarmonyTypography with Diagnosticable {
         bodySmall: TextStyle.lerp(a.bodySmall, null, t),
         caption: TextStyle.lerp(a.caption, null, t),
         overline: TextStyle.lerp(a.overline, null, t),
+        fontFamilyFallback: t < 0.5 ? a.fontFamilyFallback : null,
       );
     }
     return HarmonyTypography(
@@ -268,6 +324,7 @@ class HarmonyTypography with Diagnosticable {
       bodySmall: TextStyle.lerp(a.bodySmall, b.bodySmall, t),
       caption: TextStyle.lerp(a.caption, b.caption, t),
       overline: TextStyle.lerp(a.overline, b.overline, t),
+      fontFamilyFallback: t < 0.5 ? a.fontFamilyFallback : b.fontFamilyFallback,
     );
   }
 
@@ -284,5 +341,6 @@ class HarmonyTypography with Diagnosticable {
     properties.add(DiagnosticsProperty<TextStyle>('bodySmall', bodySmall));
     properties.add(DiagnosticsProperty<TextStyle>('caption', caption));
     properties.add(DiagnosticsProperty<TextStyle>('overline', overline));
+    properties.add(IterableProperty<String>('fontFamilyFallback', fontFamilyFallback));
   }
 }

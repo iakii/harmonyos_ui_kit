@@ -65,10 +65,12 @@ void main() {
         animationDuration: const Duration(milliseconds: 500),
         animationCurve: Curves.linear,
         visualDensity: VisualDensity.compact,
+        fontFamily: 'CustomFont',
       );
       final merged = base.merge(overrides);
       expect(merged.brightness, Brightness.dark);
       expect(merged.accentColor.normal, HarmonyColors.red.normal);
+      expect(merged.fontFamily, 'CustomFont');
     });
 
     test('lerp interpolates colors', () {
@@ -76,6 +78,58 @@ void main() {
       final dark = HarmonyThemeData.dark();
       final mid = HarmonyThemeData.lerp(light, dark, 0.5);
       expect(mid, isNotNull);
+    });
+
+    test('fontFamily is applied to typography', () {
+      final theme = HarmonyThemeData(fontFamily: 'MyCustomFont');
+      // All 10 typography levels should have the custom font
+      expect(theme.typography.headline1?.fontFamily, 'MyCustomFont');
+      expect(theme.typography.headline2?.fontFamily, 'MyCustomFont');
+      expect(theme.typography.headline3?.fontFamily, 'MyCustomFont');
+      expect(theme.typography.title1?.fontFamily, 'MyCustomFont');
+      expect(theme.typography.title2?.fontFamily, 'MyCustomFont');
+      expect(theme.typography.title3?.fontFamily, 'MyCustomFont');
+      expect(theme.typography.body?.fontFamily, 'MyCustomFont');
+      expect(theme.typography.bodySmall?.fontFamily, 'MyCustomFont');
+      expect(theme.typography.caption?.fontFamily, 'MyCustomFont');
+      expect(theme.typography.overline?.fontFamily, 'MyCustomFont');
+      // fontFamily field is stored
+      expect(theme.fontFamily, 'MyCustomFont');
+    });
+
+    test('fontFamilyFallback is applied to typography', () {
+      final fallbacks = ['Roboto', 'NotoSansSC'];
+      final theme = HarmonyThemeData(fontFamilyFallback: fallbacks);
+      expect(theme.typography.body?.fontFamilyFallback, fallbacks);
+      expect(theme.typography.headline1?.fontFamilyFallback, fallbacks);
+      expect(theme.fontFamilyFallback, fallbacks);
+    });
+
+    test('fontFamily overlays on top of custom typography', () {
+      final custom = HarmonyTypography.light().copyWith(
+        body: const TextStyle(fontSize: 20, fontFamily: 'OriginalFont'),
+      );
+      final theme = HarmonyThemeData(
+        typography: custom,
+        fontFamily: 'OverlayFont',
+      );
+      // Theme-level fontFamily takes precedence via apply()
+      expect(theme.typography.body?.fontFamily, 'OverlayFont');
+      expect(theme.typography.body?.fontSize, 20); // original size preserved
+      expect(theme.fontFamily, 'OverlayFont');
+    });
+
+    test('copyWith preserves and overrides fontFamily', () {
+      final original = HarmonyThemeData(fontFamily: 'FontA');
+      final copy = original.copyWith(fontFamily: 'FontB');
+      expect(original.fontFamily, 'FontA');
+      expect(copy.fontFamily, 'FontB');
+    });
+
+    test('copyWith without fontFamily keeps existing', () {
+      final original = HarmonyThemeData(fontFamily: 'FontA');
+      final copy = original.copyWith(brightness: Brightness.dark);
+      expect(copy.fontFamily, 'FontA');
     });
   });
 
@@ -114,6 +168,35 @@ void main() {
       final copy = typography.copyWith(body: newBody);
       expect(copy.body?.fontSize, 42);
       expect(copy.headline1?.fontSize, typography.headline1?.fontSize);
+    });
+
+    test('apply with fontFamilyFallback sets on all styles', () {
+      final fallbacks = ['Fallback1', 'Fallback2'];
+      final typography = HarmonyTypography.light().apply(
+        fontFamilyFallback: fallbacks,
+      );
+      expect(typography.body?.fontFamilyFallback, fallbacks);
+      expect(typography.headline1?.fontFamilyFallback, fallbacks);
+      expect(typography.caption?.fontFamilyFallback, fallbacks);
+      expect(typography.fontFamilyFallback, fallbacks);
+    });
+
+    test('copyWith with fontFamilyFallback preserves existing', () {
+      final typography = HarmonyTypography(
+        headline1: const TextStyle(fontSize: 32),
+        headline2: const TextStyle(fontSize: 28),
+        headline3: const TextStyle(fontSize: 24),
+        title1: const TextStyle(fontSize: 20),
+        title2: const TextStyle(fontSize: 18),
+        title3: const TextStyle(fontSize: 16),
+        body: const TextStyle(fontSize: 14),
+        bodySmall: const TextStyle(fontSize: 12),
+        caption: const TextStyle(fontSize: 11),
+        overline: const TextStyle(fontSize: 10),
+        fontFamilyFallback: ['Arial'],
+      );
+      final copy = typography.copyWith();
+      expect(copy.fontFamilyFallback, ['Arial']);
     });
   });
 

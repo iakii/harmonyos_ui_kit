@@ -40,12 +40,24 @@ class HarmonyThemeData with Diagnosticable {
     Duration? animationDuration,
     Curve? animationCurve,
     VisualDensity? visualDensity,
+    String? fontFamily,
+    List<String>? fontFamilyFallback,
     // Component themes will be added in later phases
     Map<Object, ThemeExtension<dynamic>>? extensions,
   }) {
     brightness ??= Brightness.light;
     final bool isLight = brightness == Brightness.light;
     final tokens = colorTokens ?? HarmonyColorTokens.fromBrightness(brightness);
+
+    // Resolve typography and apply custom font if provided.
+    HarmonyTypography resolvedTypography =
+        typography ?? HarmonyTypography.fromBrightness(brightness);
+    if (fontFamily != null || fontFamilyFallback != null) {
+      resolvedTypography = resolvedTypography.apply(
+        fontFamily: fontFamily,
+        fontFamilyFallback: fontFamilyFallback,
+      );
+    }
 
     return HarmonyThemeData.raw(
       brightness: brightness,
@@ -63,10 +75,12 @@ class HarmonyThemeData with Diagnosticable {
       shadowColor:
           shadowColor ??
           (isLight ? const Color(0x1A000000) : const Color(0x1AFFFFFF)),
-      typography: typography ?? HarmonyTypography.fromBrightness(brightness),
+      typography: resolvedTypography,
       animationDuration: animationDuration ?? const Duration(milliseconds: 200),
       animationCurve: animationCurve ?? Curves.easeInOut,
       visualDensity: visualDensity ?? VisualDensity.standard,
+      fontFamily: fontFamily,
+      fontFamilyFallback: fontFamilyFallback,
       extensions: extensions,
     );
   }
@@ -91,6 +105,8 @@ class HarmonyThemeData with Diagnosticable {
     required this.animationDuration,
     required this.animationCurve,
     required this.visualDensity,
+    this.fontFamily,
+    this.fontFamilyFallback,
     this.extensions,
   });
 
@@ -151,6 +167,21 @@ class HarmonyThemeData with Diagnosticable {
   /// The typography scale for this theme.
   final HarmonyTypography typography;
 
+  /// Custom font family applied to all typography styles.
+  ///
+  /// When set, this font family is applied to every [TextStyle] in
+  /// [typography] via [HarmonyTypography.apply]. If both [fontFamily]
+  /// and [typography] are provided, the font family is layered on top
+  /// of the custom typography.
+  final String? fontFamily;
+
+  /// Fallback font stack applied to all typography styles.
+  ///
+  /// Used as [TextStyle.fontFamilyFallback] on each text style. This
+  /// provides platform-level fallback when the primary font is missing
+  /// certain glyphs.
+  final List<String>? fontFamilyFallback;
+
   // ------------------------------------------------------------------
   // Animation
   // ------------------------------------------------------------------
@@ -196,6 +227,8 @@ class HarmonyThemeData with Diagnosticable {
     Duration? animationDuration,
     Curve? animationCurve,
     VisualDensity? visualDensity,
+    String? fontFamily,
+    List<String>? fontFamilyFallback,
     Map<Object, ThemeExtension<dynamic>>? extensions,
   }) {
     return HarmonyThemeData.raw(
@@ -215,6 +248,8 @@ class HarmonyThemeData with Diagnosticable {
       animationDuration: animationDuration ?? this.animationDuration,
       animationCurve: animationCurve ?? this.animationCurve,
       visualDensity: visualDensity ?? this.visualDensity,
+      fontFamily: fontFamily ?? this.fontFamily,
+      fontFamilyFallback: fontFamilyFallback ?? this.fontFamilyFallback,
       extensions: extensions ?? this.extensions,
     );
   }
@@ -241,6 +276,8 @@ class HarmonyThemeData with Diagnosticable {
       animationDuration: other.animationDuration,
       animationCurve: other.animationCurve,
       visualDensity: other.visualDensity,
+      fontFamily: other.fontFamily ?? fontFamily,
+      fontFamilyFallback: other.fontFamilyFallback ?? fontFamilyFallback,
       extensions: other.extensions,
     );
   }
@@ -273,6 +310,8 @@ class HarmonyThemeData with Diagnosticable {
         animationDuration: b.animationDuration,
         animationCurve: b.animationCurve,
         visualDensity: b.visualDensity,
+        fontFamily: t < 0.5 ? null : b.fontFamily,
+        fontFamilyFallback: t < 0.5 ? null : b.fontFamilyFallback,
         extensions: b.extensions,
       );
     }
@@ -297,6 +336,8 @@ class HarmonyThemeData with Diagnosticable {
         animationDuration: a.animationDuration,
         animationCurve: a.animationCurve,
         visualDensity: a.visualDensity,
+        fontFamily: t < 0.5 ? a.fontFamily : null,
+        fontFamilyFallback: t < 0.5 ? a.fontFamilyFallback : null,
         extensions: a.extensions,
       );
     }
@@ -325,6 +366,8 @@ class HarmonyThemeData with Diagnosticable {
       animationDuration: a.animationDuration,
       animationCurve: a.animationCurve,
       visualDensity: a.visualDensity,
+      fontFamily: t < 0.5 ? a.fontFamily : b.fontFamily,
+      fontFamilyFallback: t < 0.5 ? a.fontFamilyFallback : b.fontFamilyFallback,
       extensions: t < 0.5 ? a.extensions : b.extensions,
     );
   }
@@ -345,6 +388,8 @@ class HarmonyThemeData with Diagnosticable {
     properties.add(
       DiagnosticsProperty<Duration>('animationDuration', animationDuration),
     );
+    properties.add(StringProperty('fontFamily', fontFamily));
+    properties.add(IterableProperty<String>('fontFamilyFallback', fontFamilyFallback));
   }
 }
 

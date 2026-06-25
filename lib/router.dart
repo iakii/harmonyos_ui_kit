@@ -1,21 +1,21 @@
 import 'package:go_router/go_router.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart' hide HarmonyOSPage;
-import 'package:rohos_app/pages/js/layout.dart' show GalleryLayout;
-import 'package:rohos_app/pages/loading_page.dart' show LoadingPage;
-import 'package:rohos_app/pages/dynamic_html_view_page.dart'
+import 'package:rohos_app/presentation/pages/js_gallery/layout.dart' show GalleryLayout;
+import 'package:rohos_app/presentation/pages/loading_page.dart' show LoadingPage;
+import 'package:rohos_app/presentation/pages/dynamic_html_view_page.dart'
     show DynamicHtml2ViewPage;
-import 'package:rohos_app/pages/rust_daily.dart' show RustDailyPage;
-import 'package:rohos_app/pages/rust_daily_detail_page.dart'
+import 'package:rohos_app/presentation/pages/rust_daily/rust_daily_page.dart' show RustDailyPage;
+import 'package:rohos_app/presentation/pages/rust_daily/rust_daily_detail_page.dart'
     show RustDailyDetailPage;
-import 'pages/harmony.dart' show HarmonyOSPage;
-import 'pages/js_parse.dart' show JsParsePage;
-import 'pages/glass_kit.dart' show GlassKitPage;
-import 'pages/glass_page.dart' show GlassPage;
-import 'pages/immersive.dart' show ImmersivePage;
-import 'pages/icon_preview.dart' show IconPreviewPage;
-import 'pages/js/gallery_page.dart' show GalleryContentPage, GalleryPage;
-import 'pages/js/detail_page.dart' show DetailPage;
-import 'pages/layout.dart' show AppLayout;
+import 'presentation/pages/harmony.dart' show HarmonyOSPage;
+import 'presentation/pages/js_parse.dart' show JsParsePage;
+import 'presentation/pages/glass_kit.dart' show GlassKitPage;
+import 'presentation/pages/glass_page.dart' show GlassPage;
+import 'presentation/pages/immersive.dart' show ImmersivePage;
+import 'presentation/pages/icon_preview.dart' show IconPreviewPage;
+import 'presentation/pages/js_gallery/gallery_page.dart' show GalleryContentPage, GalleryPage;
+import 'presentation/pages/js_gallery/detail_page.dart' show DetailPage;
+import 'presentation/pages/layout.dart' show AppLayout;
 
 /// 全局路由配置。
 ///

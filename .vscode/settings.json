@@ -3,12 +3,12 @@
   "files.exclude": {
     ".idea": true,
     "android": true,
-    "test": true,
     "macos": true,
     "linux": true,
     "windows": true,
     "web": true,
     "ios": true,
-    ".zed": true
+    ".zed": true,
+    "": true
   }
 }

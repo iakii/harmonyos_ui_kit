@@ -15,8 +15,11 @@ flutter pub get
 # 静态分析
 flutter analyze
 
-# 运行测试（目前无测试文件）
+# 运行测试
 flutter test
+
+# 重新生成 riverpod .g.dart 文件
+dart run build_runner build --delete-conflicting-outputs
 
 # 构建 Rust 库（在 js_runtime 目录下）
 cd packages/js_runtime/rust && cargo build --release --target aarch64-unknown-linux-ohos
@@ -27,9 +30,62 @@ cd packages/js_runtime && flutter_rust_bridge_codegen generate
 
 ## 架构概览
 
+采用 **Flutter Clean Architecture** 分层结构：
+
 ```
-rohos_app/
-├── lib/main.dart                  # 应用入口，ProviderScope + MyApp；Rust FFI 通过 JsRuntimeLib（FRB）桥接
+lib/
+├── main.dart                     # 应用入口，ProviderScope + MyApp
+├── app.dart                      # MyApp 根组件（ConsumerWidget）
+├── router.dart                   # GoRouter 全局路由配置
+│
+├── core/                         # 基础设施层
+│   ├── error/                    # AppException 密封类体系 + Result<T>
+│   ├── theme/                    # 主题模式 Provider（themeModeProvider）
+│   ├── network/                  # DioClient, BaseRepository, interceptors
+│   ├── storage/                  # SharedPreferences 封装 (perfs)
+│   ├── utils/                    # date, logger 工具
+│   └── extensions/               # string_ext, file_ext 扩展方法
+│
+├── domain/                       # 领域层（零外部依赖）
+│   ├── entities/                 # 纯数据实体（GalleryItem, PluginInfo, RustDailyTab 等）
+│   ├── repositories/             # 仓库接口（抽象契约）
+│   └── usecases/                 # 用例（封装业务意图）
+│
+├── data/                         # 数据层
+│   ├── datasources/remote/       # 远程数据源（HTTP + HTML 解析、JS 配置获取）
+│   ├── datasources/local/        # 本地数据源（SharedPreferences 操作）
+│   ├── repositories/             # 仓库实现（调用 datasource）
+│   └── models/                   # DTO（与实体结构不同时使用）
+│
+└── presentation/                 # 表现层
+    ├── providers/                # Riverpod Providers（按功能分组）
+    │   ├── init/                 # 初始化（rust_bridge, dio）
+    │   ├── rust_daily/           # Rust Daily 数据
+    │   ├── js_gallery/           # JS 图集（config, gallery, detail, plugin_info, settings）
+    │   ├── js_engine/            # JsEngine 共享实例
+    │   └── core/                 # 通用状态（counter, webf）
+    ├── pages/                    # UI 页面（按功能分组）
+    │   ├── rust_daily/           # Rust Daily 相关页面
+    │   ├── js_gallery/           # JS 图集相关页面
+    │   └── ... (根级)            # 通用页面（splash, layout, harmony 等）
+    └── widgets/                  # 共享组件（含 vendored staggered_grid_view）
+```
+
+### 依赖规则
+
+- **domain** 不依赖 data 和 presentation（零 Flutter 依赖）
+- **data** 依赖 domain（实现 repository 接口）
+- **presentation** 依赖 domain（通过 repository 接口或 use case 访问数据）
+- **core** 被其他所有层共用
+
+### 关键特性对应关系
+
+| 特性 | 实体 | 仓库接口 | 实现 | Provider | 页面 |
+|---|---|---|---|---|---|
+| Rust Daily | RustDailyTab, RustDailyPageData | RustDailyRepository | RustDailyRepositoryImpl | rustDailyProvider | rust_daily/ |
+| JS Gallery | GalleryItem, GalleryPageData, PluginInfo | JsGalleryRepository, JsConfigRepository, JsPluginRepository | JsGalleryRepositoryImpl, JsConfigRepositoryImpl, JsPluginRepositoryImpl | galleryProvider, configProvider, detailProvider | js_gallery/ |
+| JS Engine | - | - (外部依赖) | - | jsEngineProvider | - |
+
 ├── packages/
 │   ├── harmonyos_ui/              # HarmonyOS NEXT 风格 UI 组件库（详见其 CLAUDE.md）
 │   └── js_runtime/                     # Rust FFI 桥接插件（Flutter FFI plugin）
