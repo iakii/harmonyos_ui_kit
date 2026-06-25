@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart' show SchedulerBinding;
 import 'package:flutter/services.dart';
 import 'package:hm_icon/hm_icon.dart';
 
@@ -19,11 +18,7 @@ class _IconPreviewPageState extends State<IconPreviewPage> {
   @override
   void initState() {
     super.initState();
-
-    SchedulerBinding.instance.addPostFrameCallback((_) async {
-      if (!context.mounted) return;
-      _filtered = allHMIcons.toList();
-    });
+    _filtered = allHMIcons.toList();
     _controller.addListener(_onSearchChanged);
   }
 
@@ -116,31 +111,19 @@ class _IconPreviewPageState extends State<IconPreviewPage> {
                     ),
                   ),
                 )
-              : ListView(
-                  children: [
-                    GridView.builder(
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      itemCount: _filtered.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 6,
-                            mainAxisSpacing: 4,
-                            crossAxisSpacing: 4,
-                            childAspectRatio: 1,
-                          ),
-                      itemBuilder: (context, index) {
-                        final entry = _filtered[index];
-                        return _IconTile(
-                          entry: entry,
-                          onTap: () => _onTap(entry),
-                        );
-                      },
-                    ),
-
-                    SizedBox(height: 128),
-                  ],
+              : GridView.builder(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 128),
+                  itemCount: _filtered.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 5,
+                    mainAxisSpacing: 4,
+                    crossAxisSpacing: 4,
+                    childAspectRatio: 1,
+                  ),
+                  itemBuilder: (context, index) {
+                    final entry = _filtered[index];
+                    return _IconTile(entry: entry, onTap: () => _onTap(entry));
+                  },
                 ),
         ),
       ],
@@ -171,7 +154,7 @@ class _IconTile extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(entry.icon, size: 28, color: colorScheme.onSurface),
+                Icon(entry.icon, size: 48, color: colorScheme.onSurface),
                 const SizedBox(height: 4),
                 Flexible(
                   child: Text(
@@ -180,7 +163,7 @@ class _IconTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 9,
+                      // fontSize: 12,
                       color: colorScheme.onSurface.withAlpha(160),
                     ),
                   ),

@@ -31,8 +31,20 @@ class GalleryPageData {
 class GalleryDetail {
   final List<DetailItem> list;
   final int current;
+  final int? totalPage; // 总页数，null=未提供（无分页）
+  final String? nextPageUrl; // 下一页 URL，null=未提供（无分页）
 
-  const GalleryDetail({required this.list, required this.current});
+  const GalleryDetail({
+    required this.list,
+    required this.current,
+    this.totalPage,
+    this.nextPageUrl,
+  });
+
+  /// 是否有更多分页数据。
+  /// 两者都为 null → 无分页；任意一个非 null 即启用分页。
+  bool get hasMore =>
+      nextPageUrl != null || (totalPage != null && current < totalPage!);
 
   factory GalleryDetail.fromJson(Map<String, dynamic> json) => GalleryDetail(
     list:
@@ -41,5 +53,7 @@ class GalleryDetail {
             .toList() ??
         [],
     current: (json['current'] as num?)?.toInt() ?? 1,
+    totalPage: (json['totalPage'] as num?)?.toInt(), // null 表示未提供
+    nextPageUrl: json['nextPageUrl'] as String?, // null 表示未提供
   );
 }

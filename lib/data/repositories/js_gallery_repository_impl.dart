@@ -233,6 +233,14 @@ class JsGalleryRepositoryImpl implements JsGalleryRepository {
     }
     final parsed = jsonDecode(jsonStr) as Map<String, dynamic>;
     final detail = GalleryDetail.fromJson(parsed);
-    controller.add(DetailLoadState.done(items: detail.list, batchCount: batch));
+    controller.add(
+      DetailLoadState.done(
+        items: detail.list,
+        batchCount: batch,
+        totalPage: detail.totalPage,
+        nextPageUrl: detail.nextPageUrl,
+        current: detail.current,
+      ),
+    );
   }
 }

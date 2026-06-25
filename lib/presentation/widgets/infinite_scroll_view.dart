@@ -8,35 +8,151 @@ import 'package:rohos_app/presentation/widgets/scrollbar.dart'
 
 /// 无限滚动列表视图。
 ///
-/// 基于 [SmartRefresher] 封装下拉刷新和上拉加载更多，自带应用生命周期管理。
+/// 提供两种模式：
+/// - 默认构造（[InfiniteScrollView]）：基于 [children] 的简单列表，刷新/加载状态由外部管理
+/// - [InfiniteScrollView.paginated]：自包含分页模式，内部管理 [RefreshController] 和
+///   SmartRefresher 状态转换，外部通过 [onRefresh]/[onLoadMore] 异步回调驱动数据加载
+enum _InfiniteScrollMode { children, paginated }
+
 class InfiniteScrollView extends StatefulWidget {
+  // ═══════════════════════════════════════════════════════════════
+  // 模式标记
+  // ═══════════════════════════════════════════════════════════════
+
+  final _InfiniteScrollMode _mode;
+
+  // ═══════════════════════════════════════════════════════════════
+  // 通用参数
+  // ═══════════════════════════════════════════════════════════════
+
+  /// 下拉刷新回调（异步，内部 await 完成后自动调 refreshCompleted）。
+  final Future<void> Function() onRefresh;
+
+  /// 是否还有更多页可加载。
+  final bool hasMore;
+
+  /// 外部 [ScrollController]，用于共享滚动位置。
+  final ScrollController? controller;
+
+  // ═══════════════════════════════════════════════════════════════
+  // children 模式参数（旧版，向后兼容）
+  // ═══════════════════════════════════════════════════════════════
+
+  /// 列表子组件（children 模式）。
+  final List<Widget>? children;
+
+  /// 当前是否正在加载更多（children 模式，由外部管理）。
+  final bool isLoadingMore;
+
+  /// 外部 [RefreshController]（children 模式，由外部创建管理）。
+  final RefreshController? refreshController;
+
+  /// 初始化时是否自动触发下拉刷新（children 模式）。
+  final bool autoRequestRefresh;
+
+  // ═══════════════════════════════════════════════════════════════
+  // paginated 模式参数（新版，自包含分页）
+  // ═══════════════════════════════════════════════════════════════
+
+  /// 列表项数量（paginated 模式）。
+  final int? itemCount;
+
+  /// 列表项构造器（paginated 模式）。
+  final IndexedWidgetBuilder? itemBuilder;
+
+  /// 当前错误（paginated 模式，null 表示无错误）。
+  final Object? error;
+
+  /// 列表头部组件（paginated 模式，固定显示在列表上方）。
+  final List<Widget>? headerItems;
+
+  /// 列表底部组件（paginated 模式，固定显示在列表下方）。
+  final List<Widget>? footerItems;
+
+  /// 内容区域构建器（paginated 模式）。
+  ///
+  /// 接收 [itemBuilder] 和 [itemCount]，返回一个 Widget 作为内容 sliver。
+  /// 不设置时默认用 [SliverToBoxAdapter] 逐项包裹。
+  /// 可用于注入 [SliverStaggeredGrid]、[SliverGrid] 等自定义布局。
+  final Widget Function(IndexedWidgetBuilder, int)? contentSliverBuilder;
+
+  /// 初始化时是否自动加载第一页（paginated 模式，默认 true）。
+  final bool autoLoad;
+
+  // ═══════════════════════════════════════════════════════════════
+  // 异步加载更多（paginated 模式）
+  // ═══════════════════════════════════════════════════════════════
+
+  /// children 模式同步加载更多回调（旧版）。
+  final void Function()? _onLoadMoreVoid;
+
+  /// paginated 模式异步加载更多回调（新版）。
+  final Future<void> Function()? _onLoadMoreAsync;
+
+  // ═══════════════════════════════════════════════════════════════
+  // 构造器：children 模式（旧版，向后兼容）
+  // ═══════════════════════════════════════════════════════════════
+
+  /// 基于 [children] 的简单列表模式。
+  ///
+  /// 刷新/加载状态由外部管理，通过 [refreshController]、[isLoadingMore]、
+  /// [autoRequestRefresh] 参数控制。适用于需要完全控制 SmartRefresher 状态的场景。
   const InfiniteScrollView({
     super.key,
     required this.children,
     required this.onRefresh,
-    required this.onLoadMore,
-    this.hasMore = false,
+    required this.hasMore,
     this.isLoadingMore = false,
     this.controller,
     this.refreshController,
     this.autoRequestRefresh = true,
-  });
+    required void Function() onLoadMore,
+  }) : _mode = _InfiniteScrollMode.children,
+       _onLoadMoreVoid = onLoadMore,
+       _onLoadMoreAsync = null,
+       itemCount = null,
+       itemBuilder = null,
+       error = null,
+       headerItems = null,
+       footerItems = null,
+       contentSliverBuilder = null,
+       autoLoad = true;
 
-  final List<Widget> children;
-  final Future<void> Function() onRefresh;
-  final VoidCallback onLoadMore;
-  final bool hasMore;
-  final bool isLoadingMore;
-  // 首次请求刷新时是否自动触发 [onRefresh]，默认为 true。
-  final bool autoRequestRefresh;
+  // ═══════════════════════════════════════════════════════════════
+  // 构造器：paginated 模式（自包含分页）
+  // ═══════════════════════════════════════════════════════════════
 
-  /// 外部传入的 [ScrollController]，用于共享滚动位置。
-  final ScrollController? controller;
-
-  /// 外部传入的 [RefreshController]，用于外部控制刷新/加载状态。
+  /// 自包含分页模式。
   ///
-  /// 若为 `null`，由组件内部自行创建和管理生命周期。
-  final RefreshController? refreshController;
+  /// 内部管理 [RefreshController] 和 SmartRefresher 状态转换。
+  /// 外部只需提供：
+  /// - [onRefresh] — 下拉刷新回调（异步）
+  /// - [onLoadMore] — 上拉加载更多回调（异步，内部 await 完成后自动处理 SmartRefresher 状态）
+  /// - [itemCount] / [itemBuilder] — 列表项数据
+  /// - [hasMore] — 是否还有更多页
+  ///
+  /// 可选：[error] 控制错误显示，[headerItems]/[footerItems] 添加固定组件，
+  /// [contentSliverBuilder] 注入自定义 sliver 布局（如 [SliverStaggeredGrid]）。
+  const InfiniteScrollView.paginated({
+    super.key,
+    required this.itemCount,
+    required this.itemBuilder,
+    required Future<void> Function() onLoadMore,
+    required this.onRefresh,
+    required this.hasMore,
+    this.error,
+    this.headerItems = const [],
+    this.footerItems = const [],
+    this.controller,
+    this.contentSliverBuilder,
+    this.autoLoad = true,
+  }) : _mode = _InfiniteScrollMode.paginated,
+       _onLoadMoreAsync = onLoadMore,
+       _onLoadMoreVoid = null,
+       children = null,
+       isLoadingMore = false,
+       refreshController = null,
+       autoRequestRefresh = false;
 
   @override
   State<InfiniteScrollView> createState() => _InfiniteScrollViewState();
@@ -44,7 +160,7 @@ class InfiniteScrollView extends StatefulWidget {
 
 class _InfiniteScrollViewState extends State<InfiniteScrollView>
     with WidgetsBindingObserver {
-  // ── 控制器 ──
+  // ── 控制器（paginated 模式内部使用） ──
   late final RefreshController _refreshController;
   late final ScrollController _scrollController;
   bool _isInternalController = false;
@@ -63,15 +179,30 @@ class _InfiniteScrollViewState extends State<InfiniteScrollView>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    _refreshController = widget.refreshController ?? RefreshController();
-    _isInternalRefreshController = widget.refreshController == null;
-    _scrollController = widget.controller ?? ScrollController();
-    _isInternalController = widget.controller == null;
+    if (widget._mode == _InfiniteScrollMode.paginated) {
+      // paginated 模式：内部创建 RefreshController
+      _refreshController = RefreshController();
+      _isInternalRefreshController = true;
+      _scrollController = widget.controller ?? ScrollController();
+      _isInternalController = widget.controller == null;
 
-    if (widget.autoRequestRefresh) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _refreshController.requestRefresh(needMove: false);
-      });
+      if (widget.autoLoad) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _refreshController.requestRefresh(needMove: false);
+        });
+      }
+    } else {
+      // children 模式：使用外部传入或内部创建
+      _refreshController = widget.refreshController ?? RefreshController();
+      _isInternalRefreshController = widget.refreshController == null;
+      _scrollController = widget.controller ?? ScrollController();
+      _isInternalController = widget.controller == null;
+
+      if (widget.autoRequestRefresh) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _refreshController.requestRefresh(needMove: false);
+        });
+      }
     }
   }
 
@@ -103,20 +234,29 @@ class _InfiniteScrollViewState extends State<InfiniteScrollView>
   void didUpdateWidget(InfiniteScrollView oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // isLoadingMore: true → false → 数据到达，完成上拉
-    if (oldWidget.isLoadingMore && !widget.isLoadingMore) {
-      _finishLoad();
-    }
+    if (widget._mode == _InfiniteScrollMode.paginated) {
+      // paginated 模式：检测 itemCount 从>0→0（URL 变化触发重置）
+      if ((oldWidget.itemCount ?? 0) > 0 && (widget.itemCount ?? 0) == 0) {
+        _refreshController.resetNoData();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _refreshController.requestRefresh(needMove: false);
+        });
+      }
+    } else {
+      // children 模式：保持旧版兼容
+      if (oldWidget.isLoadingMore && !widget.isLoadingMore) {
+        _finishLoad();
+      }
 
-    // 外部 controller 切换
-    if (oldWidget.controller != widget.controller) {
-      if (_isInternalController) _scrollController.dispose();
-      if (widget.controller != null) {
-        _scrollController = widget.controller!;
-        _isInternalController = false;
-      } else {
-        _scrollController = ScrollController();
-        _isInternalController = true;
+      if (oldWidget.controller != widget.controller) {
+        if (_isInternalController) _scrollController.dispose();
+        if (widget.controller != null) {
+          _scrollController = widget.controller!;
+          _isInternalController = false;
+        } else {
+          _scrollController = ScrollController();
+          _isInternalController = true;
+        }
       }
     }
   }
@@ -146,12 +286,33 @@ class _InfiniteScrollViewState extends State<InfiniteScrollView>
   Future<void> _onLoading() async {
     if (_disposed || _isPaused) return;
 
-    if (!widget.hasMore) {
-      _refreshController.loadNoData();
-      return;
+    if (widget._mode == _InfiniteScrollMode.paginated) {
+      // paginated 模式：异步加载，完成后自动管理状态
+      if (!widget.hasMore) {
+        _refreshController.loadNoData();
+        return;
+      }
+      try {
+        await widget._onLoadMoreAsync!();
+        if (!mounted || _disposed) return;
+        if (widget.hasMore) {
+          _refreshController.loadComplete();
+        } else {
+          _refreshController.loadNoData();
+        }
+      } catch (_) {
+        if (!mounted || _disposed) return;
+        _refreshController.loadFailed();
+      }
+    } else {
+      // children 模式：保持旧版兼容，fire-and-forget 触发加载
+      if (!widget.hasMore) {
+        _refreshController.loadNoData();
+        return;
+      }
+      widget._onLoadMoreVoid?.call();
+      // isLoadingMore → true 后，didUpdateWidget 在 loadingMore 回退时调 _finishLoad
     }
-    widget.onLoadMore();
-    // isLoadingMore → true，didUpdateWidget 将在数据到达后调用 _finishLoad
   }
 
   void _finishLoad() {
@@ -176,11 +337,74 @@ class _InfiniteScrollViewState extends State<InfiniteScrollView>
       color: accentColor,
     );
 
+    if (widget._mode == _InfiniteScrollMode.paginated) {
+      return _buildPaginated(accentColor, textStyle);
+    }
+    return _buildChildren(accentColor, textStyle);
+  }
+
+  /// paginated 模式：内部管理 RefreshController，列表数据由 itemBuilder 驱动。
+  Widget _buildPaginated(Color accentColor, TextStyle? textStyle) {
+    final items = List.generate(
+      widget.itemCount ?? 0,
+      (i) => widget.itemBuilder!(context, i),
+    );
+
+    final slivers = <Widget>[];
+    // 头部组件（headerItems）
+    if (widget.headerItems != null) {
+      for (final item in widget.headerItems!) {
+        slivers.add(SliverToBoxAdapter(child: item));
+      }
+    }
+
+    if (widget.contentSliverBuilder != null) {
+      // 自定义 sliver 布局（如 SliverStaggeredGrid）
+      slivers.add(
+        widget.contentSliverBuilder!(
+          widget.itemBuilder!,
+          widget.itemCount ?? 0,
+        ),
+      );
+    } else {
+      // 列表布局
+      for (final item in items) {
+        slivers.add(SliverToBoxAdapter(child: item));
+      }
+    }
+
+    // 底部组件（footerItems）
+    if (widget.footerItems != null) {
+      for (final item in widget.footerItems!) {
+        slivers.add(SliverToBoxAdapter(child: item));
+      }
+    }
+
+    return _buildScaffold(accentColor, textStyle, slivers);
+  }
+
+  /// children 模式：保持旧版兼容，直接渲染外部传入的 children。
+  Widget _buildChildren(Color accentColor, TextStyle? textStyle) {
+    // 在 children 模式下，没有 GridDelegate，直接使用 ListView
+    final slivers = (widget.children ?? [])
+        .map((child) => SliverToBoxAdapter(child: child))
+        .toList();
+
+    return _buildScaffold(accentColor, textStyle, slivers);
+  }
+
+  /// 共享的 SmartRefresher 脚手架。
+  Widget _buildScaffold(
+    Color accentColor,
+    TextStyle? textStyle,
+    List<Widget> slivers,
+  ) {
     return ScrollConfiguration(
       behavior: CustomScrollBehaviour(),
       child: RefreshConfiguration(
-        hideFooterWhenNotFull: true,
+        // hideFooterWhenNotFull: true,
         enableLoadingWhenFailed: true,
+        enableBallisticRefresh: true,
         enableScrollWhenRefreshCompleted: true,
         maxUnderScrollExtent: 0,
         springDescription: const SpringDescription(
@@ -197,9 +421,9 @@ class _InfiniteScrollViewState extends State<InfiniteScrollView>
           footer: _buildFooter(accentColor, textStyle),
           onRefresh: _onRefresh,
           onLoading: _onLoading,
-          child: ListView(
+          child: CustomScrollView(
             controller: _scrollController,
-            children: widget.children,
+            slivers: slivers,
           ),
         ),
       ),

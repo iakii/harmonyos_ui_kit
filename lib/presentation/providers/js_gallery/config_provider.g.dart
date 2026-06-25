@@ -6,7 +6,7 @@ part of 'config_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$jsConfigHash() => r'ff49ce68de2cc2133a51da4444c0860279192652';
+String _$jsConfigHash() => r'9dab894130c1ff60c3ebcb4062fb27cb07f6658d';
 
 /// See also [JsConfig].
 @ProviderFor(JsConfig)

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' show Colors;
+import 'package:flutter/material.dart' show Colors, WidgetsBinding;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:rohos_app/presentation/widgets/loading.dart' show Loading;
@@ -19,7 +19,9 @@ class SplashPage extends ConsumerWidget {
     // 监听 Rust 初始化状态，初始化完成后自动导航到首页
     ref.listen(rustLibInitProvider, (prev, next) {
       next.whenOrNull(
-        data: (_) => router.go('/'),
+        data: (_) => WidgetsBinding.instance.addPostFrameCallback(
+          (_) => router.go('/js_gallery'),
+        ),
         error: (Object error, StackTrace stackTrace) {},
       );
     });

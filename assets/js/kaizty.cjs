@@ -30,9 +30,8 @@ class Client {
     icon: "https://www.kaizty.com/favicon.ico",
     name: "Kaizty",
     menus: [
-      { label: "首页", path: "" },
-      { label: "最热", path: "/hot" },
-      // { label: "标签", path: "/photo" },
+      { label: "🏚️ 首页", path: "" },
+      { label: "🔥 最热", path: "/hot", icon: "U+F07B0" },
     ],
   };
 
@@ -81,90 +80,26 @@ class Client {
     // 创建 URL 对象
     const dom = await import("dom");
     const html = await fetch(url).then((response) => response.text());
-
-    console.log(`请求${url} 获得数据`, html.length)
-
     const contentme = JSON.parse(dom.querySelector(html, 'div.contentme'))
-
-    console.log(111, contentme)
-
     const image = JSON.parse(dom.querySelectorAll(contentme.innerHtml, 'img'))
-
     const list = image.map(img => {
-
-      console.log(222, JSON.stringify(img))
-
       return {
         cover: img.attrs.find((a) => a[0] === "src")?.[1],
         href: "",
         title: "",
       }
     })
-
-    // console.log(222, image)
-
-    return JSON.stringify({
+    const next = JSON.parse(dom.querySelectorAll(html, 'a.page-numbers')).find((el) => el.text === 'Next >')
+    const href = next?.attrs.find((a) => a[0] === "href")?.[1] || null;
+    const result = {
       list,
-      current: 1,
-    });
-  }
-
-  async _parse(url, parsePage = true) {
-    const dom = await import("dom");
-    const html = await fetch(url).then((response) => response.text());
-    // 获取 div.content 容器，再从其 innerHtml 中查询子元素
-    const contentRaw = dom.querySelector(html, "div.content");
-    const contentDiv = contentRaw !== null ? JSON.parse(contentRaw) : null;
-
-    let href = null;
-    let title = null;
-    let src = null;
-
-    if (contentDiv) {
-      const aRaw = dom.querySelector(contentDiv.innerHtml, "a[href][title]");
-      const aTag = aRaw !== null ? JSON.parse(aRaw) : null;
-      if (aTag) {
-        href = aTag.attrs.find((a) => a[0] === "href")?.[1] || null;
-        title = aTag.attrs.find((a) => a[0] === "title")?.[1] || null;
-      }
-
-      const imgRaw = dom.querySelector(contentDiv.innerHtml, "img[src]");
-      const imgTag = imgRaw !== null ? JSON.parse(imgRaw) : null;
-      if (imgTag) {
-        src = imgTag.attrs.find((a) => a[0] === "src")?.[1] || null;
-      }
+      current: 1
+    };
+    if (href) {
+      result["nextPageUrl"] = this.info.website + href;
     }
-
-    const items = [
-      {
-        cover: src,
-        href,
-        title,
-      },
-    ];
-
-    // 获取总页数
-    if (parsePage) {
-      const totalPages = await this._parsePageSize(html, dom);
-      for (let index = 2; index < +totalPages; index++) {
-        console.log("获取第几页：", index, "总页数：", totalPages);
-        const pageUrl = `${url.replace(".html", `_${index}.html`)}`;
-        await waitTime();
-        const result = await this._parse(pageUrl, false);
-        items.push(...result);
-        if (items.length % 5 == 0) {
-          postMessage(
-            "sendChannelDetails",
-            JSON.stringify({
-              list: items,
-              current: index,
-            }),
-          );
-        }
-      }
-    }
-
-    return items;
+    // console.log('result', result, url)
+    return JSON.stringify(result);
   }
 
   async _parsePageSize(html, dom) {

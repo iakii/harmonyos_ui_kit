@@ -17,9 +17,11 @@ import 'presentation/pages/glass_kit.dart' show GlassKitPage;
 import 'presentation/pages/glass_page.dart' show GlassPage;
 import 'presentation/pages/immersive.dart' show ImmersivePage;
 import 'presentation/pages/icon_preview.dart' show IconPreviewPage;
-import 'presentation/pages/js_gallery/gallery_page.dart'
-    show GalleryContentPage, GalleryPage;
-import 'presentation/pages/js_gallery/detail_page.dart' show DetailPage;
+import 'presentation/pages/js_gallery/gallery/gallery_page.dart'
+    show GalleryPage;
+import 'presentation/pages/js_gallery/gallery/gallery_content_page.dart'
+    show GalleryContentPage;
+import 'presentation/pages/js_gallery/detail/detail_page.dart' show DetailPage;
 import 'presentation/pages/layout.dart' show AppLayout;
 
 /// 全局路由配置。

@@ -141,16 +141,13 @@ class Client {
     }
   }
 
-  async fetchDetails(url, parsePage = true) {
+  async fetchDetails(url, page = 1) {
     // 创建 URL 对象
-    const items = await this._parse(url, parsePage);
-    return JSON.stringify({
-      list: items,
-      current: 1,
-    });
+    const items = await this._parse(url, page);
+    return JSON.stringify(items);
   }
 
-  async _parse(url, parsePage = true) {
+  async _parse(url, page = 1,) {
     const dom = await import("dom");
 
     const html = await fetch(url).then((response) => response.text());
@@ -161,7 +158,7 @@ class Client {
     let href = null;
     let title = null;
     let src = null;
-
+    const items = []
     if (contentDiv) {
       const aRaw = dom.querySelector(contentDiv.innerHtml, "a[href][title]");
       const aTag = aRaw !== null ? JSON.parse(aRaw) : null;
@@ -175,38 +172,34 @@ class Client {
       if (imgTag) {
         src = imgTag.attrs.find((a) => a[0] === "src")?.[1] || null;
       }
-    }
 
-    const items = [
-      {
+      items.push({
         cover: src,
         href,
         title,
-      },
-    ];
-
-    // 获取总页数
-    if (parsePage) {
-      const totalPages = await this._parsePageSize(html, dom);
-      for (let index = 2; index < +totalPages; index++) {
-        console.log("获取第几页：", index, "总页数：", totalPages);
-        const pageUrl = `${url.replace(".html", `_${index}.html`)}`;
-        await waitTime();
-        const result = await this._parse(pageUrl, false);
-        items.push(...result);
-        if (items.length % 5 == 0) {
-          postMessage(
-            "sendChannelDetails",
-            JSON.stringify({
-              list: items,
-              current: index,
-            }),
-          );
-        }
-      }
+      });
     }
+    const totalPages = await this._parsePageSize(html, dom);
 
-    return items;
+    // for (let index = page + 1; index < page + 5; index++) {
+    //   console.log("获取第几页：", index, "总页数：", totalPages);
+    //   const pageUrl = `${url.replace(".html", `_${index}.html`)}`;
+    //   await waitTime();
+    //   const result = await this._parse(pageUrl, index);
+    //   items.push(...result);
+    //   // if (items.length % 5 == 0) {
+    //   //   postMessage(
+    //   //     "sendChannelDetails",
+    //   //     JSON.stringify({
+    //   //       list: items,
+    //   //       current: index,
+    //   //     }),
+    //   //   );
+    //   // }
+    // }
+
+    return { list: items, totalPage: totalPages, current: page };
+    // return { list: items, totalPage: Math.floor(totalPages / 5), current: page };
   }
 
   async _parsePageSize(html, dom) {
