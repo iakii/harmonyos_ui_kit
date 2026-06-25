@@ -27,8 +27,8 @@ class Client {
     type: "photo",
     version: "1.0.0",
     website: "https://sexygirl.cc",
-    icon: "https://sexygirl.cc/favicon_512.png",
-    name: "Kaizty",
+    icon: "https://sexygirl.cc/favicon.ico",
+    name: "性感女孩",
     menus: [
       { label: "最新", path: "/zh/photo/" },
       { label: "AI", path: "/zh/ai_picture/" },

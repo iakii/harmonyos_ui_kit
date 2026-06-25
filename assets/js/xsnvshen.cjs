@@ -27,7 +27,7 @@ class Client {
     type: "photo",
     version: "1.0.0",
     website: "https://www.xsnvshen.co",
-    icon: "https://sexygirl.cc/favicon_512.png",
+    icon: "https://www.xsnvshen.co/favicon_512.png",
     name: "Kaizty",
     menus: [
       { label: "最新", path: "/zh/photo/" },

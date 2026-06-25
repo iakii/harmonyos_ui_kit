@@ -1,4 +1,4 @@
-
+// http://mh.jdtaotu.com/mh/hmlist.asp?page=70 漫画
 
 class Client {
   info = {
@@ -18,190 +18,6 @@ class Client {
       { "label": "无圣光", "path": "/fei/tungirlm/25_1.html" },
       { "label": "标签", "path": "/photo/" },
     ],
-    subMenus: [
-      {
-        "website": "http://www.ftmeinv.com",
-        "icon": "http://www.ftmeinv.com/favicon.ico",
-        "name": "肥臀美女图",
-        "menus": [
-          { "label": "首页", "path": "" },
-          { "label": "性感美女", "path": "/fei/tungirlm/1_1.html" },
-          { "label": "日韩套图", "path": "/fei/tungirlm/2_1.html" },
-          { "label": "内衣丝袜", "path": "/fei/tungirlm/9_1.html" },
-          { "label": "萌妹萝莉", "path": "/fei/tungirlm/11_1.html" },
-          { "label": "精品套图", "path": "/fei/tungirlm/18_1.html" },
-          { "label": "高清套图", "path": "/fei/tungirlm/24_1.html" },
-          { "label": "无圣光", "path": "/fei/tungirlm/25_1.html" },
-          { "label": "标签", "path": "/photo/" },
-        ],
-      },
-      {
-        "net": "http://www.gqtuku.com",
-        "name": "高清图库",
-        "menus": [
-          { "label": "首页", "path": "" },
-          { "label": "性感美女", "path": "/goaqingxi/tupiankum/1_1.html" },
-          { "label": "日韩套图", "path": "/goaqingxi/tupiankum/2_1.html" },
-          { "label": "内衣丝袜", "path": "/goaqingxi/tupiankum/9_1.html" },
-          { "label": "萌妹萝莉", "path": "/goaqingxi/tupiankum/11_1.html" },
-          { "label": "精品套图", "path": "/goaqingxi/tupiankum/18_1.html" },
-          { "label": "高清套图", "path": "/goaqingxi/tupiankum/24_1.html" },
-          { "label": "无圣光", "path": "/goaqingxi/tupiankum/25_1.html" },
-          { "label": "标签", "path": "/photo/" },
-        ],
-      },
-      {
-        "net": "http://www.tsmnt.com",
-        "name": "特色美女图",
-        "menus": [
-          { "label": "首页", "path": "" },
-          { "label": "性感美女", "path": "/yuan/tuntum/1_1.html" },
-          { "label": "日韩套图", "path": "/yuan/tuntum/2_1.html" },
-          { "label": "内衣丝袜", "path": "/yuan/tuntum/9_1.html" },
-          { "label": "萌妹萝莉", "path": "/yuan/tuntum/11_1.html" },
-          { "label": "精品套图", "path": "/yuan/tuntum/18_1.html" },
-          { "label": "高清套图", "path": "/yuan/tuntum/24_1.html" },
-          { "label": "无圣光", "path": "/yuan/tuntum/25_1.html" },
-          { "label": "标签", "path": "/photo/" },
-        ],
-      },
-
-      {
-        "net": "http://www.flsft.com",
-        "name": "福利私房图",
-        "menus": [
-          { "label": "首页", "path": "" },
-          { "label": "性感美女", "path": "/gqoqingyou/wum/1_1.html" },
-          { "label": "日韩套图", "path": "/gqoqingyou/wum/2_1.html" },
-          { "label": "内衣丝袜", "path": "/gqoqingyou/wum/9_1.html" },
-          { "label": "萌妹萝莉", "path": "/gqoqingyou/wum/11_1.html" },
-          { "label": "精品套图", "path": "/gqoqingyou/wum/18_1.html" },
-          { "label": "高清套图", "path": "/gqoqingyou/wum/24_1.html" },
-          { "label": "无圣光", "path": "/gqoqingyou/wum/25_1.html" },
-          { "label": "标签", "path": "/photo/" },
-        ],
-      },
-      {
-        "net": "http://www.ywmeitu.com",
-        "name": "尤物美图",
-        "menus": [
-          { "label": "首页", "path": "" },
-          { "label": "性感美女", "path": "/you/wutmm/1_1.html" },
-          { "label": "日韩套图", "path": "/you/wutmm/2_1.html" },
-          { "label": "内衣丝袜", "path": "/you/wutmm/9_1.html" },
-          { "label": "萌妹萝莉", "path": "/you/wutmm/11_1.html" },
-          { "label": "精品套图", "path": "/you/wutmm/18_1.html" },
-          { "label": "高清套图", "path": "/you/wutmm/24_1.html" },
-          { "label": "无圣光", "path": "/you/wutmm/25_1.html" },
-          { "label": "标签", "path": "/photo/" },
-        ],
-      },
-      {
-        "net": "http://www.mtmnt.com",
-        "name": "模特美女图",
-        "menus": [
-          { "label": "首页", "path": "" },
-          { "label": "性感美女", "path": "/meinv/mulu/1_1.html" },
-          { "label": "日韩套图", "path": "/meinv/mulu/2_1.html" },
-          { "label": "内衣丝袜", "path": "/meinv/mulu/9_1.html" },
-          { "label": "萌妹萝莉", "path": "/meinv/mulu/11_1.html" },
-          { "label": "精品套图", "path": "/meinv/mulu/18_1.html" },
-          { "label": "高清套图", "path": "/meinv/mulu/24_1.html" },
-          { "label": "无圣光", "path": "/meinv/mulu/25_1.html" },
-          { "label": "标签", "path": "/photo/" },
-        ],
-      },
-      {
-        "net": "http://www.plwht.com",
-        "name": "漂亮网红图",
-        "menus": [
-          { "label": "首页", "path": "" },
-          { "label": "性感美女", "path": "/jin/caitup/1_1.html" },
-          { "label": "日韩套图", "path": "/jin/caitup/2_1.html" },
-          { "label": "内衣丝袜", "path": "/jin/caitup/9_1.html" },
-          { "label": "萌妹萝莉", "path": "/jin/caitup/11_1.html" },
-          { "label": "精品套图", "path": "/jin/caitup/18_1.html" },
-          { "label": "高清套图", "path": "/jin/caitup/24_1.html" },
-          { "label": "无圣光", "path": "/jin/caitup/25_1.html" },
-          { "label": "标签", "path": "/photo/" },
-        ],
-      },
-      {
-        "net": "http://www.symzt.com",
-        "name": "摄影妹子图",
-        "menus": [
-          { "label": "首页", "path": "" },
-          { "label": "性感美女", "path": "/se/yintum/1_1.html" },
-          { "label": "日韩套图", "path": "/se/yintum/2_1.html" },
-          { "label": "内衣丝袜", "path": "/se/yintum/9_1.html" },
-          { "label": "萌妹萝莉", "path": "/se/yintum/11_1.html" },
-          { "label": "精品套图", "path": "/se/yintum/18_1.html" },
-          { "label": "高清套图", "path": "/se/yintum/24_1.html" },
-          { "label": "无圣光", "path": "/se/yintum/25_1.html" },
-          { "label": "标签", "path": "/photo/" },
-        ],
-      },
-      {
-        "net": "http://www.swmzt.com",
-        "name": "丝袜妹子图",
-        "menus": [
-          { "label": "首页", "path": "" },
-          { "label": "性感美女", "path": "/si/tuwa/1_1.html" },
-          { "label": "日韩套图", "path": "/si/tuwa/2_1.html" },
-          { "label": "内衣丝袜", "path": "/si/tuwa/9_1.html" },
-          { "label": "萌妹萝莉", "path": "/si/tuwa/11_1.html" },
-          { "label": "精品套图", "path": "/si/tuwa/18_1.html" },
-          { "label": "高清套图", "path": "/si/tuwa/24_1.html" },
-          { "label": "无圣光", "path": "/si/tuwa/25_1.html" },
-          { "label": "标签", "path": "/photo/" },
-        ],
-      },
-      {
-        "net": "http://www.gqwht.com",
-        "name": "高清网红图",
-        "menus": [
-          { "label": "首页", "path": "" },
-          { "label": "性感美女", "path": "/gaoqing/meinvtu/1_1.html" },
-          { "label": "日韩套图", "path": "/gaoqing/meinvtu/2_1.html" },
-          { "label": "内衣丝袜", "path": "/gaoqing/meinvtu/9_1.html" },
-          { "label": "萌妹萝莉", "path": "/gaoqing/meinvtu/11_1.html" },
-          { "label": "精品套图", "path": "/gaoqing/meinvtu/18_1.html" },
-          { "label": "高清套图", "path": "/gaoqing/meinvtu/24_1.html" },
-          { "label": "无圣光", "path": "/gaoqing/meinvtu/25_1.html" },
-          { "label": "标签", "path": "/photo/" },
-        ],
-      },
-      {
-        "net": "http://www.mtmeinv.com",
-        "name": "模特美女",
-        "menus": [
-          { "label": "首页", "path": "" },
-          { "label": "性感美女", "path": "/mote/lanmu/1_1.html" },
-          { "label": "日韩套图", "path": "/mote/lanmu/2_1.html" },
-          { "label": "内衣丝袜", "path": "/mote/lanmu/9_1.html" },
-          { "label": "萌妹萝莉", "path": "/mote/lanmu/11_1.html" },
-          { "label": "精品套图", "path": "/mote/lanmu/18_1.html" },
-          { "label": "高清套图", "path": "/mote/lanmu/24_1.html" },
-          { "label": "无圣光", "path": "/mote/lanmu/25_1.html" },
-          { "label": "标签", "path": "/photo/" },
-        ],
-      },
-      {
-        "net": "http://www.ywsft.com",
-        "name": "尤物私房图 ",
-        "menus": [
-          { "label": "首页", "path": "" },
-          { "label": "性感美女", "path": "/nv/shengyoupm/1_1.html" },
-          { "label": "日韩套图", "path": "/nv/shengyoupm/2_1.html" },
-          { "label": "内衣丝袜", "path": "/nv/shengyoupm/9_1.html" },
-          { "label": "萌妹萝莉", "path": "/nv/shengyoupm/11_1.html" },
-          { "label": "精品套图", "path": "/nv/shengyoupm/18_1.html" },
-          { "label": "高清套图", "path": "/nv/shengyoupm/24_1.html" },
-          { "label": "无圣光", "path": "/nv/shengyoupm/25_1.html" },
-          { "label": "标签", "path": "/photo/" },
-        ],
-      }
-    ]
   }
 
   get pluginInfo() {
@@ -220,8 +36,9 @@ class Client {
     const html = await this._request(url);
 
     const dom = await import("dom");
+
     let listLi;
-    if (isHomePage) listLi = JSON.parse(dom.querySelectorAll(html, "div.img li"));
+    if (isHomePage || url.includes("/photo/")) listLi = JSON.parse(dom.querySelectorAll(html, "div.img li"));
     else listLi = JSON.parse(dom.querySelectorAll(html, "div ul li"));
 
     const list = listLi.map((li) => {
@@ -276,8 +93,10 @@ class Client {
 
 
 
-  async fetchDetails(url, page = 3) {
+  async fetchDetails(url, page = 1) {
     console.log("getDetail 请求的url：", url);
+    if (page != 1) url = `${url.replace(".html", `_${page}.html`)}`;
+
     const html = await this._request(url);
     const dom = await import("dom");
 
@@ -299,14 +118,15 @@ class Client {
       }
     })
 
-
-    const totalPage = await this._parsePageSize(html, dom);
-    console.log("totalPage:", totalPage, list);
-    return JSON.stringify({
-      list,
-      totalPage,
-      current: page,
-    })
+    const result = { list }
+    const pageLinks = JSON.parse(dom.querySelectorAll(html, "div.pagelist a"));
+    // 取最后一个
+    if (pageLinks.length > 0) {
+      pageLinks.map(x => {
+        parseInt(x.text, 10) && (result.totalPage = Math.max(result.totalPage || 0, parseInt(x.text, 10)))
+      })
+    }
+    return JSON.stringify(result);
   }
 
   async _parsePageSize(html, dom) {

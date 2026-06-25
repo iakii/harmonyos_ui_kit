@@ -34,6 +34,7 @@ class Client {
       { label: "🔥 最热", path: "/hot" },
       { label: "👻 Cosplay", path: "/category/%5BCosplay%5D" },
       { label: "🎀 网路收集系列", path: "/category/【网路收集系列】" },
+      { label: "🤖 AI系列", path: "/category/%5BAI%20Generated%5D" },
       { label: "📦 网路收集", path: "/category/【网路收集】" },
       { label: "🎬 JVID", path: "/category/%5BJVID%5D" },
       { label: "🍬 萌甜物语系列", path: "/category/【萌甜物语系列】" },
@@ -44,6 +45,7 @@ class Client {
       { label: "🏮 国模系列", path: "/category/【国模系列】" },
       { label: "✨ 高丝女子系列", path: "/category/【高丝女子系列】" },
       { label: "🌪️ 风之领域", path: "/category/【风之领域】" },
+      { label: "🌙 大生模拍", path: "/category/%5B大生模拍%5D" },
     ],
   };
 

@@ -92,8 +92,8 @@ class Client {
   }
 
 
-
-  async fetchDetails(url, page = 3) {
+  async fetchDetails(url, page = 1) {
+    if (page != 1) url = `${url.replace(".html", `_${page}.html`)}`;
     console.log("getDetail 请求的url：", url);
     const html = await this._request(url);
     const dom = await import("dom");
@@ -104,7 +104,7 @@ class Client {
     const list = slide.map(x => {
       console.log("slide x:", JSON.stringify(x))
       const img = JSON.parse(dom.querySelector(x.innerHtml, "img"));
-      console.log("slide img:", img);
+      // console.log("slide img:", img);
       const src = img?.attrs?.find((a) => a[0] === "src")?.[1] || "";
       const a = JSON.parse(dom.querySelector(x.innerHtml, "a"));
       const href = a?.attrs?.find((a) => a[0] === "href")?.[1] || "";
@@ -117,13 +117,15 @@ class Client {
     })
 
 
-    const totalPage = await this._parsePageSize(html, dom);
-    console.log("totalPage:", totalPage, list);
-    return JSON.stringify({
-      list,
-      totalPage,
-      current: page,
-    })
+    const result = { list }
+    const pageLinks = JSON.parse(dom.querySelectorAll(html, "div.pagelist a"));
+    // 取最后一个
+    if (pageLinks.length > 0) {
+      pageLinks.map(x => {
+        parseInt(x.text, 10) && (result.totalPage = Math.max(result.totalPage || 0, parseInt(x.text, 10)))
+      })
+    }
+    return JSON.stringify(result);
   }
 
   async _parsePageSize(html, dom) {

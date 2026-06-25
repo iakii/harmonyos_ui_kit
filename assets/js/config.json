@@ -62,5 +62,21 @@
   {
     "title": "Wallspic",
     "assets": "/assets/js/wallspic.cjs"
+  },
+  {
+    "title": "8se.cc(Test)",
+    "assets": "/assets/js/8se.cjs"
+  },
+  {
+    "title": "微图坊(Test)",
+    "assets": "/assets/js/v2ph.cjs"
+  },
+  {
+    "title": "sexygirl(Test)",
+    "assets": "/assets/js/sexygirl.cjs"
+  },
+  {
+    "title": "xsnvshen(Test)",
+    "assets": "/assets/js/xsnvshen.cjs"
   }
 ]
