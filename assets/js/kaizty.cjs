@@ -31,7 +31,19 @@ class Client {
     name: "Kaizty",
     menus: [
       { label: "🏚️ 首页", path: "" },
-      { label: "🔥 最热", path: "/hot", icon: "U+F07B0" },
+      { label: "🔥 最热", path: "/hot" },
+      { label: "👻 Cosplay", path: "/category/%5BCosplay%5D" },
+      { label: "🎀 网路收集系列", path: "/category/【网路收集系列】" },
+      { label: "📦 网路收集", path: "/category/【网路收集】" },
+      { label: "🎬 JVID", path: "/category/%5BJVID%5D" },
+      { label: "🍬 萌甜物语系列", path: "/category/【萌甜物语系列】" },
+      { label: "📸 陆模私拍系列", path: "/category/【陆模私拍系列】" },
+      { label: "🐦 推特美女", path: "/category/【推特美女】" },
+      { label: "🫧 清凉写真", path: "/category/【清凉写真】" },
+      { label: "🌸 台模系列", path: "/category/【台模系列】" },
+      { label: "🏮 国模系列", path: "/category/【国模系列】" },
+      { label: "✨ 高丝女子系列", path: "/category/【高丝女子系列】" },
+      { label: "🌪️ 风之领域", path: "/category/【风之领域】" },
     ],
   };
 
@@ -93,7 +105,6 @@ class Client {
     const href = next?.attrs.find((a) => a[0] === "href")?.[1] || null;
     const result = {
       list,
-      current: 1
     };
     if (href) {
       result["nextPageUrl"] = this.info.website + href;
