@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart' show SchedulerBinding;
 import 'package:flutter/services.dart';
 import 'package:hm_icon/hm_icon.dart';
 
@@ -18,7 +19,11 @@ class _IconPreviewPageState extends State<IconPreviewPage> {
   @override
   void initState() {
     super.initState();
-    _filtered = allHMIcons.toList();
+
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      if (!context.mounted) return;
+      _filtered = allHMIcons.toList();
+    });
     _controller.addListener(_onSearchChanged);
   }
 

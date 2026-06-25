@@ -5,6 +5,8 @@ import 'package:rohos_app/pages/loading_page.dart' show LoadingPage;
 import 'package:rohos_app/pages/dynamic_html_view_page.dart'
     show DynamicHtml2ViewPage;
 import 'package:rohos_app/pages/rust_daily.dart' show RustDailyPage;
+import 'package:rohos_app/pages/rust_daily_detail_page.dart'
+    show RustDailyDetailPage;
 import 'pages/harmony.dart' show HarmonyOSPage;
 import 'pages/js_parse.dart' show JsParsePage;
 import 'pages/glass_kit.dart' show GlassKitPage;
@@ -19,7 +21,7 @@ import 'pages/layout.dart' show AppLayout;
 ///
 /// 使用 GoRouter ShellRoute，所有页面包裹在 AppLayout 中。
 final router = GoRouter(
-  // initialLocation: '/rust',
+  initialLocation: '/rust',
   errorBuilder: (context, state) => HosPage(
     title: 'Page Not Found',
     body: Column(
@@ -101,7 +103,14 @@ final router = GoRouter(
         if (state.extra == null) {
           return const RustDailyPage();
         }
-        return RustDailyPage(url: (state.extra) as String?);
+        final extra = state.extra as Map<String, dynamic>;
+        final type = extra['type'] as String?;
+        final url = extra['url'] as String?;
+        final title = extra['title'] as String? ?? '';
+        if (type == 'detail' && url != null) {
+          return RustDailyDetailPage(url: url, title: title);
+        }
+        return const RustDailyPage();
       },
     ),
     GoRoute(
