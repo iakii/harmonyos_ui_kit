@@ -1,42 +1,48 @@
+import 'package:flutter/material.dart' show Colors;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
-import 'package:hm_icon/hm_icon.dart';
 import 'package:rohos_app/presentation/widgets/loading.dart' show Loading;
+import 'package:rohos_app/router.dart' show router;
+
+import '../providers/init/rust_bridge_provider.dart' show rustLibInitProvider;
 
 /// 启动页。
 ///
 /// 在 [rustLibInitProvider] 完成初始化前显示，展示应用名称和加载动画。
-class SplashPage extends StatelessWidget {
+class SplashPage extends ConsumerWidget {
   const SplashPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = HarmonyTheme.of(context);
 
+    // 监听 Rust 初始化状态，初始化完成后自动导航到首页
+    ref.listen(rustLibInitProvider, (prev, next) {
+      next.whenOrNull(
+        data: (_) => router.go('/'),
+        error: (Object error, StackTrace stackTrace) {},
+      );
+    });
+
     return HosPage(
-      backgroundColor: theme.surfaceColor,
+      backgroundColor: theme.accentColor,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Loading(size: 80),
-            const SizedBox(height: 24),
             Text(
-              'Rohos App',
-              style: theme.typography.title1?.copyWith(color: theme.textColor),
+              'HarmonyOS UI',
+              style: theme.typography.title1?.copyWith(
+                color: Colors.white.withValues(alpha: 30),
+              ),
             ),
             const SizedBox(height: 8),
-
-            Icon(
-              HMIcons.harmonyos,
-              size: 48,
-              color: theme.textColor.withValues(alpha: 0.6),
-            ),
+            Loading(size: 80, color: Colors.white),
             const SizedBox(height: 8),
-
             Text(
               '正在加载…',
               style: theme.typography.body?.copyWith(
-                color: theme.textColor.withValues(alpha: 0.6),
+                color: Colors.white.withValues(alpha: 30),
               ),
             ),
           ],
