@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:rohos_app/presentation/providers/js_gallery/gallery_page_accumulator_provider.dart';

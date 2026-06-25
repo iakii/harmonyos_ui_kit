@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:rohos_app/domain/entities/rust_daily_page_data.dart';
