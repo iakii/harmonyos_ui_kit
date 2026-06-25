@@ -3,7 +3,8 @@ import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:hm_icon/hm_icon.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:rohos_app/presentation/widgets/loading.dart';
-import 'package:rohos_app/presentation/widgets/scrollbar.dart' show CustomScrollBehaviour;
+import 'package:rohos_app/presentation/widgets/scrollbar.dart'
+    show CustomScrollBehaviour;
 
 /// 无限滚动列表视图。
 ///
@@ -18,6 +19,7 @@ class InfiniteScrollView extends StatefulWidget {
     this.isLoadingMore = false,
     this.controller,
     this.refreshController,
+    this.autoRequestRefresh = true,
   });
 
   final List<Widget> children;
@@ -25,6 +27,8 @@ class InfiniteScrollView extends StatefulWidget {
   final VoidCallback onLoadMore;
   final bool hasMore;
   final bool isLoadingMore;
+  // 首次请求刷新时是否自动触发 [onRefresh]，默认为 true。
+  final bool autoRequestRefresh;
 
   /// 外部传入的 [ScrollController]，用于共享滚动位置。
   final ScrollController? controller;
@@ -59,17 +63,15 @@ class _InfiniteScrollViewState extends State<InfiniteScrollView>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    if (widget.refreshController != null) {
-      _refreshController = widget.refreshController!;
-    } else {
-      _refreshController = RefreshController();
-      _isInternalRefreshController = true;
-    }
-    if (widget.controller != null) {
-      _scrollController = widget.controller!;
-    } else {
-      _scrollController = ScrollController();
-      _isInternalController = true;
+    _refreshController = widget.refreshController ?? RefreshController();
+    _isInternalRefreshController = widget.refreshController == null;
+    _scrollController = widget.controller ?? ScrollController();
+    _isInternalController = widget.controller == null;
+
+    if (widget.autoRequestRefresh) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _refreshController.requestRefresh(needMove: false);
+      });
     }
   }
 
@@ -214,7 +216,7 @@ class _InfiniteScrollViewState extends State<InfiniteScrollView>
       failedText: '刷新失败',
       idleIcon: Icon(HMIcons.chevronDown, color: accentColor),
       releaseIcon: Icon(HMIcons.arrowClockwise, color: accentColor),
-      refreshingIcon: Loading(size: 24, color: accentColor),
+      refreshingIcon: Loading(size: 32, color: accentColor),
       completeIcon: Icon(HMIcons.checkmarkCircle, size: 24, color: accentColor),
       failedIcon: Icon(HMIcons.exclamationmarkCircle, color: accentColor),
       spacing: 8,
@@ -227,9 +229,10 @@ class _InfiniteScrollViewState extends State<InfiniteScrollView>
       loadStyle: LoadStyle.ShowWhenLoading,
       idleText: '加载完成',
       loadingText: '加载更多...',
+      canLoadingText: '释放加载',
       noDataText: '— 已加载全部 —',
       failedText: '加载失败',
-      loadingIcon: Loading(size: 24, color: accentColor),
+      loadingIcon: Loading(size: 32, color: accentColor),
       noMoreIcon: const SizedBox.shrink(),
       spacing: 8,
       idleIcon: Icon(HMIcons.checkmarkCircle, color: accentColor),
