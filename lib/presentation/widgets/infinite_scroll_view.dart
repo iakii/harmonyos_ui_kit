@@ -328,11 +328,10 @@ class _InfiniteScrollViewState extends State<InfiniteScrollView>
       await widget.onRefresh();
       if (!mounted || _disposed) return;
       _refreshController.refreshCompleted();
-      if (!widget.hasMore) {
-        _refreshController.loadNoData();
-      } else {
-        _refreshController.resetNoData();
-      }
+      // 刷新后不依赖 widget.hasMore：此处可能还是父 widget 重建前的旧值。
+      // 父 widget 在 provider state 更新后会异步重建，重建后的 hasMore
+      // 会在下一次上拉加载时起作用。此处总是重置 noData，允许后续上拉。
+      _refreshController.resetNoData();
     } catch (_) {
       if (!mounted || _disposed) return;
       _refreshController.refreshFailed();
@@ -477,6 +476,7 @@ class _InfiniteScrollViewState extends State<InfiniteScrollView>
           footer: _buildFooter(accentColor, textStyle),
           onRefresh: _onRefresh,
           onLoading: _onLoading,
+
           child: CustomScrollView(
             controller: _scrollController,
             slivers: slivers,
