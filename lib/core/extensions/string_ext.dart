@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:path/path.dart' as p;
-import 'package:rohos_app/core/utils/logger.dart' show console;
+import 'package:rohos_app/core/utils/logger.dart' show iLogger;
 
 final _rgbRegExp = RegExp(
   r'^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$',
@@ -19,7 +19,7 @@ final _signedNumericRegExp = RegExp(r'^[+-]?[0-9]*$');
 
 extension ExtensionString on String {
   void get log {
-    console.d(this);
+    iLogger.d(this);
   }
 
   double get toDouble => double.tryParse(this) ?? 1;

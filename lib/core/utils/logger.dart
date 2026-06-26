@@ -24,7 +24,22 @@ Logger _logger = Logger(
   output: MultiOutput([consoleOutput, _LogStorage()]),
 );
 
-Logger get console => _logger;
+Logger get iLogger => _logger;
+
+// ignore: camel_case_types
+class console {
+  static void log(Object? message) {
+    iLogger.d(message);
+  }
+
+  static void error(Object? message) {
+    iLogger.e(message);
+  }
+
+  static void info(Object? message) {
+    iLogger.i(message);
+  }
+}
 // Logger get console => _logger;
 
 // ignore: unused_element
@@ -65,7 +80,7 @@ class _LogStorage extends LogOutput {
           );
           var hours = Day().diff(fileCreateDay, "hour");
           if (hours > logExpiredTime) {
-            console.d('日志文件：${element.fileName}，已经超过$logExpiredTime小时，现在删除.');
+            iLogger.d('日志文件：${element.fileName}，已经超过$logExpiredTime小时，现在删除.');
             element.deleteSync();
           }
         }
