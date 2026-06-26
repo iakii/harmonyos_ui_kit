@@ -31,6 +31,7 @@ class JsIntroPage extends ConsumerStatefulWidget {
 class _JsIntroPageState extends ConsumerState<JsIntroPage> {
   bool _isLoading = true;
   String? _error;
+  bool _descExpanded = false; // 简介展开/收起状态
 
   @override
   void initState() {
@@ -88,14 +89,49 @@ class _JsIntroPageState extends ConsumerState<JsIntroPage> {
       addRepaintBoundaries: false,
       addAutomaticKeepAlives: false,
       children: [
-        // 封面图
+        // 封面图 — Hero 区域，带底部渐变遮罩与顶部圆角
         if (data.cover.isNotEmpty)
-          ExtendedImage.network(
-            data.cover,
-            fit: BoxFit.fitWidth,
-            headers: {'referer': data.cover, 'referrerpolicy': 'unsafe-url'},
-            handleLoadingProgress: true,
-            loadStateChanged: imageLoadState,
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: SizedBox(
+              height: 600,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ExtendedImage.network(
+                    data.cover,
+                    fit: BoxFit.cover,
+                    headers: {
+                      'referer': data.cover,
+                      'referrerpolicy': 'unsafe-url',
+                    },
+                    handleLoadingProgress: true,
+                    loadStateChanged: imageLoadState,
+                  ),
+                  // 底部渐变遮罩，使封面平滑过渡到页面背景
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: 80,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            theme.scaffoldBackgroundColor.withValues(
+                              alpha: 0.85,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
 
         // 漫画标题
@@ -103,22 +139,29 @@ class _JsIntroPageState extends ConsumerState<JsIntroPage> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text(
             data.title,
-            style: theme.typography.title2?.copyWith(
-              fontWeight: FontWeight.bold,
+            style: theme.typography.title1?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontFamily: 'HarmonyOs Sans SC',
             ),
           ),
         ),
 
         // 基本信息卡片（作者/分类/状态）
         HosCard(
-          padding: const EdgeInsets.symmetric(vertical: 0),
+          padding: EdgeInsets.zero,
           child: Column(
             children: [
-              _infoRow(theme, '作者', data.author),
-              Divider(height: 1, color: theme.dividerColor),
-              _infoRow(theme, '分类', data.category),
-              Divider(height: 1, color: theme.dividerColor),
-              _infoRow(theme, '状态', data.status),
+              _infoRow(theme, Icons.person_outline, '作者', data.author),
+              HosDivider(),
+              _infoRow(theme, Icons.category_outlined, '分类', data.category),
+              HosDivider(),
+              _infoRow(
+                theme,
+                Icons.info_outline,
+                '状态',
+                data.status,
+                statusColor: _statusColor(theme, data.status),
+              ),
             ],
           ),
         ),
@@ -134,31 +177,37 @@ class _JsIntroPageState extends ConsumerState<JsIntroPage> {
             ),
           ),
 
-        // 简介
-        if (data.description.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text('简介', style: theme.typography.title3),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              data.description,
-              style: theme.typography.body?.copyWith(height: 1.6),
-            ),
-          ),
-        ],
+        // 简介 — 用 HosCard 包裹，支持展开/收起
+        if (data.description.isNotEmpty)
+          HosCard(child: _descriptionSection(theme, data.description)),
 
         // 章节列表
         if (data.list.isNotEmpty) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-            child: Text(
-              '章节列表（共 ${data.list.length} 话）',
-              style: theme.typography.title3,
+            child: Row(
+              children: [
+                Text(
+                  '章节列表',
+                  style: theme.typography.title3?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'HarmonyOs Sans SC',
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '共 ${data.list.length} 话',
+                  style: theme.typography.bodySmall?.copyWith(
+                    color: theme.textSecondaryColor,
+                  ),
+                ),
+              ],
             ),
           ),
-          ...data.list.map((ch) => _chapterItem(context, theme, ch)),
+          ...data.list.asMap().entries.map(
+            (entry) =>
+                _chapterItem(context, theme, entry.value, index: entry.key),
+          ),
         ],
       ],
     );
@@ -166,20 +215,61 @@ class _JsIntroPageState extends ConsumerState<JsIntroPage> {
 
   // ── 信息行（作者/分类/状态） ──
 
-  Widget _infoRow(HarmonyThemeData theme, String label, String value) {
+  /// 返回状态对应的语义色。
+  Color _statusColor(HarmonyThemeData theme, String status) {
+    final s = status.trim();
+    if (s.contains('完结') || s.contains('完成')) {
+      return theme.colorTokens.statusSuccess;
+    }
+    if (s.contains('连载')) {
+      return theme.colorTokens.statusInfo;
+    }
+    return theme.textSecondaryColor;
+  }
+
+  Widget _infoRow(
+    HarmonyThemeData theme,
+    IconData icon,
+    String label,
+    String value, {
+    Color? statusColor,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       child: Row(
         children: [
+          Icon(icon, size: 18, color: theme.textSecondaryColor),
+          8.H,
           Text(
             label,
             style: theme.typography.bodySmall?.copyWith(
               color: theme.textSecondaryColor,
+              fontSize: 14,
             ),
           ),
-          // const SizedBox(width: 16),
           16.H,
-          Expanded(child: Text(value, style: theme.typography.body)),
+          Expanded(
+            child: Row(
+              children: [
+                // 状态颜色圆点
+                if (statusColor != null) ...[
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  6.H,
+                ],
+                Text(
+                  value,
+                  style: theme.typography.body?.copyWith(fontSize: 14),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -198,7 +288,7 @@ class _JsIntroPageState extends ConsumerState<JsIntroPage> {
       },
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: theme.accentColor.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(8),
@@ -206,11 +296,52 @@ class _JsIntroPageState extends ConsumerState<JsIntroPage> {
         child: Text(
           tag.title ?? '',
           style: theme.typography.overline?.copyWith(
-            fontSize: 12,
+            fontSize: 14,
+            fontFamily: 'HarmonyOs Sans SC',
             color: theme.accentColor.withValues(alpha: 0.8),
           ),
         ),
       ),
+    );
+  }
+
+  // ── 简介展开/收起卡片 ──
+
+  /// 可展开/收起的简介区。默认显示 3 行，溢出时显示展开按钮。
+  Widget _descriptionSection(HarmonyThemeData theme, String description) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '简介',
+          style: theme.typography.title3?.copyWith(
+            fontFamily: 'HarmonyOs Sans SC',
+          ),
+        ),
+        8.H,
+        Text(
+          description,
+          style: theme.typography.body?.copyWith(height: 1.6),
+          maxLines: _descExpanded ? null : 3,
+          overflow: _descExpanded ? null : TextOverflow.ellipsis,
+        ),
+        if (!_descExpanded)
+          Align(
+            alignment: Alignment.centerRight,
+            child: HosTextButton(
+              onPressed: () => setState(() => _descExpanded = true),
+              child: const Text('展开'),
+            ),
+          )
+        else
+          Align(
+            alignment: Alignment.centerRight,
+            child: HosTextButton(
+              onPressed: () => setState(() => _descExpanded = false),
+              child: const Text('收起'),
+            ),
+          ),
+      ],
     );
   }
 
@@ -219,10 +350,30 @@ class _JsIntroPageState extends ConsumerState<JsIntroPage> {
   Widget _chapterItem(
     BuildContext context,
     HarmonyThemeData theme,
-    DetailItem chapter,
-  ) {
+    DetailItem chapter, {
+    required int index,
+  }) {
     return HosListItem(
+      leading: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: theme.accentColor.withValues(alpha: 0.08),
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          '${index + 1}',
+          style: theme.typography.caption?.copyWith(
+            color: theme.accentColor.normal,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
       title: chapter.title ?? '',
+
+      // subtitle: index == 0 ? '最新' : null,
       trailing: Icon(Icons.chevron_right, color: theme.textSecondaryColor),
       onTap: () {
         if (chapter.href == null || chapter.href!.isEmpty) return;

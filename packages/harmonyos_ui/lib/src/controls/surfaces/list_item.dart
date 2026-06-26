@@ -60,8 +60,8 @@ class HosListItem extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: Container(
         height: height,
-        padding: padding ??
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding:
+            padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(color: theme.dividerColor, width: 0.5),
@@ -69,10 +69,7 @@ class HosListItem extends StatelessWidget {
         ),
         child: Row(
           children: [
-            if (leading != null) ...[
-              leading!,
-              const SizedBox(width: 12),
-            ],
+            if (leading != null) ...[leading!, const SizedBox(width: 12)],
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -83,8 +80,10 @@ class HosListItem extends StatelessWidget {
                       title!,
                       style: theme.typography.body?.copyWith(
                         color: theme.textColor,
+                        fontSize: 14,
                       ),
                       maxLines: 1,
+
                       overflow: TextOverflow.ellipsis,
                     ),
                   if (subtitle != null) ...[
@@ -93,6 +92,7 @@ class HosListItem extends StatelessWidget {
                       subtitle!,
                       style: theme.typography.bodySmall?.copyWith(
                         color: theme.textSecondaryColor,
+                        fontSize: 13,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -101,10 +101,7 @@ class HosListItem extends StatelessWidget {
                 ],
               ),
             ),
-            if (trailing != null) ...[
-              const SizedBox(width: 8),
-              trailing!,
-            ],
+            if (trailing != null) ...[const SizedBox(width: 8), trailing!],
           ],
         ),
       ),
