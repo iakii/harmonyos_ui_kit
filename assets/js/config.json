@@ -1,5 +1,9 @@
 [
   {
+    "title": "漫画jdtaotu",
+    "assets": "/assets/js/jdtaotu.cjs"
+  },
+  {
     "title": "美图乐",
     "assets": "/assets/js/meitule.cjs"
   },
