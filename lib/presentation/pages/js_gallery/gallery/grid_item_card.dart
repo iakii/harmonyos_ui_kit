@@ -25,11 +25,8 @@ class GridItemCard extends ConsumerWidget {
     return GestureDetector(
       onTap: () {
         if (item.link.isEmpty || item.to == 'none') return;
-
-        context.push(
-          item.to == 'gallery' ? '/js_gallery_list' : '/js_gallery_detail',
-          extra: {"title": item.title, 'url': item.link},
-        );
+        final path = GalleryItem.getRoutePath(item.to);
+        context.push(path, extra: {"title": item.title, 'url': item.link});
       },
       child: HosCard(
         margin: EdgeInsets.zero,

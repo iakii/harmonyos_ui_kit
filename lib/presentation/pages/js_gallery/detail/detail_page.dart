@@ -12,7 +12,7 @@ import 'detail_loading_widget.dart' show DetailLoadingWidget;
 /// 图集详情页（分页版）。
 ///
 /// 通过 [DetailPageAccumulator] provider 管理分页累积数据，
-/// [InfiniteScrollView.paginated] 实现下拉刷新和上拉加载更多。
+/// [InfiniteScrollView.builder] 实现下拉刷新和上拉加载更多。
 /// 当响应包含 totalPage 或 nextPageUrl 时启用分页，否则为单次加载。
 class DetailPage extends ConsumerStatefulWidget {
   const DetailPage({super.key, required this.url, this.title = '详情'});
@@ -98,7 +98,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
 
     // 有数据（或正在加载中）→ 无限滚动
     // provider.build 只返回空状态，由 autoLoad 触发 refresh() 加载首页
-    final content = InfiniteScrollView.paginated(
+    final content = InfiniteScrollView.builder(
       controller: _scrollController,
       autoLoad: true,
       itemCount: state.items.length,

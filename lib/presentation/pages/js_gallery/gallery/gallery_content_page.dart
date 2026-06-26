@@ -9,7 +9,7 @@ import 'grid_item_card.dart' show GridItemCard;
 
 /// 图集内容区 — 无限滚动分页版。
 ///
-/// 使用 [InfiniteScrollView.paginated] 实现下拉刷新和上拉加载更多，
+/// 使用 [InfiniteScrollView.builder] 实现下拉刷新和上拉加载更多，
 /// 配合 [GalleryPageAccumulator] provider 管理分页累积数据。
 /// URL 变化时 provider 自动重置状态。
 class GalleryContentPage extends ConsumerStatefulWidget {
@@ -26,8 +26,7 @@ class GalleryContentPage extends ConsumerStatefulWidget {
   final String title;
 
   @override
-  ConsumerState<GalleryContentPage> createState() =>
-      _GalleryContentPageState();
+  ConsumerState<GalleryContentPage> createState() => _GalleryContentPageState();
 }
 
 class _GalleryContentPageState extends ConsumerState<GalleryContentPage> {
@@ -71,14 +70,16 @@ class _GalleryContentPageState extends ConsumerState<GalleryContentPage> {
         .floor()
         .clamp(2, 6);
 
-    final content = InfiniteScrollView.paginated(
+    final content = InfiniteScrollView.builder(
       controller: _scrollController,
       itemCount: items.length,
       itemBuilder: (context, index) => GridItemCard(item: items[index]),
-      onRefresh: () =>
-          ref.read(galleryPageAccumulatorProvider(widget.url).notifier).refresh(),
-      onLoadMore: () =>
-          ref.read(galleryPageAccumulatorProvider(widget.url).notifier).loadNext(),
+      onRefresh: () => ref
+          .read(galleryPageAccumulatorProvider(widget.url).notifier)
+          .refresh(),
+      onLoadMore: () => ref
+          .read(galleryPageAccumulatorProvider(widget.url).notifier)
+          .loadNext(),
       hasMore: hasMore,
       error: hasError ? state!.error : null,
       headerItems: [
@@ -100,6 +101,8 @@ class _GalleryContentPageState extends ConsumerState<GalleryContentPage> {
       contentSliverBuilder: (builder, count) => SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         sliver: SliverStaggeredGrid.countBuilder(
+          // addRepaintBoundaries: false,
+          addAutomaticKeepAlives: false,
           crossAxisCount: crossAxisCount,
           itemCount: count,
           itemBuilder: builder,

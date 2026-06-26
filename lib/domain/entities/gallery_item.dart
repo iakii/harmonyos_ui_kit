@@ -5,7 +5,7 @@ class GalleryItem {
   final String link;
   final String cover;
   final String title;
-  // 跳转类型，默认为 "page"，表示打开详情页面；如果是 "gallery"，则打开图集页面。
+  // 跳转类型，默认为 "page"，表示打开详情页面；如果是 "gallery"，则打开图集页面。intro 打开简介页面
   final String to;
 
   final List<DetailItem> tags;
@@ -29,4 +29,15 @@ class GalleryItem {
             .toList() ??
         [],
   );
+
+  static String getRoutePath(String to) {
+    switch (to) {
+      case 'gallery':
+        return '/js_gallery_list';
+      case 'intro':
+        return '/js_intro';
+      default:
+        return '/js_gallery_detail';
+    }
+  }
 }
