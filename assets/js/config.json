@@ -4,6 +4,14 @@
     "assets": "/assets/js/jdtaotu.cjs"
   },
   {
+    "title": "套图网",
+    "assets": "/assets/js/taotu.cjs"
+  },
+  {
+    "title": "美人图",
+    "assets": "/assets/js/meirentu.cjs"
+  },
+  {
     "title": "美图乐",
     "assets": "/assets/js/meitule.cjs"
   },
