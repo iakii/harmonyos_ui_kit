@@ -58,7 +58,7 @@ class InfiniteScrollViewController {
 ///
 /// 提供两种模式：
 /// - 默认构造（[InfiniteScrollView]）：基于 [children] 的简单列表，刷新/加载状态由外部管理
-/// - [InfiniteScrollView.paginated]：自包含分页模式，内部管理 [RefreshController] 和
+/// - [InfiniteScrollView.builder]：自包含分页模式，内部管理 [RefreshController] 和
 ///   SmartRefresher 状态转换，外部通过 [onRefresh]/[onLoadMore] 异步回调驱动数据加载
 enum _InfiniteScrollMode { children, paginated }
 
@@ -185,7 +185,7 @@ class InfiniteScrollView extends StatefulWidget {
   ///
   /// 可选：[error] 控制错误显示，[headerItems]/[footerItems] 添加固定组件，
   /// [contentSliverBuilder] 注入自定义 sliver 布局（如 [SliverStaggeredGrid]）。
-  const InfiniteScrollView.paginated({
+  const InfiniteScrollView.builder({
     super.key,
     required this.itemCount,
     required this.itemBuilder,

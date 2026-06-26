@@ -1,5 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart' hide HarmonyOSPage;
+import 'package:rohos_app/presentation/pages/js_gallery/intro/js_intro.dart'
+    show JsIntroPage;
 import 'package:rohos_app/presentation/pages/js_gallery/layout.dart'
     show GalleryLayout;
 import 'package:rohos_app/presentation/pages/loading_page.dart'
@@ -90,6 +92,15 @@ final router = GoRouter(
               url: (state.extra as Map<String, dynamic>)['url'] as String,
               title: (state.extra as Map<String, dynamic>)['title'] as String,
               showAppBar: true,
+            );
+          },
+        ),
+        GoRoute(
+          path: '/js_intro',
+          builder: (context, state) {
+            return JsIntroPage(
+              url: (state.extra as Map<String, dynamic>)['url'] as String,
+              title: (state.extra as Map<String, dynamic>)['title'] as String,
             );
           },
         ),
