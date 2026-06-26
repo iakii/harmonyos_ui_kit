@@ -45,7 +45,7 @@ class GridItemCard extends ConsumerWidget {
               child: ExtendedImage.network(
                 item.cover,
                 // 'https://cdn.pixabay.com/photo/2016/05/31/11/26/baby-1426651_1280.jpg',
-                fit: BoxFit.cover,
+                fit: BoxFit.fitWidth,
                 headers: {
                   "referer": item.cover,
                   "referrerpolicy": "unsafe-url",

@@ -31,12 +31,12 @@ class JsConfig extends _$JsConfig {
     if (savedAssets != null && savedAssets.isNotEmpty) {
       try {
         final jsContent = await loadJsContent(savedAssets);
-        console.d(
+        iLogger.d(
           "jsConfig: loaded ${sites.length} sites, selected: $savedAssets",
         );
         return JsConfigData(sites, jsContent, savedAssets);
       } catch (e) {
-        console.e("加载 JS 内容失败: $savedAssets, error: $e");
+        iLogger.e("加载 JS 内容失败: $savedAssets, error: $e");
       }
     }
 
@@ -53,7 +53,7 @@ class JsConfig extends _$JsConfig {
         JsConfigData(state.requireValue.sites, jsContent, assets),
       );
     } catch (e) {
-      console.e("选择 JS 源后加载内容失败: $assets, error: $e");
+      iLogger.e("选择 JS 源后加载内容失败: $assets, error: $e");
       state = AsyncValue.data(
         JsConfigData(state.requireValue.sites, '', assets),
       );
@@ -77,7 +77,7 @@ class JsConfig extends _$JsConfig {
       final jsContent = await dio.get("$baseUrl$assets");
       return jsContent.data.toString();
     } catch (e) {
-      console.e("加载 JS 内容失败: $assets, error: $e");
+      iLogger.e("加载 JS 内容失败: $assets, error: $e");
       return '';
     }
   }

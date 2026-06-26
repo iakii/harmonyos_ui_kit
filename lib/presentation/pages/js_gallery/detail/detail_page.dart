@@ -1,6 +1,6 @@
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:rohos_app/core/utils/logger.dart' show console;
+import 'package:rohos_app/core/utils/logger.dart' show iLogger;
 import 'package:rohos_app/domain/entities/detail_accumulator_state.dart';
 import 'package:rohos_app/presentation/providers/js_gallery/detail_page_accumulator_provider.dart';
 import 'package:rohos_app/presentation/widgets/back_to_top_button.dart';
@@ -93,8 +93,8 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       return const HosEmptyState(message: '暂无内容');
     }
 
-    console.d('hasmore ${state.hasMore}');
-    console.d(state.items.map((e) => e.cover).toList());
+    iLogger.d('hasmore ${state.hasMore}');
+    iLogger.d(state.items.map((e) => e.cover).toList());
 
     // 有数据（或正在加载中）→ 无限滚动
     // provider.build 只返回空状态，由 autoLoad 触发 refresh() 加载首页
@@ -107,10 +107,12 @@ class _DetailPageState extends ConsumerState<DetailPage> {
         index: index,
         total: state.items.length,
       ),
-      onRefresh: () =>
-          ref.read(detailPageAccumulatorProvider(widget.url).notifier).refresh(),
-      onLoadMore: () =>
-          ref.read(detailPageAccumulatorProvider(widget.url).notifier).loadNext(),
+      onRefresh: () => ref
+          .read(detailPageAccumulatorProvider(widget.url).notifier)
+          .refresh(),
+      onLoadMore: () => ref
+          .read(detailPageAccumulatorProvider(widget.url).notifier)
+          .loadNext(),
       hasMore: state.hasMore,
       error: state.error != null && state.items.isNotEmpty ? state.error : null,
       headerItems: [

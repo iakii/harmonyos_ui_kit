@@ -12,12 +12,41 @@ class RustDailyPageData {
   /// 当前页码。
   final int currentPage;
 
+  final bool loading;
+
   const RustDailyPageData({
     required this.html,
     required this.liItems,
     required this.totalPage,
     required this.currentPage,
+    required this.loading,
   });
 
   bool get hasMore => currentPage < totalPage;
+
+  factory RustDailyPageData.empty() {
+    return RustDailyPageData(
+      html: '',
+      liItems: [],
+      totalPage: 1,
+      currentPage: 1,
+      loading: false,
+    );
+  }
+
+  RustDailyPageData copyWith({
+    String? html,
+    List<String>? liItems,
+    int? totalPage,
+    int? currentPage,
+    bool? loading,
+  }) {
+    return RustDailyPageData(
+      html: html ?? this.html,
+      liItems: liItems ?? this.liItems,
+      totalPage: totalPage ?? this.totalPage,
+      currentPage: currentPage ?? this.currentPage,
+      loading: loading ?? this.loading,
+    );
+  }
 }

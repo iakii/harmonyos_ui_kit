@@ -9,13 +9,45 @@ part 'rust_daily_provider.g.dart';
 
 /// Rust Daily 数据 Provider。
 ///
-/// 根据 [url]、[type]、[page] 获取并解析 HTML。
-/// - type == "list" 时追加 `&current_page=$page`，解析 `<li>` 列表和 paginator
+/// 根据 [url]、[type] 获取并解析 HTML。
+/// - type == "list" 时内部维护 _currentPage/_accumulatedItems，
+///   支持 [refresh]() 和 [loadMore]() 分页操作，自动累积跨页数据到 state.html
 /// - type == "detail" 时直接获取 `div.detail-body` 内容
 @riverpod
 class RustDaily extends _$RustDaily {
+  // ── 内部分页状态（单次 fetch 内维持） ──
+  int _currentPage = 1;
+  int _totalPage = 1;
+  final List<String> _accumulatedItems = [];
+
   @override
-  FutureOr<RustDailyPageData> build(RustDailyParams params) async {
+  RustDailyPageData build(RustDailyParams params) {
+    return RustDailyPageData.empty();
+  }
+
+  /// 单次加载（详情页使用）：不重置分页状态，直接获取当前 URL 内容。
+  Future<void> fetch() async {
+    await _fetch();
+  }
+
+  /// 下拉刷新：重置到第 1 页并重新加载。
+  Future<void> refresh() async {
+    _currentPage = 1;
+    _totalPage = 1;
+    _accumulatedItems.clear();
+    await _fetch();
+  }
+
+  /// 上拉加载更多：翻页并获取下一页数据，自动追加到累积列表。
+  Future<void> loadMore() async {
+    if (_currentPage >= _totalPage) return;
+    _currentPage++;
+    await _fetch();
+  }
+
+  /// 获取当前页数据（内部方法）。
+  Future<void> _fetch() async {
+    state = state.copyWith(loading: true);
     final dio = ref.read(dioClientProvider).dio;
 
     final baseUrl = params.url.startsWith("http")
@@ -24,7 +56,7 @@ class RustDaily extends _$RustDaily {
 
     // list 类型时追加分页参数（根据 URL 是否已有 query string 决定 ? 或 &）
     final fetchUrl = params.type == "list"
-        ? "$baseUrl${baseUrl.contains('?') ? '&' : '?'}current_page=${params.page}"
+        ? "$baseUrl${baseUrl.contains('?') ? '&' : '?'}current_page=$_currentPage"
         : baseUrl;
 
     final response = await dio.get(fetchUrl);
@@ -41,59 +73,64 @@ class RustDaily extends _$RustDaily {
       throw ParseException('HTML 解析失败：documentElement 为空');
     }
 
-    final String html;
-    final List<String> liItems;
-    final int totalPage;
-
     if (params.type == "list") {
-      // ── 列表模式：提取 <li> + 解析 paginator ──
+      // ── 列表模式：解析 li + 累积到 _accumulatedItems ──
       final pagination = dom.querySelectorAll('div.paginator a');
 
       if (pagination.isNotEmpty) {
         final lastText = pagination.last.text;
-        totalPage = int.tryParse(lastText) ?? 1;
+        _totalPage = int.tryParse(lastText) ?? 1;
       } else {
-        totalPage = 1;
+        _totalPage = 1;
       }
 
-      liItems = dom.querySelectorAll('li').map((li) {
+      final liItems = dom.querySelectorAll('li').map((li) {
         li.attributes['class'] = 'shared-li';
         return li.outerHtml;
       }).toList();
 
-      console.i('Rust Daily 列表模式：共 $liItems 条 <li>，总页数 $totalPage');
+      iLogger.i('Rust Daily 列表模式：共 ${liItems.length} 条 <li>，总页数 $_totalPage');
 
-      html =
-          '''
-<div style="padding:16px">
-${liItems.join('\n')}
-</div>''';
+      // 第 1 页替换，后续页追加
+      if (_currentPage == 1) {
+        _accumulatedItems
+          ..clear()
+          ..addAll(liItems);
+      } else {
+        _accumulatedItems.addAll(liItems);
+      }
+
+      final html =
+          '<div style="padding:16px">\n${_accumulatedItems.join('\n')}\n</div>';
+
+      state = state.copyWith(
+        loading: false,
+        html: html,
+        liItems: List.of(_accumulatedItems),
+        totalPage: _totalPage,
+        currentPage: _currentPage,
+      );
     } else {
       // ── 详情模式：提取 detail-body ──
       final element = dom.querySelector('div.detail-body');
-      html =
-          '''
-<div style="padding:16px">
-${element?.outerHtml ?? '暂无内容'}
-</div>''';
-      liItems = [];
-      totalPage = 1;
-    }
+      final html =
+          '<div style="padding:16px">\n${element?.outerHtml ?? '暂无内容'}\n</div>';
 
-    return RustDailyPageData(
-      html: html,
-      liItems: liItems,
-      totalPage: totalPage,
-      currentPage: params.page,
-    );
+      state = state.copyWith(
+        loading: false,
+        html: html,
+        liItems: [],
+        totalPage: 1,
+        currentPage: 1,
+      );
+    }
   }
 }
 
-/// Provider 参数。
+/// Provider 参数（不含 page，一个 (url+type+tabKey) 对应一个 provider 实例）。
 class RustDailyParams {
   final String url;
-  final String type;
-  final int page;
+  final String type; // "list" | "detail"
 
   /// Tab 标识，用于区分不同 tab 的 provider 实例缓存。
   ///
@@ -104,7 +141,6 @@ class RustDailyParams {
   const RustDailyParams({
     required this.url,
     required this.type,
-    this.page = 1,
     this.tabKey = '',
   });
 
@@ -114,9 +150,8 @@ class RustDailyParams {
       other is RustDailyParams &&
           url == other.url &&
           type == other.type &&
-          page == other.page &&
           tabKey == other.tabKey;
 
   @override
-  int get hashCode => Object.hash(url, type, page, tabKey);
+  int get hashCode => Object.hash(url, type, tabKey);
 }

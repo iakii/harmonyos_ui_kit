@@ -46,7 +46,7 @@ class RustDailyRemoteDataSource {
       return li.outerHtml;
     }).toList();
 
-    console.i('Rust Daily 列表模式：共 ${liItems.length} 条 <li>，总页数 $totalPage');
+    iLogger.i('Rust Daily 列表模式：共 ${liItems.length} 条 <li>，总页数 $totalPage');
 
     final html =
         '''

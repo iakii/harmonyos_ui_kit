@@ -20,7 +20,7 @@ class GalleryPageAccumulator extends _$GalleryPageAccumulator {
   Future<GalleryAccumulatorState> build(String url) async {
     // url 变化时 Riverpod 自动重新 build，无需手动重置
     ref.onDispose(() {
-      console.d('GalleryPageAccumulator: disposed url=$url');
+      iLogger.d('GalleryPageAccumulator: disposed url=$url');
     });
     return GalleryAccumulatorState.empty();
   }
@@ -34,9 +34,7 @@ class GalleryPageAccumulator extends _$GalleryPageAccumulator {
     if (current.isLoading || !current.hasMore) return;
 
     final nextPage = current.currentPage + 1;
-    state = AsyncValue.data(
-      current.copyWith(isLoading: true, error: null),
-    );
+    state = AsyncValue.data(current.copyWith(isLoading: true, error: null));
 
     try {
       final pageData = await ref.read(
@@ -53,10 +51,8 @@ class GalleryPageAccumulator extends _$GalleryPageAccumulator {
         ),
       );
     } catch (e) {
-      console.e('GalleryPageAccumulator: loadNext error: $e');
-      state = AsyncValue.data(
-        current.copyWith(isLoading: false, error: e),
-      );
+      iLogger.e('GalleryPageAccumulator: loadNext error: $e');
+      state = AsyncValue.data(current.copyWith(isLoading: false, error: e));
       rethrow;
     }
   }

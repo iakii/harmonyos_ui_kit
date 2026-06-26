@@ -32,7 +32,7 @@ class JsConfigRemoteDataSource {
       final jsContent = await dio.get("$_baseUrl/$assets");
       return jsContent.data.toString();
     } catch (e) {
-      console.e("加载 JS 内容失败: $assets, error: $e");
+      iLogger.e("加载 JS 内容失败: $assets, error: $e");
       return '';
     }
   }

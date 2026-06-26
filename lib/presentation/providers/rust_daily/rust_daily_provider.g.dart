@@ -6,7 +6,7 @@ part of 'rust_daily_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$rustDailyHash() => r'09082691dd253163e33e00bd3e823726a884921b';
+String _$rustDailyHash() => r'58a72ed50e42f39a07322903871c9832ffc8e74c';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -30,16 +30,17 @@ class _SystemHash {
 }
 
 abstract class _$RustDaily
-    extends BuildlessAutoDisposeAsyncNotifier<RustDailyPageData> {
+    extends BuildlessAutoDisposeNotifier<RustDailyPageData> {
   late final RustDailyParams params;
 
-  FutureOr<RustDailyPageData> build(RustDailyParams params);
+  RustDailyPageData build(RustDailyParams params);
 }
 
 /// Rust Daily 数据 Provider。
 ///
-/// 根据 [url]、[type]、[page] 获取并解析 HTML。
-/// - type == "list" 时追加 `&current_page=$page`，解析 `<li>` 列表和 paginator
+/// 根据 [url]、[type] 获取并解析 HTML。
+/// - type == "list" 时内部维护 _currentPage/_accumulatedItems，
+///   支持 [refresh]() 和 [loadMore]() 分页操作，自动累积跨页数据到 state.html
 /// - type == "detail" 时直接获取 `div.detail-body` 内容
 ///
 /// Copied from [RustDaily].
@@ -48,16 +49,18 @@ const rustDailyProvider = RustDailyFamily();
 
 /// Rust Daily 数据 Provider。
 ///
-/// 根据 [url]、[type]、[page] 获取并解析 HTML。
-/// - type == "list" 时追加 `&current_page=$page`，解析 `<li>` 列表和 paginator
+/// 根据 [url]、[type] 获取并解析 HTML。
+/// - type == "list" 时内部维护 _currentPage/_accumulatedItems，
+///   支持 [refresh]() 和 [loadMore]() 分页操作，自动累积跨页数据到 state.html
 /// - type == "detail" 时直接获取 `div.detail-body` 内容
 ///
 /// Copied from [RustDaily].
-class RustDailyFamily extends Family<AsyncValue<RustDailyPageData>> {
+class RustDailyFamily extends Family<RustDailyPageData> {
   /// Rust Daily 数据 Provider。
   ///
-  /// 根据 [url]、[type]、[page] 获取并解析 HTML。
-  /// - type == "list" 时追加 `&current_page=$page`，解析 `<li>` 列表和 paginator
+  /// 根据 [url]、[type] 获取并解析 HTML。
+  /// - type == "list" 时内部维护 _currentPage/_accumulatedItems，
+  ///   支持 [refresh]() 和 [loadMore]() 分页操作，自动累积跨页数据到 state.html
   /// - type == "detail" 时直接获取 `div.detail-body` 内容
   ///
   /// Copied from [RustDaily].
@@ -65,8 +68,9 @@ class RustDailyFamily extends Family<AsyncValue<RustDailyPageData>> {
 
   /// Rust Daily 数据 Provider。
   ///
-  /// 根据 [url]、[type]、[page] 获取并解析 HTML。
-  /// - type == "list" 时追加 `&current_page=$page`，解析 `<li>` 列表和 paginator
+  /// 根据 [url]、[type] 获取并解析 HTML。
+  /// - type == "list" 时内部维护 _currentPage/_accumulatedItems，
+  ///   支持 [refresh]() 和 [loadMore]() 分页操作，自动累积跨页数据到 state.html
   /// - type == "detail" 时直接获取 `div.detail-body` 内容
   ///
   /// Copied from [RustDaily].
@@ -96,17 +100,19 @@ class RustDailyFamily extends Family<AsyncValue<RustDailyPageData>> {
 
 /// Rust Daily 数据 Provider。
 ///
-/// 根据 [url]、[type]、[page] 获取并解析 HTML。
-/// - type == "list" 时追加 `&current_page=$page`，解析 `<li>` 列表和 paginator
+/// 根据 [url]、[type] 获取并解析 HTML。
+/// - type == "list" 时内部维护 _currentPage/_accumulatedItems，
+///   支持 [refresh]() 和 [loadMore]() 分页操作，自动累积跨页数据到 state.html
 /// - type == "detail" 时直接获取 `div.detail-body` 内容
 ///
 /// Copied from [RustDaily].
 class RustDailyProvider
-    extends AutoDisposeAsyncNotifierProviderImpl<RustDaily, RustDailyPageData> {
+    extends AutoDisposeNotifierProviderImpl<RustDaily, RustDailyPageData> {
   /// Rust Daily 数据 Provider。
   ///
-  /// 根据 [url]、[type]、[page] 获取并解析 HTML。
-  /// - type == "list" 时追加 `&current_page=$page`，解析 `<li>` 列表和 paginator
+  /// 根据 [url]、[type] 获取并解析 HTML。
+  /// - type == "list" 时内部维护 _currentPage/_accumulatedItems，
+  ///   支持 [refresh]() 和 [loadMore]() 分页操作，自动累积跨页数据到 state.html
   /// - type == "detail" 时直接获取 `div.detail-body` 内容
   ///
   /// Copied from [RustDaily].
@@ -136,7 +142,7 @@ class RustDailyProvider
   final RustDailyParams params;
 
   @override
-  FutureOr<RustDailyPageData> runNotifierBuild(covariant RustDaily notifier) {
+  RustDailyPageData runNotifierBuild(covariant RustDaily notifier) {
     return notifier.build(params);
   }
 
@@ -157,7 +163,7 @@ class RustDailyProvider
   }
 
   @override
-  AutoDisposeAsyncNotifierProviderElement<RustDaily, RustDailyPageData>
+  AutoDisposeNotifierProviderElement<RustDaily, RustDailyPageData>
   createElement() {
     return _RustDailyProviderElement(this);
   }
@@ -178,14 +184,13 @@ class RustDailyProvider
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin RustDailyRef on AutoDisposeAsyncNotifierProviderRef<RustDailyPageData> {
+mixin RustDailyRef on AutoDisposeNotifierProviderRef<RustDailyPageData> {
   /// The parameter `params` of this provider.
   RustDailyParams get params;
 }
 
 class _RustDailyProviderElement
-    extends
-        AutoDisposeAsyncNotifierProviderElement<RustDaily, RustDailyPageData>
+    extends AutoDisposeNotifierProviderElement<RustDaily, RustDailyPageData>
     with RustDailyRef {
   _RustDailyProviderElement(super.provider);
 

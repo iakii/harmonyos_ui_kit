@@ -7,7 +7,7 @@ part of 'gallery_page_accumulator_provider.dart';
 // **************************************************************************
 
 String _$galleryPageAccumulatorHash() =>
-    r'9b01999f952312777bc5cb0d63e0553f11757425';
+    r'734c23b3395dfe3ea9927595e740b987a500e4d7';
 
 /// Copied from Dart SDK
 class _SystemHash {

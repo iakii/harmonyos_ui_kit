@@ -7,7 +7,7 @@ part of 'detail_page_accumulator_provider.dart';
 // **************************************************************************
 
 String _$detailPageAccumulatorHash() =>
-    r'b24494625c216fdee51a2ca4b4b4d5e21ed3c25e';
+    r'fd5c9dfbb44f1e738943b3c918f3397a791f877d';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -39,7 +39,8 @@ abstract class _$DetailPageAccumulator
 
 /// 详情分页累积 Provider（按 URL）。
 ///
-/// [build] 时自动加载第一页数据，UI 通过 [AsyncValue.when] 展示加载/错误/数据状态。
+/// [build] 只获取 JS 配置，不加载数据。首页数据由 [InfiniteScrollView] 的
+/// [autoLoad] 触发 [refresh()] 来加载。UI 通过 [AsyncValue.when] 展示状态。
 /// [loadNext] 加载后续分页，[refresh] 重新加载首页。
 ///
 /// Copied from [DetailPageAccumulator].
@@ -48,7 +49,8 @@ const detailPageAccumulatorProvider = DetailPageAccumulatorFamily();
 
 /// 详情分页累积 Provider（按 URL）。
 ///
-/// [build] 时自动加载第一页数据，UI 通过 [AsyncValue.when] 展示加载/错误/数据状态。
+/// [build] 只获取 JS 配置，不加载数据。首页数据由 [InfiniteScrollView] 的
+/// [autoLoad] 触发 [refresh()] 来加载。UI 通过 [AsyncValue.when] 展示状态。
 /// [loadNext] 加载后续分页，[refresh] 重新加载首页。
 ///
 /// Copied from [DetailPageAccumulator].
@@ -56,7 +58,8 @@ class DetailPageAccumulatorFamily
     extends Family<AsyncValue<DetailAccumulatorState>> {
   /// 详情分页累积 Provider（按 URL）。
   ///
-  /// [build] 时自动加载第一页数据，UI 通过 [AsyncValue.when] 展示加载/错误/数据状态。
+  /// [build] 只获取 JS 配置，不加载数据。首页数据由 [InfiniteScrollView] 的
+  /// [autoLoad] 触发 [refresh()] 来加载。UI 通过 [AsyncValue.when] 展示状态。
   /// [loadNext] 加载后续分页，[refresh] 重新加载首页。
   ///
   /// Copied from [DetailPageAccumulator].
@@ -64,7 +67,8 @@ class DetailPageAccumulatorFamily
 
   /// 详情分页累积 Provider（按 URL）。
   ///
-  /// [build] 时自动加载第一页数据，UI 通过 [AsyncValue.when] 展示加载/错误/数据状态。
+  /// [build] 只获取 JS 配置，不加载数据。首页数据由 [InfiniteScrollView] 的
+  /// [autoLoad] 触发 [refresh()] 来加载。UI 通过 [AsyncValue.when] 展示状态。
   /// [loadNext] 加载后续分页，[refresh] 重新加载首页。
   ///
   /// Copied from [DetailPageAccumulator].
@@ -96,7 +100,8 @@ class DetailPageAccumulatorFamily
 
 /// 详情分页累积 Provider（按 URL）。
 ///
-/// [build] 时自动加载第一页数据，UI 通过 [AsyncValue.when] 展示加载/错误/数据状态。
+/// [build] 只获取 JS 配置，不加载数据。首页数据由 [InfiniteScrollView] 的
+/// [autoLoad] 触发 [refresh()] 来加载。UI 通过 [AsyncValue.when] 展示状态。
 /// [loadNext] 加载后续分页，[refresh] 重新加载首页。
 ///
 /// Copied from [DetailPageAccumulator].
@@ -108,7 +113,8 @@ class DetailPageAccumulatorProvider
         > {
   /// 详情分页累积 Provider（按 URL）。
   ///
-  /// [build] 时自动加载第一页数据，UI 通过 [AsyncValue.when] 展示加载/错误/数据状态。
+  /// [build] 只获取 JS 配置，不加载数据。首页数据由 [InfiniteScrollView] 的
+  /// [autoLoad] 触发 [refresh()] 来加载。UI 通过 [AsyncValue.when] 展示状态。
   /// [loadNext] 加载后续分页，[refresh] 重新加载首页。
   ///
   /// Copied from [DetailPageAccumulator].

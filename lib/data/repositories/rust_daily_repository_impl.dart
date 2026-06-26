@@ -18,12 +18,15 @@ class RustDailyRepositoryImpl implements RustDailyRepository {
   }) async {
     try {
       final result = await _dataSource.getList(url: url, page: page);
-      return Success(RustDailyPageData(
-        html: result.html,
-        liItems: result.liItems,
-        totalPage: result.totalPage,
-        currentPage: page,
-      ));
+      return Success(
+        RustDailyPageData(
+          html: result.html,
+          liItems: result.liItems,
+          totalPage: result.totalPage,
+          currentPage: page,
+          loading: false,
+        ),
+      );
     } on AppException catch (e) {
       return Failure(e);
     } catch (e, stackTrace) {
@@ -35,12 +38,15 @@ class RustDailyRepositoryImpl implements RustDailyRepository {
   Future<Result<RustDailyPageData>> getDetail({required String url}) async {
     try {
       final html = await _dataSource.getDetail(url: url);
-      return Success(RustDailyPageData(
-        html: html,
-        liItems: [],
-        totalPage: 1,
-        currentPage: 1,
-      ));
+      return Success(
+        RustDailyPageData(
+          html: html,
+          liItems: [],
+          totalPage: 1,
+          currentPage: 1,
+          loading: false,
+        ),
+      );
     } on AppException catch (e) {
       return Failure(e);
     } catch (e, stackTrace) {
