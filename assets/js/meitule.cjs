@@ -46,6 +46,19 @@ class Client {
     return JSON.stringify(this.info);
   }
 
+  async search(keyword, page = 1) {
+    // http://www.symzt.com/chis/$text/1.html
+    // const keyword = await toPinYin(keywords ?? '')
+    const url = `${this.info.website}/e/search/?name=news&show=title&tempid=1&keyboard=${keyword}`;
+    const response = await fetch(url).then((response) => {
+      console.log("search 请求url：",  response.url);
+      return response.text();
+    });
+    console.log("search 请求的keyword：", JSON.stringify(response), url);
+
+    return this.fetchGallery(url, page);
+  }
+
   async fetchGallery(url, page = 1) {
     if (page != 1) {
       url = `${url}/index_${page}.html`;

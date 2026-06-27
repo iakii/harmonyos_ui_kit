@@ -23,6 +23,15 @@ class Client {
   get pluginInfo() {
     return JSON.stringify(this.info);
   }
+
+  async search(keywords, page = 1) {
+    // http://www.symzt.com/chis/$text/1.html
+    const keyword = await toPinYin(keywords ?? '')
+    console.log("search 请求的keyword：", keyword, keywords);
+    const url = `${this.info.website}/chis/${keyword}/${page}.html`;
+    return this.fetchGallery(url, page);
+  }
+
   async fetchGallery(path, page = 1) {
 
     const isHomePage = path === this.info.website;
@@ -31,7 +40,6 @@ class Client {
     if (!isHomePage) {
       url = `${path.replace(/\/(\d+_)?\d+\.html$/, `/$1${page}.html`)}`
     }
-    // console.log("getPage 请求的url：", { isHomePage, path, url });
 
     const html = await this._request(url);
 
@@ -54,7 +62,7 @@ class Client {
         img = null;
       }
       const href = a?.attrs?.find((a) => a[0] === "href")?.[1] || "";
-      const cover = img?.attrs?.find((a) => a[0] === "lazy-src")?.[1] || "";
+      const cover = img?.attrs?.find((a) => a[0] === "lazy-src" || a[0] == 'src')?.[1] || "";
       const title = li.text || "";
       return {
         link: `${this.info.website}${href}`,
@@ -63,11 +71,9 @@ class Client {
       };
     });
     const totalPages = await this._parsePageSize(html, dom);
-    return JSON.stringify({
-      list: list,
-      totalPage: totalPages,
-      currentPage: page,
-    });
+    const response = { list: list, totalPage: totalPages, currentPage: page }
+    console.log("fetchGallery response:", JSON.stringify(response, null, 2));
+    return JSON.stringify(response);
   }
 
 
