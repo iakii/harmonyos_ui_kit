@@ -19,25 +19,21 @@ import 'package:rohos_app/presentation/providers/js_engine/js_engine_provider.da
 /// jsConfig 变化 → jsEngine 重建 → 本 Provider 重建。
 /// 闭包中 [ref.read] 获取最新引擎 future（builder 外安全）。
 final jsGalleryRepositoryProvider = Provider<JsGalleryRepository>((ref) {
-  ref.watch(jsEngineProvider);
-  return JsGalleryRepositoryImpl(
-    () => ref.read(jsEngineProvider.future),
-  );
+  // ref.watch(jsEngineProvider);
+  return JsGalleryRepositoryImpl(() => ref.watch(jsEngineProvider.future));
 });
 
 /// JsPluginRepository 的 Riverpod Provider。
 final jsPluginRepositoryProvider = Provider<JsPluginRepository>((ref) {
-  ref.watch(jsEngineProvider);
-  return JsPluginRepositoryImpl(
-    () => ref.read(jsEngineProvider.future),
-  );
+  // ref.watch(jsEngineProvider);
+  return JsPluginRepositoryImpl(() => ref.watch(jsEngineProvider.future));
 });
 
 /// JsConfigRepository 的 Riverpod Provider。
 ///
 /// 组合远程数据源（GitHub 拉取）和本地数据源（SharedPreferences 持久化）。
 final jsConfigRepositoryProvider = Provider<JsConfigRepository>((ref) {
-  final dio = ref.watch(dioProvider);
+  final dio = ref.read(dioProvider);
   return JsConfigRepositoryImpl(
     JsConfigRemoteDataSource(dio),
     JsSourceLocalDataSource(),
@@ -46,8 +42,6 @@ final jsConfigRepositoryProvider = Provider<JsConfigRepository>((ref) {
 
 /// RustDailyRepository 的 Riverpod Provider。
 final rustDailyRepositoryProvider = Provider<RustDailyRepository>((ref) {
-  final dio = ref.watch(dioProvider);
-  return RustDailyRepositoryImpl(
-    RustDailyRemoteDataSource(dio),
-  );
+  final dio = ref.read(dioProvider);
+  return RustDailyRepositoryImpl(RustDailyRemoteDataSource(dio));
 });

@@ -25,9 +25,13 @@ class GridItemCard extends ConsumerWidget {
     );
     return GestureDetector(
       onTap: () {
+        // _TypeError (type '_Map<String, String>' is not a subtype of type 'GalleryRouteArgs' in type cast)
         if (item.link.isEmpty || item.to == 'none') return;
         final path = GalleryItem.getRoutePath(item.to);
-        context.push(path, extra: {"title": item.title, 'url': item.link});
+        context.push(
+          path,
+          extra: GalleryRouteArgs(title: item.title, url: item.link),
+        );
       },
       child: HosCard(
         margin: EdgeInsets.zero,

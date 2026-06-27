@@ -23,6 +23,7 @@ final selectedSourceProvider = Provider<String?>((ref) {
 
 @riverpod
 class JsConfig extends _$JsConfig {
+  bool get isLoading => state.isLoading;
   @override
   Future<JsConfigData> build() async {
     final sites = await getSites();
