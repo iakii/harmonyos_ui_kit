@@ -79,7 +79,7 @@ class JsGalleryRepositoryImpl implements JsGalleryRepository {
     try {
       receivePort = ReceivePort();
       isolate = await Isolate.spawn(
-        runProgressiveDetailWorker,
+        runDetailWorker,
         DetailWorkerInit(
           jsSource: jsContent,
           url: url,

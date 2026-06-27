@@ -133,7 +133,7 @@ Future<GalleryDetail> _loadSinglePage({
 }) async {
   final receivePort = ReceivePort();
   final isolate = await Isolate.spawn(
-    runSinglePageDetailWorker,
+    runDetailWorker,
     DetailWorkerInit(
       jsSource: jsSource,
       url: url,

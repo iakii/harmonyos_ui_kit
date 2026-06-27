@@ -33,11 +33,15 @@ class GalleryPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final assets = ref.watch(
-      jsConfigProvider.select((selector) => selector.value?.name),
-    );
+    final configState = ref.watch(jsConfigProvider);
 
-    if (assets == null || assets == '') {
+    // jsConfig 尚未就绪或未选择源 → 统一用 Scaffold 包裹
+    final isPending = configState.isLoading ||
+        configState.valueOrNull?.name == null ||
+        configState.valueOrNull!.name.isEmpty;
+
+    if (isPending) {
+      final showLoading = configState.isLoading;
       return Scaffold(
         backgroundColor: Colors.transparent,
         appBar: HosAppBar(
@@ -48,29 +52,31 @@ class GalleryPage extends HookConsumerWidget {
               onPressed: () => showSetting(context),
             ),
           ],
-          title: '未配置资源',
+          title: showLoading ? '图集' : '未配置资源',
         ),
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(HMIcons.artGallery, size: 64),
-              const SizedBox(height: 16),
-              const Text('请先配置 JS 源文件'),
-              const SizedBox(height: 8),
-              HosTextButton(
-                onPressed: () => showSetting(context),
-                child: const Text(
-                  '去设置',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontFamily: "HarmonyOs Sans SC",
-                  ),
+        body: showLoading
+            ? const Center(child: Loading(size: 64))
+            : Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(HMIcons.artGallery, size: 64),
+                    const SizedBox(height: 16),
+                    const Text('请先配置 JS 源文件'),
+                    const SizedBox(height: 8),
+                    HosTextButton(
+                      onPressed: () => showSetting(context),
+                      child: const Text(
+                        '去设置',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontFamily: "HarmonyOs Sans SC",
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
       );
     }
 
