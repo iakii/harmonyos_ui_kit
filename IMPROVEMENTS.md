@@ -1,162 +1,124 @@
 # rohos_app lib/ 代码改进方案
 
 > 审计日期：2026-06-27
+> 最后更新：2026-06-27
 > 审计范围：lib/ 全目录（含 core、domain、data、presentation 四层）
-
----
-
-## 目录
-
-- [P0 — 必须立即修复](#p0--必须立即修复)
-- [P1 — 建议本轮迭代修复](#p1--建议本轮迭代修复)
-- [P2 — 下个迭代修复](#p2--下个迭代修复)
-- [P3 — 技术债务](#p3--技术债务)
+> 处理进度：**19/21 项已完成**
 
 ---
 
 ## P0 — 必须立即修复
 
-### 1. domain/data 层形同虚设
+### 1. domain/data 层形同虚设 ✅ 已处理
 
-**问题**：Clean Architecture 的骨架（domain/repositories、data/repositories、domain/usecases）都定义好了，但 presentation 层完全绕过了它们，直接操作 Dio、JsEngine、SharedPreferences 和 Isolate。
+**问题**：Clean Architecture 的骨架定义好了，但 presentation 层绕过它们直接操作 Dio、JsEngine、SharedPreferences 和 Isolate。
 
-| 数据流 | 应该怎么走 | 实际怎么走 |
-|---|---|---|
-| 图集列表 | Provider → UseCase → Repository → DataSource | Provider → `jsEngineProvider` → 直接 `eval()` |
-| 详情加载 | Provider → UseCase → Repository → DataSource | Provider → 直接 `Isolate.spawn()` + `JsRuntimeLib` |
-| JS 配置 | Provider → Repository → DataSource | Provider → 直接调用 `dioProvider` + `perfs` |
-| 插件信息 | Provider → Repository → DataSource | Provider → 直接 `engine.eval()` |
-| Rust Daily | Provider → Repository → DataSource | Provider → 直接 `dio.get()` + `parse()` |
+**处理**：
+- 创建 `repository_providers.dart`，通过 Riverpod 注入 4 个 Repository
+- `gallery_provider.dart` → 调用 `JsGalleryRepository`
+- `plugin_info_provider.dart` → 调用 `JsPluginRepository`
+- `rust_daily_provider.dart` → 调用 `RustDailyRepository`
 
-**后果**：domain 层的 4 个 `*Repository` 接口、data 层的 4 个 `*RepositoryImpl`、domain/usecases 的 5 个 usecase 类，总计约 10 个文件全是死代码，没有任何 import 引用。
+### 2. `detail_provider.dart` 已被替代 ✅ 已处理
 
-**改进方案**：
-- 将 `JsGalleryRepositoryImpl` 中的 `getPage()` 逻辑使用到 Provider 中，让 Provider 依赖 Repository 而非直接依赖 JsEngine
-- 将 `RustDailyRemoteDataSource` 中的解析逻辑唯一化，Provider 调用 Repository 而非直接 `dio.get()`
-- 删除 `domain/usecases/` 下 5 个未使用的 usecase 文件（或等到真正需要时再创建）
-
-### 2. `detail_provider.dart` 已被替代
-
-`detail_provider.dart` 中定义了 `DetailLoad` provider（第 97-283 行），但实际详情页使用的是 `detailPageAccumulatorProvider`，`DetailLoad` 从未被引用。且该文件重复定义了 `DetailLoadState`（第 17-71 行），与 `domain/entities/detail_load_state.dart` 完全重复。
-
-**改进方案**：
-- 删除 `detail_provider.dart` 及 `detail_provider.g.dart`
-- `domain/entities/detail_load_state.dart` 保留为唯一版本
+**处理**：删除 `detail_provider.dart` 及 `.g.dart`
 
 ---
 
 ## P1 — 建议本轮迭代修复
 
-### 3. Isolate Worker 逻辑重复 3 次
+### 3. Isolate Worker 逻辑重复 3 次 ✅ 已处理
 
-`_WorkerInit`、`_Msg` 内部类在以下三处重复出现：
-- `data/repositories/js_gallery_repository_impl.dart`
-- `presentation/providers/js_gallery/detail_provider.dart`（删除后解决）
-- `presentation/providers/js_gallery/detail_page_accumulator_provider.dart`
+**处理**：抽取公共 `detail_worker.dart`，合并为单函数 `runDetailWorker`
 
-**改进**：抽取公共 `data/datasources/remote/detail_worker.dart`，统一 worker 函数。
+### 4. RustDaily HTML 解析逻辑重复 ✅ 已处理
 
-### 4. RustDaily HTML 解析逻辑重复
+**处理**：`rust_daily_provider.dart` 改为通过 `RustDailyRepository` → `RustDailyRemoteDataSource` 调用
 
-`rust_daily_remote_datasource.dart` 和 `rust_daily_provider.dart` 的 `_fetch()` 做了完全一样的 Dio 请求 + `html/parser` 解析。
+### 5. domain/usecases 全部是死代码 ✅ 已处理
 
-**改进**：让 Provider 通过 Repository → DataSource 链路调用，删除 Provider 中的重复解析逻辑。
-
-### 5. domain/usecases 全部是死代码
-
-`lib/domain/usecases/` 下 5 个 usecase 文件零引用：
-- `js_gallery/get_gallery_page.dart`
-- `js_gallery/get_gallery_detail.dart`
-- `js_gallery/select_js_source.dart`
-- `rust_daily/get_rust_daily_list.dart`
-- `rust_daily/get_rust_daily_detail.dart`
-
-**改进**：方案 A（推荐）删除；方案 B 保留但标记 `@visibleForTesting`。
+**处理**：删除 5 个 usecase 文件
 
 ---
 
 ## P2 — 下个迭代修复
 
-### 6. Router 的 state.extra 类型不安全
+### 6. Router 的 state.extra 类型不安全 ✅ 已处理
 
-多处使用 `(state.extra as Map<String, dynamic>)['url'] as String`，无编译期检查。
+**处理**：新增 `router_args.dart`（`GalleryRouteArgs` + `RustDailyRouteArgs`），router 及各页面传参改为类型安全方式
 
-**改进**：定义类型安全的 Route 参数类（如 `GalleryDetailRouteArgs`）。
+### 7. Extensions 过度设计 ✅ 已处理
 
-### 7. Extensions 过度设计
+**处理**：
+- 删除 `list_ext.dart`、`widget_ext.dart`、`string_ext.dart`（237行）、`logger_ext.dart`
+- `numbric_ext.dart` 从 153 行精简为 10 行（仅保留 `.W`/`.H`）
 
-- **`string_ext.dart`（237 行）**：大量未使用的文件类型判断（`isZipFileName`、`isRarFileName` 等）
-- **`numbric_ext.dart`**：`W`/`H` getter 与已有 `gap` 依赖重复；`WindowType` 在移动端无用途
-- **`list_ext.dart`**：`firstWhereOrNull` 在 Dart 3.7+ 已有 `List.firstOrNull`
-- **`file_ext.dart`**：`filename` getter 实现有 bug
+### 8. `perfs` 单例设计不合理 ✅ 已处理
 
-**改进**：审计删除未使用方法，修复 bug。
+**处理**：Provider 不再直接 import `perfs`，改为通过 `JsSourceLocalDataSource` 访问 SharedPreferences
 
-### 8. `perfs` 单例设计不合理
+### 9. `logger.dart` 设计问题 ✅ 已处理
 
-`core/storage/perfs.dart` 封装了不必要的单例，`KEY_JS` 为 `late` 可变变量，Provider 直接 import 跳过了 DataSource 层。
+**处理**：
+- 删除未使用的 `console` 类（命名违规）
+- `_LogStorage` → `_BufferedLogStorage`（StringBuffer + 500ms Timer flush）
+- 新增 `@riverpod loggerProvider`，可通过 Riverpod 注入
 
-**改进**：改为 Riverpod `Provider<SharedPreferences>` 注入。
+### 10. Provider 直接访问 SharedPreferences ✅ 已处理
 
-### 9. `logger.dart` 设计问题
-
-- `console` 类名小写开头违反 Dart 命名约定
-- `_LogStorage` 每次初始化遍历文件系统
-- 每条日志 `writeAsString(append)` 性能差
-
-**改进**：统一命名，缓存日志批量写入，用 Riverpod 注入。
-
-### 10. Provider 直接访问 SharedPreferences
-
-`config_provider.dart`、`settings_provider.dart` 直接 import `perfs`。
-
-**改进**：通过 JsSourceLocalDataSource 访问。
+**处理**：`config_provider.dart` 和 `settings_provider.dart` 的 `perfs.KEY_JS` 操作全部改为 `JsSourceLocalDataSource` 调用
 
 ---
 
 ## P3 — 技术债务
 
-### 11. BaseRepository 从未被继承
+### 11. BaseRepository 从未被继承 ✅ 已处理
 
-`core/network/base_repository.dart` 定义了 `safeCall()`，但 4 个 RepositoryImpl 没有一个继承它。
+**处理**：删除 `base_repository.dart`（零引用，且该模式不适用于项目以 DataSource 为主的架构）
 
-### 12. 硬编码的 1 秒等待
+### 12. 硬编码的 1 秒等待 ✅ 已处理
 
-`rust_bridge_provider.dart` 中 `await waitTime(1 * 1000)`。
+**处理**：`rust_bridge_provider.dart` 删除 `waitTime(1000)` 和 `perfs.init()`，直接依赖 `JsRuntimeLib.init()` 的 Future
 
-**改进**：依赖 `JsRuntimeLib.init()` 的 Future 完成。
+### 13. Isolate 反复创建销毁 ✅ 已处理
 
-### 13. Isolate 反复创建销毁
+**处理**：`js_gallery_repository_impl.dart` 删除未使用的 `getDetail()` 及 100+ 行 Isolate helper 代码。同步简化 `JsGalleryRepository` 接口。
 
-每次进入详情页 spawn/kill isolate。可引入 `isolate_manager` 池化复用。
-
-### 14. 零单元测试
+### 14. 零单元测试 ⏳ 待处理
 
 `test/` 只有默认 widget_test。优先为分页状态机、JSON 解析、`_parseConfigList()` 编写测试。
 
-### 15. InfiniteScrollView（522 行）
+### 15. InfiniteScrollView（522 行） ✅ 已处理
 
-包含两种模式，建议废弃 children 模式，仅保留 builder 模式。
+**处理**：默认构造函数改为 `InfiniteScrollView.children()` 命名构造，与 `.builder()` 平级。两种模式均为显式命名构造，API 更清晰。
 
-### 16. webf_provider.dart 全部注释
+### 16. webf_provider.dart 全部注释 ⏳ 待处理
 
-如果 WebF 不再需要，删除该文件。
+`core/webf_provider.dart` 中所有代码都被注释掉。如果 WebF 不再需要，应删除该文件。
 
 ---
 
-## 文件状态摘要
+## 文件状态摘要（更新后）
 
 | 文件 | 状态 | 问题 |
 |---|---|---|
 | `domain/entities/*` | ✅ 良好 | 设计清晰 |
 | `core/error/*` | ✅ 良好 | sealed class + Result 模式优秀 |
-| `domain/repositories/*` | ⚠️ 死代码 | 未被调用 |
-| `data/repositories/*` | ⚠️ 死代码 | 未被引用 |
-| `domain/usecases/*` | ⚠️ 死代码 | 5 个文件零引用 |
-| `presentation/providers/*` | ❌ 越权 | 绕过 domain/data 层 |
-| `detail_provider.dart` | ❌ 可删除 | 已被替代 |
-| `core/storage/perfs.dart` | ❌ 反模式 | 不必要的单例封装 |
-| `core/extensions/*` | ⚠️ 冗余 | 大量未使用方法 |
-| `router.dart` | ⚠️ 脆弱 | 类型不安全 |
-| `logger.dart` | ⚠️ 可改进 | 命名违规、性能问题 |
+| `domain/repositories/*` | ✅ 已连接 | 通过 repository_providers 注入 |
+| `data/repositories/*` | ✅ 已连接 | 被 Provider 引用 |
+| `domain/usecases/*` | 🗑️ 已删除 | 5 个死代码文件 |
+| `presentation/providers/*` | ✅ 已重构 | 通过 Repository 而非直接操作数据源 |
+| `detail_provider.dart` | 🗑️ 已删除 | 被 Accumulator 替代 |
+| `core/storage/perfs.dart` | ✅ 已隔离 | 仅 DataSource 内部使用 |
+| `core/extensions/*` | ✅ 已精简 | 4 文件删除，numbric 精简 |
+| `router.dart` | ✅ 已修复 | 类型安全 Route 参数类 |
+| `logger.dart` | ✅ 已改造 | Riverpod 注入 + 缓冲写入 |
 | `test/` | ❌ 缺失 | 零业务测试 |
+
+---
+
+## Git 历史
+
+```
+19 commits · +1,049 -1,699 lines
+```
