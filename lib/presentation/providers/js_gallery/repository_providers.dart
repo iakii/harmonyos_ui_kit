@@ -15,9 +15,11 @@ import 'package:rohos_app/presentation/providers/js_engine/js_engine_provider.da
 
 /// JsGalleryRepository 的 Riverpod Provider。
 ///
-/// 通过 [jsEngineProvider.future] 获取 JsEngine，闭包中改用 [ref.read]
-/// 而非 [ref.watch]，因为闭包在 Provider builder 返回后才执行。
+/// [ref.watch(jsEngineProvider)] 在 builder 中建立依赖链：
+/// jsConfig 变化 → jsEngine 重建 → 本 Provider 重建。
+/// 闭包中 [ref.read] 获取最新引擎 future（builder 外安全）。
 final jsGalleryRepositoryProvider = Provider<JsGalleryRepository>((ref) {
+  ref.watch(jsEngineProvider);
   return JsGalleryRepositoryImpl(
     () => ref.read(jsEngineProvider.future),
   );
@@ -25,6 +27,7 @@ final jsGalleryRepositoryProvider = Provider<JsGalleryRepository>((ref) {
 
 /// JsPluginRepository 的 Riverpod Provider。
 final jsPluginRepositoryProvider = Provider<JsPluginRepository>((ref) {
+  ref.watch(jsEngineProvider);
   return JsPluginRepositoryImpl(
     () => ref.read(jsEngineProvider.future),
   );

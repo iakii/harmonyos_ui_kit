@@ -77,8 +77,7 @@ class GalleryPage extends HookConsumerWidget {
     final pluginInfoAsync = ref.watch(pluginInfoProvider);
     final selectedTabIndex = useState(0);
 
-    return RepaintBoundary(
-      child: AsyncValueWidget<PluginInfo>(
+    return AsyncValueWidget<PluginInfo>(
       value: pluginInfoAsync,
       error: (err, _) => HosPage(
         showAppBar: true,
@@ -99,7 +98,6 @@ class GalleryPage extends HookConsumerWidget {
         pluginInfo: pluginInfo,
         selectedTabIndex: selectedTabIndex,
       ),
-    ),
-  );
+    );
   }
 }
