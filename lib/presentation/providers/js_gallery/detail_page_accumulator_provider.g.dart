@@ -7,7 +7,7 @@ part of 'detail_page_accumulator_provider.dart';
 // **************************************************************************
 
 String _$detailPageAccumulatorHash() =>
-    r'01f7650a91880ab9ff2f113ffc3ae6a911987dca';
+    r'0befd316b7f26b189e4a3ce1ac3eb9e3951f5fac';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -39,37 +39,21 @@ abstract class _$DetailPageAccumulator
 
 /// 详情分页累积 Provider（按 URL）。
 ///
-/// [build] 只获取 JS 配置和初始化 Worker 池，不加载数据。
-/// 首页数据由 [InfiniteScrollView] 的 [autoLoad] 触发 [refresh()] 来加载。
-/// [loadNext] 加载后续分页，[refresh] 重新加载首页。
-///
 /// Copied from [DetailPageAccumulator].
 @ProviderFor(DetailPageAccumulator)
 const detailPageAccumulatorProvider = DetailPageAccumulatorFamily();
 
 /// 详情分页累积 Provider（按 URL）。
 ///
-/// [build] 只获取 JS 配置和初始化 Worker 池，不加载数据。
-/// 首页数据由 [InfiniteScrollView] 的 [autoLoad] 触发 [refresh()] 来加载。
-/// [loadNext] 加载后续分页，[refresh] 重新加载首页。
-///
 /// Copied from [DetailPageAccumulator].
 class DetailPageAccumulatorFamily
     extends Family<AsyncValue<DetailAccumulatorState>> {
   /// 详情分页累积 Provider（按 URL）。
   ///
-  /// [build] 只获取 JS 配置和初始化 Worker 池，不加载数据。
-  /// 首页数据由 [InfiniteScrollView] 的 [autoLoad] 触发 [refresh()] 来加载。
-  /// [loadNext] 加载后续分页，[refresh] 重新加载首页。
-  ///
   /// Copied from [DetailPageAccumulator].
   const DetailPageAccumulatorFamily();
 
   /// 详情分页累积 Provider（按 URL）。
-  ///
-  /// [build] 只获取 JS 配置和初始化 Worker 池，不加载数据。
-  /// 首页数据由 [InfiniteScrollView] 的 [autoLoad] 触发 [refresh()] 来加载。
-  /// [loadNext] 加载后续分页，[refresh] 重新加载首页。
   ///
   /// Copied from [DetailPageAccumulator].
   DetailPageAccumulatorProvider call(String url) {
@@ -100,10 +84,6 @@ class DetailPageAccumulatorFamily
 
 /// 详情分页累积 Provider（按 URL）。
 ///
-/// [build] 只获取 JS 配置和初始化 Worker 池，不加载数据。
-/// 首页数据由 [InfiniteScrollView] 的 [autoLoad] 触发 [refresh()] 来加载。
-/// [loadNext] 加载后续分页，[refresh] 重新加载首页。
-///
 /// Copied from [DetailPageAccumulator].
 class DetailPageAccumulatorProvider
     extends
@@ -112,10 +92,6 @@ class DetailPageAccumulatorProvider
           DetailAccumulatorState
         > {
   /// 详情分页累积 Provider（按 URL）。
-  ///
-  /// [build] 只获取 JS 配置和初始化 Worker 池，不加载数据。
-  /// 首页数据由 [InfiniteScrollView] 的 [autoLoad] 触发 [refresh()] 来加载。
-  /// [loadNext] 加载后续分页，[refresh] 重新加载首页。
   ///
   /// Copied from [DetailPageAccumulator].
   DetailPageAccumulatorProvider(String url)
