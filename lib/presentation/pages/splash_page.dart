@@ -19,8 +19,9 @@ class SplashPage extends ConsumerWidget {
     // 监听 Rust 初始化状态，初始化完成后自动导航到首页
     ref.listen(rustLibInitProvider, (prev, next) {
       next.whenOrNull(
-        data: (_) =>
-            WidgetsBinding.instance.addPostFrameCallback((_) => router.go('/')),
+        data: (_) => WidgetsBinding.instance.addPostFrameCallback(
+          (_) => router.go('/js_gallery'),
+        ),
         error: (Object error, StackTrace stackTrace) {},
       );
     });

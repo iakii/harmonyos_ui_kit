@@ -65,6 +65,7 @@ dependencies:
   lifecycle: ^0.10.0
   flutter_svg: ^2.3.0
   gap: ^3.0.1
+  pinyin: ^3.3.0
 
 dependency_overrides:
   intl: 0.20.2

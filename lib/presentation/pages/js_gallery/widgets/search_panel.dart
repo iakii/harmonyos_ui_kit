@@ -16,7 +16,7 @@ import 'package:rohos_app/presentation/pages/js_gallery/gallery/grid_item_card.d
 final searchControllerProvider = Provider.autoDispose<TextEditingController>((
   ref,
 ) {
-  final c = TextEditingController();
+  final c = TextEditingController(text: "丝袜");
   ref.onDispose(() => c.dispose());
   return c;
 });

@@ -1,8 +1,11 @@
 import 'dart:convert';
 
 import 'package:js_runtime/js_runtime.dart';
+import 'package:pinyin/pinyin.dart' show PinyinHelper;
 import 'package:rohos_app/core/error/app_exception.dart';
 import 'package:rohos_app/core/error/result.dart';
+import 'package:rohos_app/core/extensions/string.ext.dart';
+import 'package:rohos_app/core/utils/logger.dart' show iLogger;
 import 'package:rohos_app/domain/entities/gallery_detail.dart';
 import 'package:rohos_app/domain/repositories/js_gallery_repository.dart';
 
@@ -23,7 +26,8 @@ class JsGalleryRepositoryImpl implements JsGalleryRepository {
       final engine = await _engineProvider();
 
       final result = await engine.eval(
-        code: '''
+        code:
+            '''
       (async () => {
         const { default: client } = await import('client');
         return await client.fetchGallery(${jsonEncode(url)}, $page);
@@ -56,8 +60,21 @@ class JsGalleryRepositoryImpl implements JsGalleryRepository {
     try {
       final engine = await _engineProvider();
 
+      // PinyinHelper.getPinyin
+      engine.register(
+        name: 'toPinYin',
+        func: (args) {
+          final keyword = jsonDecode(args)[0] as String;
+          iLogger.d(
+            'toPin called with $args =  args: $keyword  py: ${keyword.pinyin}',
+          );
+          return Future.value(jsonEncode([keyword.pinyin]));
+        },
+      );
+
       final result = await engine.eval(
-        code: '''
+        code:
+            '''
       (async () => {
         const { default: client } = await import('client');
         return await client.search(${jsonEncode(keyword)}, $page);
