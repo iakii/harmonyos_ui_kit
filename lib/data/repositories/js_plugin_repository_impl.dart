@@ -10,6 +10,8 @@ import 'package:rohos_app/domain/repositories/js_plugin_repository.dart';
 /// JsPluginRepository 实现。
 ///
 /// 通过 JsEngine 执行 JS 代码获取插件元信息。
+/// 注意：client.pluginInfo 在 .cjs 中通常是预序列化的 JSON 字符串，
+/// 因此直接返回即可，不使用 JSON.stringify() 避免双重编码。
 class JsPluginRepositoryImpl implements JsPluginRepository {
   final Future<JsEngine> Function() _engineProvider;
 
@@ -24,14 +26,13 @@ class JsPluginRepositoryImpl implements JsPluginRepository {
         code: '''
       (async () => {
         const { default: client } = await import('client');
-        return JSON.stringify(client.pluginInfo);
+        return client.pluginInfo;
       })()
     ''',
       );
 
-      final jsonStr = result.asStringSync ?? '';
-
-      if (jsonStr.isEmpty || jsonStr == 'undefined') {
+      final jsonStr = result.asStringSync;
+      if (jsonStr == null || jsonStr.isEmpty || jsonStr == 'undefined') {
         return Failure(ParseException('获取插件信息失败：返回为空'));
       }
 
