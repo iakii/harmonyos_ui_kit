@@ -37,85 +37,188 @@ lib/
 ├── main.dart                     # 应用入口，ProviderScope + MyApp
 ├── app.dart                      # MyApp 根组件（ConsumerWidget）
 ├── router.dart                   # GoRouter 全局路由配置
+├── router_args.dart              # 路由参数类（GalleryRouteArgs, RustDailyRouteArgs）
 │
 ├── core/                         # 基础设施层
-│   ├── error/                    # AppException 密封类体系 + Result<T>
+│   ├── error/                    # AppException 密封类体系 + Result<T> + ApiException
 │   ├── theme/                    # 主题模式 Provider（themeModeProvider）
-│   ├── network/                  # DioClient, BaseRepository, interceptors
+│   ├── network/                  # DioClient, interceptors（auth/error/log）
 │   ├── storage/                  # SharedPreferences 封装 (perfs)
 │   ├── utils/                    # date, logger 工具
-│   └── extensions/               # string_ext, file_ext 扩展方法
+│   └── extensions/               # file_ext, numbric_ext 扩展方法
 │
 ├── domain/                       # 领域层（零外部依赖）
-│   ├── entities/                 # 纯数据实体（GalleryItem, PluginInfo, RustDailyTab 等）
-│   ├── repositories/             # 仓库接口（抽象契约）
-│   └── usecases/                 # 用例（封装业务意图）
+│   ├── entities/                 # 纯数据实体（见下方实体清单）
+│   └── repositories/             # 仓库接口（抽象契约）
 │
 ├── data/                         # 数据层
-│   ├── datasources/remote/       # 远程数据源（HTTP + HTML 解析、JS 配置获取）
-│   ├── datasources/local/        # 本地数据源（SharedPreferences 操作）
+│   ├── datasources/remote/       # 远程数据源（HTTP + HTML 解析、JS 配置获取、DetailWorkerPool）
+│   ├── datasources/local/        # 本地数据源（SharedPreferences 操作 + JS 源码缓存）
 │   ├── repositories/             # 仓库实现（调用 datasource）
-│   └── models/                   # DTO（与实体结构不同时使用）
+│   └── models/                   # DTO（预留目录，当前为空）
 │
 └── presentation/                 # 表现层
     ├── providers/                # Riverpod Providers（按功能分组）
     │   ├── init/                 # 初始化（rust_bridge, dio）
     │   ├── rust_daily/           # Rust Daily 数据
-    │   ├── js_gallery/           # JS 图集（config, gallery, detail, plugin_info, settings）
+    │   ├── js_gallery/           # JS 图集（repository、gallery、config、detail accumulator、intro、settings）
     │   ├── js_engine/            # JsEngine 共享实例
     │   └── core/                 # 通用状态（counter, webf）
     ├── pages/                    # UI 页面（按功能分组）
-    │   ├── rust_daily/           # Rust Daily 相关页面
-    │   ├── js_gallery/           # JS 图集相关页面
-    │   └── ... (根级)            # 通用页面（splash, layout, harmony 等）
-    └── widgets/                  # 共享组件（含 vendored staggered_grid_view）
+    │   ├── rust_daily/           # Rust Daily 页面（列表 + 详情）
+    │   ├── js_gallery/           # JS 图集页面（gallery/detail/intro/layout/widgets）
+    │   └── ... (根级)            # 通用页面（splash, layout, harmony, glass, immersive 等）
+    └── widgets/                  # 共享组件（infinite_scroll, pagination, html 渲染, staggered_grid_view）
 ```
 
 ### 依赖规则
 
 - **domain** 不依赖 data 和 presentation（零 Flutter 依赖）
 - **data** 依赖 domain（实现 repository 接口）
-- **presentation** 依赖 domain（通过 repository 接口或 use case 访问数据）
+- **presentation** 依赖 domain（通过 repository 接口访问数据，不再使用 usecase 层）
 - **core** 被其他所有层共用
+
+### 领域实体清单
+
+| 实体文件 | 类 | 用途 |
+|---|---|---|
+| `gallery_item.dart` | GalleryItem, GalleryPageData | 图集列表项 + 分页数据 |
+| `gallery_detail.dart` | GalleryDetail | 详情数据（含分页元数据） |
+| `detail_item.dart` | DetailItem | 单条详情项 |
+| `detail_accumulator_state.dart` | DetailAccumulatorState | 详情分页累积状态 |
+| `detail_load_state.dart` | DetailLoadState | 详情加载状态枚举 |
+| `gallery_accumulator_state.dart` | GalleryAccumulatorState | 图集分页累积状态 |
+| `plugin_info.dart` | PluginInfo | 插件信息 |
+| `site_config.dart` | SiteConfig | 站点 JS 配置 |
+| `menu_item.dart` | MenuItem | 菜单项 |
+| `rust_daily_tab.dart` | RustDailyTab | Rust Daily 标签页 |
+| `rust_daily_page_data.dart` | RustDailyPageData | Rust Daily 分页数据 |
 
 ### 关键特性对应关系
 
-| 特性 | 实体 | 仓库接口 | 实现 | Provider | 页面 |
+| 特性 | 核心实体 | 仓库接口 | 实现 | Provider | 页面 |
 |---|---|---|---|---|---|
 | Rust Daily | RustDailyTab, RustDailyPageData | RustDailyRepository | RustDailyRepositoryImpl | rustDailyProvider | rust_daily/ |
-| JS Gallery | GalleryItem, GalleryPageData, PluginInfo | JsGalleryRepository, JsConfigRepository, JsPluginRepository | JsGalleryRepositoryImpl, JsConfigRepositoryImpl, JsPluginRepositoryImpl | galleryProvider, configProvider, detailProvider | js_gallery/ |
+| JS Gallery 列表 | GalleryItem, GalleryPageData | JsGalleryRepository | JsGalleryRepositoryImpl | galleryProvider, galleryPageAccumulatorProvider | js_gallery/gallery/ |
+| JS Gallery 详情 | GalleryDetail, DetailItem | JsGalleryRepository | JsGalleryRepositoryImpl | detailPageAccumulatorProvider, detailWorkerPoolProvider | js_gallery/detail/ |
+| JS 配置 | SiteConfig | JsConfigRepository | JsConfigRepositoryImpl | jsConfigProvider | - |
+| JS 插件信息 | PluginInfo | JsPluginRepository | JsPluginRepositoryImpl | pluginInfoProvider | - |
 | JS Engine | - | - (外部依赖) | - | jsEngineProvider | - |
 
-├── packages/
-│   ├── harmonyos_ui/              # HarmonyOS NEXT 风格 UI 组件库（详见其 CLAUDE.md）
-│   └── js_runtime/                     # Rust FFI 桥接插件（Flutter FFI plugin）
-│       ├── flutter_rust_bridge.yaml  # FRB codegen 配置
-│       ├── lib/
-│       │   ├── lib.dart            # Barrel 导出
-│       │   └── src/frb/            # FRB 生成的 Dart 代码
-│       │       ├── api/hello.dart  # Rust hello() 的 Dart 封装
-│       │       ├── frb_generated.dart  # 入口类 JsRuntimeLib
-│       │       └── frb_generated.io.dart / .web.dart
-│       ├── rust/                   # Rust 源码
-│       │   ├── Cargo.toml          # crate: js_runtime (cdylib+staticlib), 依赖 boa_engine
-│       │   └── src/
-│       │       ├── lib.rs          # mod frb_generated + pub mod api
-│       │       ├── api/            # 手写的公开 Rust API
-│       │       └── frb_generated.rs  # FRB 自动生成（勿手动编辑）
-│       ├── cargokit/               # 跨平台 Cargo 构建胶水
-│       └── ohos/ android/ ios/ ... # 各平台原生工程
-├── ohos/                          # HarmonyOS 原生工程
-│   ├── build-profile.json5        # 签名配置 / SDK 版本 / 模块声明
-│   ├── entry/
-│   │   └── src/main/
-│   │       ├── module.json5       # Ability 声明、权限（INTERNET）
-│   │       └── ets/
-│   │           ├── entryability/EntryAbility.ets  # 入口 Ability，注册 Flutter 插件
-│   │           ├── pages/Index.ets                 # FlutterPage 容器
-│   │           └── plugins/GeneratedPluginRegistrant.ets  # 插件注册（自动生成）
-│   └── AppScope/app.json5
-├── android/ ios/ windows/ linux/ macos/ web/  # 其他平台工程
-└── pubspec.yaml                  # Flutter 项目配置，sdk ^3.9.2
+## 关键架构模式
+
+### DetailWorkerPool — 常驻 Isolate 池
+
+`lib/data/datasources/remote/detail_worker_pool.dart` 封装了一个常驻后台 Isolate，用于加载详情数据。相比每次请求都 spawn/kill Isolate，池化设计显著减少延迟。
+
+```dart
+// 初始化（应用启动时）
+final pool = DetailWorkerPool();
+await pool.init(); // 启动常驻 Isolate，内部初始化 JsRuntimeLib
+
+// 提交任务（可并发排队）
+final detail = await pool.execute(
+  url: 'https://...',
+  jsSource: config.jsContent,  // JS 客户端代码
+  name: config.name,
+  current: 1,                  // 页码
+);
+
+// 释放
+await pool.dispose();
+```
+
+**关键设计：**
+- 单一 `ReceivePort` + `listen`：第一条消息是 worker 发出的 `SendPort`（表示就绪），后续消息是任务结果
+- 通过 `Completer<GalleryDetail>` + `taskId` 实现异步任务匹配
+- 支持超时保护（初始化 10s，任务 30s）
+- Isolate 崩溃时通知所有等待中的任务
+
+### Accumulator 模式 — 分页累积 Provider
+
+将分页累积逻辑从 Widget State 中抽取到 Riverpod Provider，使用 `@riverpod` 注解生成：
+
+**GalleryPageAccumulator** (`gallery_page_accumulator_provider.dart`):
+- 维护 `GalleryAccumulatorState`（items, currentPage, totalPage, isLoading, error, hasLoaded）
+- 对外暴露 `loadNext()` 和 `refresh()`
+- URL 变化时 Riverpod 自动重建，状态自然清零
+
+**DetailPageAccumulator** (`detail_page_accumulator_provider.dart`):
+- 维护 `DetailAccumulatorState`（items, currentPage, totalPage, nextPageUrl, isLoading, error）
+- 内部通过 `DetailWorkerPool` 加载数据
+- 支持 `nextPageUrl` 和 `totalPage` 两种分页模式
+- 共用 `_loadPage()` 方法消除 `loadNext`/`refresh` 重复代码
+
+### Repository Provider 注册
+
+所有 Repository 的 Riverpod Provider 统一在 `lib/presentation/providers/js_gallery/repository_providers.dart` 中注册：
+
+- `jsGalleryRepositoryProvider` — JsGalleryRepository（依赖 jsEngineProvider）
+- `jsPluginRepositoryProvider` — JsPluginRepository（依赖 jsEngineProvider）
+- `jsConfigRepositoryProvider` — JsConfigRepository（依赖 Dio + 本地缓存）
+- `rustDailyRepositoryProvider` — RustDailyRepository（依赖 Dio）
+
+### 路由参数传递
+
+`lib/router_args.dart` 定义了两个路由参数类，通过 GoRouter 的 `state.extra` 传递：
+
+- **GalleryRouteArgs**：用于 `/js_gallery_detail`、`/js_gallery_list`、`/js_intro`，携带 `url` 和 `title`
+- **RustDailyRouteArgs**：用于 `/rust`（`type=detail` 时跳转详情页），携带 `url`、`type`、`title`
+
+### 全局路由表
+
+| 路径 | 页面 | 参数 |
+|---|---|---|
+| `/splash` | SplashPage | - |
+| `/` | HarmonyOSPage | - |
+| `/js_parse` | JsParsePage | - |
+| `/glass` | GlassPage | - |
+| `/glass_kit` | GlassKitPage | - |
+| `/icons` | IconPreviewPage | - |
+| `/js_gallery` | GalleryPage | - |
+| `/js_gallery_detail` | DetailPage | GalleryRouteArgs |
+| `/js_gallery_list` | GalleryContentPage | GalleryRouteArgs |
+| `/js_intro` | JsIntroPage | GalleryRouteArgs |
+| `/loading` | LoadingPage | - |
+| `/webF` | DynamicHtml2ViewPage | - |
+| `/rust` | RustDailyPage / RustDailyDetailPage | RustDailyRouteArgs (可选) |
+| `/immersive` | ImmersivePage | - |
+
+## 子包与平台工程
+
+```
+packages/
+├── harmonyos_ui/              # HarmonyOS NEXT 风格 UI 组件库（详见其 CLAUDE.md）
+└── js_runtime/                # Rust FFI 桥接插件（Flutter FFI plugin）
+    ├── flutter_rust_bridge.yaml  # FRB codegen 配置
+    ├── lib/
+    │   ├── lib.dart            # Barrel 导出
+    │   └── src/frb/            # FRB 生成的 Dart 代码
+    │       ├── api/hello.dart  # Rust hello() 的 Dart 封装
+    │       ├── frb_generated.dart  # 入口类 JsRuntimeLib
+    │       └── frb_generated.io.dart / .web.dart
+    ├── rust/                   # Rust 源码
+    │   ├── Cargo.toml          # crate: js_runtime (cdylib+staticlib), 依赖 boa_engine
+    │   └── src/
+    │       ├── lib.rs          # mod frb_generated + pub mod api
+    │       ├── api/            # 手写的公开 Rust API
+    │       └── frb_generated.rs  # FRB 自动生成（勿手动编辑）
+    ├── cargokit/               # 跨平台 Cargo 构建胶水
+    └── ohos/ android/ ios/ ... # 各平台原生工程
+
+ohos/                          # HarmonyOS 原生工程
+├── build-profile.json5        # 签名配置 / SDK 版本 / 模块声明
+├── entry/
+│   └── src/main/
+│       ├── module.json5       # Ability 声明、权限（INTERNET）
+│       └── ets/
+│           ├── entryability/EntryAbility.ets  # 入口 Ability，注册 Flutter 插件
+│           ├── pages/Index.ets                 # FlutterPage 容器
+│           └── plugins/GeneratedPluginRegistrant.ets  # 插件注册（自动生成）
+└── AppScope/app.json5
+
+android/ ios/ windows/ linux/ macos/ web/  # 其他平台工程
+pubspec.yaml                  # Flutter 项目配置，sdk ^3.9.2
 ```
 
 ## 核心技术栈
@@ -205,12 +308,12 @@ ref.onDispose(() {
 }
 ```
 
-**共享引擎模式**（跨页面复用，见 `gallery_provider.dart`）:
-- 使用 `IsolateManager` 在后台 isolate 中持有长生命周期 `JsEngine`
-- `onDispose` 回调中先调 `cancelEval()` 再 `close()`
-- 适用于需要反复调用的场景（如分页列表）
+**共享引擎模式**（跨页面复用，见 `js_engine_provider.dart` + `gallery_provider.dart`）:
+- 使用 `FutureProvider<JsEngine>` 持有单例引擎，`ref.onDispose` 时 `close()`
+- 适用于需要反复调用的场景（如分页列表、配置获取）
 
-**独立引擎模式**（单次请求，见 `detail_provider.dart`）:
-- 后台 isolate 中创建 `JsEngine`，请求完成后立即 `close()`
-- 通过 `engine.register()` 注册回调，`engine.eval()` 执行 JS
-- 适用于一次性数据获取场景
+**常驻 Worker 池模式**（详情加载，见 `detail_worker_pool.dart` + `detail_page_accumulator_provider.dart`）:
+- `DetailWorkerPool` 维护一个常驻后台 Isolate，内部初始化 `JsRuntimeLib`
+- 每个任务创建独立 `JsEngine` → eval → 返回结果 → 关闭 `JsEngine`
+- 通过 `Completer` + `taskId` 支持并发任务排队
+- 适用于需要反复调用的高频场景（如分页详情加载）

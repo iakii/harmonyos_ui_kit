@@ -3,10 +3,12 @@ import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:hm_icon/hm_icon.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:rohos_app/domain/entities/plugin_info.dart';
+import 'package:rohos_app/presentation/pages/js_gallery/widgets/search_panel.dart'
+    show showSearchPanel;
 import 'package:rohos_app/presentation/pages/js_gallery/widgets/setting_panel.dart'
     show SettingPanel;
-import 'package:rohos_app/presentation/widgets/loading.dart' show Loading;
 import 'package:rohos_app/router.dart' show router;
+
 import 'gallery_content_page.dart' show GalleryContentPage;
 import 'gallery_menu_bar.dart' show GalleryMenuBar;
 
@@ -45,18 +47,14 @@ class GalleryBody extends HookConsumerWidget {
         ? '$website${currentMenu.path}'
         : website;
 
-    final theme = HarmonyTheme.of(context);
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: HosAppBar(
         leading: Icon(HMIcons.harmonyos),
         actions: [
           IconButton(
-            icon: Loading(
-              size: 36,
-              color: theme.isLight ? Colors.black : Colors.white,
-            ),
-            onPressed: () => router.push('/loading'),
+            icon: Icon(HMIcons.magnifyingglass),
+            onPressed: () => showSearchPanel(context),
           ),
 
           IconButton(

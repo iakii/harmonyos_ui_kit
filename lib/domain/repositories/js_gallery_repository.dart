@@ -10,4 +10,13 @@ abstract class JsGalleryRepository {
     required String url,
     required int page,
   });
+
+  /// 搜索图集（调用 JS [client.search]）。
+  ///
+  /// 返回格式与 [getPage] 相同，为 [GalleryPageData]。
+  /// 如果 JS 客户端未实现 search 方法，将抛出 JS 错误。
+  Future<Result<GalleryPageData>> search({
+    required String keyword,
+    required int page,
+  });
 }

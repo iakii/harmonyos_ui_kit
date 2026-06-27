@@ -47,4 +47,38 @@ class JsGalleryRepositoryImpl implements JsGalleryRepository {
       return Failure(UnknownException(e.toString(), stackTrace: stackTrace));
     }
   }
+
+  @override
+  Future<Result<GalleryPageData>> search({
+    required String keyword,
+    required int page,
+  }) async {
+    try {
+      final engine = await _engineProvider();
+
+      final result = await engine.eval(
+        code: '''
+      (async () => {
+        const { default: client } = await import('client');
+        return await client.search(${jsonEncode(keyword)}, $page);
+      })()
+    ''',
+      );
+
+      final jsonStr = result.asStringSync ?? '';
+
+      if (jsonStr.isEmpty || jsonStr == 'undefined') {
+        return Failure(NetworkException('搜索失败: "$keyword"'));
+      }
+
+      final data = GalleryPageData.fromJson(
+        jsonDecode(jsonStr) as Map<String, dynamic>,
+      );
+      return Success(data);
+    } on AppException catch (e) {
+      return Failure(e);
+    } catch (e, stackTrace) {
+      return Failure(UnknownException(e.toString(), stackTrace: stackTrace));
+    }
+  }
 }

@@ -18,6 +18,12 @@ class Client {
   get pluginInfo() {
     return JSON.stringify(this.info);
   }
+
+  async search(keyword, page = 1) {
+    const url = `${this.info.website}/mh/hmso.asp?keyword=${encodeURIComponent(keyword)}&page=${page}`;
+    return await this.fetchGallery(url, 1);
+  }
+
   async fetchGallery(path, page = 1) {
 
     let url = path;
@@ -59,7 +65,7 @@ class Client {
         parseInt(x.text, 10) && (result.totalPage = Math.max(result.totalPage || 0, parseInt(x.text, 10)))
       })
     }
-    // console.log('getPage result', JSON.stringify(result), url)
+    console.log('getPage result', JSON.stringify(result), url)
     return JSON.stringify(result);
   }
 
