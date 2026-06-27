@@ -94,9 +94,12 @@ class GalleryPage extends HookConsumerWidget {
         leading: Icon(HMIcons.harmonyos),
         body: const Center(child: Loading(size: 64)),
       ),
-      data: (pluginInfo) => GalleryBody(
-        pluginInfo: pluginInfo,
-        selectedTabIndex: selectedTabIndex,
+      data: (pluginInfo) => RepaintBoundary(
+        key: ValueKey('gallery_body_${pluginInfo.name}'),
+        child: GalleryBody(
+          pluginInfo: pluginInfo,
+          selectedTabIndex: selectedTabIndex,
+        ),
       ),
     );
   }

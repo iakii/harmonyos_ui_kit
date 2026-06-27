@@ -3,6 +3,7 @@ import 'package:flutter/material.dart'
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:html/dom.dart' as html;
 import 'package:rohos_app/router.dart' show router;
+import 'package:rohos_app/router_args.dart' show RustDailyRouteArgs;
 import 'package:styled_widget/styled_widget.dart';
 
 import 'carousel.dart';
@@ -63,11 +64,11 @@ Widget? customWidgetBuilder(html.Element element) {
       onTap: () {
         router.push(
           "/rust",
-          extra: {
-            'url': a.attributes['href'] ?? '/',
-            'type': "detail",
-            'title': a.text,
-          },
+          extra: RustDailyRouteArgs(
+            url: a.attributes['href'] ?? '/',
+            type: 'detail',
+            title: a.text,
+          ),
         );
       },
     );

@@ -53,7 +53,6 @@ class GalleryPageAccumulator extends _$GalleryPageAccumulator {
     } catch (e) {
       iLogger.e('GalleryPageAccumulator: loadNext error: $e');
       state = AsyncValue.data(current.copyWith(isLoading: false, error: e));
-      rethrow;
     }
   }
 
