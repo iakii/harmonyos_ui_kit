@@ -77,7 +77,8 @@ class GalleryPage extends HookConsumerWidget {
     final pluginInfoAsync = ref.watch(pluginInfoProvider);
     final selectedTabIndex = useState(0);
 
-    return AsyncValueWidget<PluginInfo>(
+    return RepaintBoundary(
+      child: AsyncValueWidget<PluginInfo>(
       value: pluginInfoAsync,
       error: (err, _) => HosPage(
         showAppBar: true,
@@ -94,13 +95,11 @@ class GalleryPage extends HookConsumerWidget {
         leading: Icon(HMIcons.harmonyos),
         body: const Center(child: Loading(size: 64)),
       ),
-      data: (pluginInfo) => RepaintBoundary(
-        key: ValueKey('gallery_body_${pluginInfo.name}'),
-        child: GalleryBody(
-          pluginInfo: pluginInfo,
-          selectedTabIndex: selectedTabIndex,
-        ),
+      data: (pluginInfo) => GalleryBody(
+        pluginInfo: pluginInfo,
+        selectedTabIndex: selectedTabIndex,
       ),
-    );
+    ),
+  );
   }
 }
