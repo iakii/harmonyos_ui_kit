@@ -26,23 +26,6 @@ Logger _logger = Logger(
 
 Logger get iLogger => _logger;
 
-// ignore: camel_case_types
-class console {
-  static void log(Object? message) {
-    iLogger.d(message);
-  }
-
-  static void error(Object? message) {
-    iLogger.e(message);
-  }
-
-  static void info(Object? message) {
-    iLogger.i(message);
-  }
-}
-// Logger get console => _logger;
-
-// ignore: unused_element
 class _LogStorage extends LogOutput {
   // 默认的日志文件过期时间，以小时为单位
   static const _logExpiredTime = 24;
