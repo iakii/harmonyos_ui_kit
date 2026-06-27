@@ -155,7 +155,7 @@ class _RustDailyListTabState extends ConsumerState<RustDailyListTab>
 
     return Stack(
       children: [
-        InfiniteScrollView(
+        InfiniteScrollView.children(
           controller: _scrollController,
           refreshController: _refreshController,
           onRefresh: onRefresh,

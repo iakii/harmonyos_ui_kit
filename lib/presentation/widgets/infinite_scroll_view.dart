@@ -148,7 +148,7 @@ class InfiniteScrollView extends StatefulWidget {
   ///
   /// 刷新/加载状态由外部管理，通过 [refreshController]、[isLoadingMore]、
   /// [autoRequestRefresh] 参数控制。适用于需要完全控制 SmartRefresher 状态的场景。
-  const InfiniteScrollView({
+  const InfiniteScrollView.children({
     super.key,
     required this.children,
     required this.onRefresh,
