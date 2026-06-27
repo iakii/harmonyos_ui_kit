@@ -6,7 +6,7 @@ part of 'rust_daily_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$rustDailyHash() => r'58a72ed50e42f39a07322903871c9832ffc8e74c';
+String _$rustDailyHash() => r'5203620f1a5d98a86aa28c09ae61f45c1bc34230';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -38,7 +38,8 @@ abstract class _$RustDaily
 
 /// Rust Daily 数据 Provider。
 ///
-/// 根据 [url]、[type] 获取并解析 HTML。
+/// 根据 [RustDailyParams] 获取并解析 HTML，通过 [rustDailyRepositoryProvider]
+/// 经由 Repository 完成 HTTP 请求和 HTML 解析。
 /// - type == "list" 时内部维护 _currentPage/_accumulatedItems，
 ///   支持 [refresh]() 和 [loadMore]() 分页操作，自动累积跨页数据到 state.html
 /// - type == "detail" 时直接获取 `div.detail-body` 内容
@@ -49,7 +50,8 @@ const rustDailyProvider = RustDailyFamily();
 
 /// Rust Daily 数据 Provider。
 ///
-/// 根据 [url]、[type] 获取并解析 HTML。
+/// 根据 [RustDailyParams] 获取并解析 HTML，通过 [rustDailyRepositoryProvider]
+/// 经由 Repository 完成 HTTP 请求和 HTML 解析。
 /// - type == "list" 时内部维护 _currentPage/_accumulatedItems，
 ///   支持 [refresh]() 和 [loadMore]() 分页操作，自动累积跨页数据到 state.html
 /// - type == "detail" 时直接获取 `div.detail-body` 内容
@@ -58,7 +60,8 @@ const rustDailyProvider = RustDailyFamily();
 class RustDailyFamily extends Family<RustDailyPageData> {
   /// Rust Daily 数据 Provider。
   ///
-  /// 根据 [url]、[type] 获取并解析 HTML。
+  /// 根据 [RustDailyParams] 获取并解析 HTML，通过 [rustDailyRepositoryProvider]
+  /// 经由 Repository 完成 HTTP 请求和 HTML 解析。
   /// - type == "list" 时内部维护 _currentPage/_accumulatedItems，
   ///   支持 [refresh]() 和 [loadMore]() 分页操作，自动累积跨页数据到 state.html
   /// - type == "detail" 时直接获取 `div.detail-body` 内容
@@ -68,7 +71,8 @@ class RustDailyFamily extends Family<RustDailyPageData> {
 
   /// Rust Daily 数据 Provider。
   ///
-  /// 根据 [url]、[type] 获取并解析 HTML。
+  /// 根据 [RustDailyParams] 获取并解析 HTML，通过 [rustDailyRepositoryProvider]
+  /// 经由 Repository 完成 HTTP 请求和 HTML 解析。
   /// - type == "list" 时内部维护 _currentPage/_accumulatedItems，
   ///   支持 [refresh]() 和 [loadMore]() 分页操作，自动累积跨页数据到 state.html
   /// - type == "detail" 时直接获取 `div.detail-body` 内容
@@ -100,7 +104,8 @@ class RustDailyFamily extends Family<RustDailyPageData> {
 
 /// Rust Daily 数据 Provider。
 ///
-/// 根据 [url]、[type] 获取并解析 HTML。
+/// 根据 [RustDailyParams] 获取并解析 HTML，通过 [rustDailyRepositoryProvider]
+/// 经由 Repository 完成 HTTP 请求和 HTML 解析。
 /// - type == "list" 时内部维护 _currentPage/_accumulatedItems，
 ///   支持 [refresh]() 和 [loadMore]() 分页操作，自动累积跨页数据到 state.html
 /// - type == "detail" 时直接获取 `div.detail-body` 内容
@@ -110,7 +115,8 @@ class RustDailyProvider
     extends AutoDisposeNotifierProviderImpl<RustDaily, RustDailyPageData> {
   /// Rust Daily 数据 Provider。
   ///
-  /// 根据 [url]、[type] 获取并解析 HTML。
+  /// 根据 [RustDailyParams] 获取并解析 HTML，通过 [rustDailyRepositoryProvider]
+  /// 经由 Repository 完成 HTTP 请求和 HTML 解析。
   /// - type == "list" 时内部维护 _currentPage/_accumulatedItems，
   ///   支持 [refresh]() 和 [loadMore]() 分页操作，自动累积跨页数据到 state.html
   /// - type == "detail" 时直接获取 `div.detail-body` 内容

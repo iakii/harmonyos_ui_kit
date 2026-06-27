@@ -1,15 +1,15 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:html/parser.dart' show parse;
-import 'package:rohos_app/core/error/app_exception.dart';
-import 'package:rohos_app/domain/entities/rust_daily_page_data.dart';
-import 'package:rohos_app/presentation/providers/init/dio_provider.dart';
+import 'package:rohos_app/core/error/result.dart';
 import 'package:rohos_app/core/utils/logger.dart';
+import 'package:rohos_app/domain/entities/rust_daily_page_data.dart';
+import 'package:rohos_app/presentation/providers/js_gallery/repository_providers.dart';
 
 part 'rust_daily_provider.g.dart';
 
 /// Rust Daily 数据 Provider。
 ///
-/// 根据 [url]、[type] 获取并解析 HTML。
+/// 根据 [RustDailyParams] 获取并解析 HTML，通过 [rustDailyRepositoryProvider]
+/// 经由 Repository 完成 HTTP 请求和 HTML 解析。
 /// - type == "list" 时内部维护 _currentPage/_accumulatedItems，
 ///   支持 [refresh]() 和 [loadMore]() 分页操作，自动累积跨页数据到 state.html
 /// - type == "detail" 时直接获取 `div.detail-body` 内容
@@ -45,83 +45,69 @@ class RustDaily extends _$RustDaily {
     await _fetch();
   }
 
-  /// 获取当前页数据（内部方法）。
+  /// 获取当前页数据（内部方法），通过 Repository 完成 HTTP + HTML 解析。
   Future<void> _fetch() async {
     state = state.copyWith(loading: true);
-    final dio = ref.read(dioClientProvider).dio;
-
-    final baseUrl = params.url.startsWith("http")
-        ? params.url
-        : "https://rustcc.cn${params.url}";
-
-    // list 类型时追加分页参数（根据 URL 是否已有 query string 决定 ? 或 &）
-    final fetchUrl = params.type == "list"
-        ? "$baseUrl${baseUrl.contains('?') ? '&' : '?'}current_page=$_currentPage"
-        : baseUrl;
-
-    final response = await dio.get(fetchUrl);
-
-    if (response.statusCode != 200) {
-      throw NetworkException(
-        '请求失败: HTTP ${response.statusCode}',
-        statusCode: response.statusCode,
-      );
-    }
-
-    final dom = parse(response.data).documentElement;
-    if (dom == null) {
-      throw ParseException('HTML 解析失败：documentElement 为空');
-    }
+    final repo = ref.read(rustDailyRepositoryProvider);
 
     if (params.type == "list") {
-      // ── 列表模式：解析 li + 累积到 _accumulatedItems ──
-      final pagination = dom.querySelectorAll('div.paginator a');
+      final result = await repo.getList(
+        url: params.url,
+        page: _currentPage,
+        tabKey: params.tabKey,
+      );
 
-      if (pagination.isNotEmpty) {
-        final lastText = pagination.last.text;
-        _totalPage = int.tryParse(lastText) ?? 1;
-      } else {
-        _totalPage = 1;
-      }
+      result.when(
+        success: (pageData) {
+          _totalPage = pageData.totalPage;
 
-      final liItems = dom.querySelectorAll('li').map((li) {
-        li.attributes['class'] = 'shared-li';
-        return li.outerHtml;
-      }).toList();
+          // 第 1 页替换，后续页追加
+          if (_currentPage == 1) {
+            _accumulatedItems
+              ..clear()
+              ..addAll(pageData.liItems);
+          } else {
+            _accumulatedItems.addAll(pageData.liItems);
+          }
 
-      iLogger.i('Rust Daily 列表模式：共 ${liItems.length} 条 <li>，总页数 $_totalPage');
+          iLogger.i(
+            'Rust Daily 列表模式：共 ${pageData.liItems.length} 条 <li>，总页数 $_totalPage',
+          );
 
-      // 第 1 页替换，后续页追加
-      if (_currentPage == 1) {
-        _accumulatedItems
-          ..clear()
-          ..addAll(liItems);
-      } else {
-        _accumulatedItems.addAll(liItems);
-      }
+          final html =
+              '<div style="padding:16px">\n${_accumulatedItems.join('\n')}\n</div>';
 
-      final html =
-          '<div style="padding:16px">\n${_accumulatedItems.join('\n')}\n</div>';
-
-      state = state.copyWith(
-        loading: false,
-        html: html,
-        liItems: List.of(_accumulatedItems),
-        totalPage: _totalPage,
-        currentPage: _currentPage,
+          state = state.copyWith(
+            loading: false,
+            html: html,
+            liItems: List.of(_accumulatedItems),
+            totalPage: _totalPage,
+            currentPage: _currentPage,
+          );
+        },
+        failure: (error) {
+          state = state.copyWith(loading: false);
+          throw error;
+        },
       );
     } else {
-      // ── 详情模式：提取 detail-body ──
-      final element = dom.querySelector('div.detail-body');
-      final html =
-          '<div style="padding:16px">\n${element?.outerHtml ?? '暂无内容'}\n</div>';
+      // ── 详情模式 ──
+      final result = await repo.getDetail(url: params.url);
 
-      state = state.copyWith(
-        loading: false,
-        html: html,
-        liItems: [],
-        totalPage: 1,
-        currentPage: 1,
+      result.when(
+        success: (pageData) {
+          state = state.copyWith(
+            loading: false,
+            html: pageData.html,
+            liItems: [],
+            totalPage: 1,
+            currentPage: 1,
+          );
+        },
+        failure: (error) {
+          state = state.copyWith(loading: false);
+          throw error;
+        },
       );
     }
   }

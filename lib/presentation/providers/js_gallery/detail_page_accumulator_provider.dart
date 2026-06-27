@@ -2,35 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:isolate';
 
-import 'package:js_runtime/js_runtime.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:rohos_app/data/datasources/remote/detail_worker.dart';
 import 'package:rohos_app/domain/entities/detail_accumulator_state.dart';
 import 'package:rohos_app/domain/entities/gallery_detail.dart';
 import 'package:rohos_app/presentation/providers/js_gallery/config_provider.dart';
 
 part 'detail_page_accumulator_provider.g.dart';
-
-// ─── Worker 通信 ────────────────────────────────────────────────
-
-class _WorkerInit {
-  final String jsSource;
-  final String url;
-  final SendPort sendPort;
-  final String name;
-  final int current;
-  const _WorkerInit({
-    required this.jsSource,
-    required this.url,
-    required this.sendPort,
-    required this.name,
-    required this.current,
-  });
-}
-
-abstract class _Msg {
-  static const final_ = 'final';
-  static const error = 'error';
-}
 
 // ─── Provider ───────────────────────────────────────────────────
 
@@ -146,7 +124,7 @@ String _buildNextPageUrl(String baseUrl, int nextPage) {
 
 // ─── 单页加载（后台 isolate） ───────────────────────────────────
 
-/// 在后台 isolate 中执行一次 fetchDetails(url)，等待最终结果返回。
+/// 在后台 Isolate 中执行一次 fetchDetails(url)，等待最终结果返回。
 Future<GalleryDetail> _loadSinglePage({
   required String url,
   required String jsSource,
@@ -155,8 +133,8 @@ Future<GalleryDetail> _loadSinglePage({
 }) async {
   final receivePort = ReceivePort();
   final isolate = await Isolate.spawn(
-    _pageWorker,
-    _WorkerInit(
+    runSinglePageDetailWorker,
+    DetailWorkerInit(
       jsSource: jsSource,
       url: url,
       name: name,
@@ -170,14 +148,14 @@ Future<GalleryDetail> _loadSinglePage({
     await for (final message in receivePort) {
       final msg = message as Map<String, Object?>;
       switch (msg['type'] as String) {
-        case _Msg.final_:
+        case DetailWorkerMsg.final_:
           final jsonStr = msg['data'] as String;
           if (jsonStr.isEmpty || jsonStr == 'undefined') {
             throw Exception('获取详情失败: 返回数据为空');
           }
           final parsed = jsonDecode(jsonStr) as Map<String, dynamic>;
           return GalleryDetail.fromJson(parsed);
-        case _Msg.error:
+        case DetailWorkerMsg.error:
           throw Exception(msg['error'] as String);
       }
       // 忽略 progress 消息（单次加载不需要逐批推送）
@@ -188,48 +166,5 @@ Future<GalleryDetail> _loadSinglePage({
       isolate.kill(priority: Isolate.immediate);
     } catch (_) {}
     receivePort.close();
-  }
-}
-
-// ─── 后台 Worker ─────────────────────────────────────────────────
-
-@pragma('vm:entry-point')
-Future<void> _pageWorker(_WorkerInit init) async {
-  await JsRuntimeLib.init();
-
-  final engine = JsEngine.create(
-    runtimeOptions: JsRuntimeOptions(
-      builtins: JsBuiltinOptions.all(),
-      info: init.name,
-    ),
-    modules: [JsModule(name: 'client', source: init.jsSource)],
-  );
-
-  try {
-    // 注册 postMessage 回调，JS 端调用时不报错即可（忽略进度）
-    await engine.register(
-      name: 'postMessage',
-      func: (String argsJson) async => jsonEncode(null),
-    );
-
-    final result = await engine.eval(
-      code:
-          '''
-      (async () => {
-        const dom = await import('dom');
-        const { default: client } = await import('client');
-        return await client.fetchDetails(${jsonEncode(init.url)}, ${init.current});
-      })()
-    ''',
-    );
-
-    init.sendPort.send({
-      'type': _Msg.final_,
-      'data': result.asStringSync ?? '',
-    });
-  } catch (e) {
-    init.sendPort.send({'type': _Msg.error, 'error': e.toString()});
-  } finally {
-    engine.close();
   }
 }

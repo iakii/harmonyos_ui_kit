@@ -6,7 +6,7 @@ part of 'gallery_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$galleryHash() => r'de6286ec245466d6de3cf4fd8fa0d6b40e9260f0';
+String _$galleryHash() => r'ea217e8383a2ed696643e5421e0aa69027d53b7a';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -31,7 +31,7 @@ class _SystemHash {
 
 /// 图集列表 Provider（按 URL 和页码分页）。
 ///
-/// 依赖 [jsEngineProvider] 的共享 JsEngine，JS eval 在工作线程执行不阻塞 UI。
+/// 通过 [jsGalleryRepositoryProvider] 经由 Repository → JsEngine 获取数据。
 ///
 /// Copied from [gallery].
 @ProviderFor(gallery)
@@ -39,20 +39,20 @@ const galleryProvider = GalleryFamily();
 
 /// 图集列表 Provider（按 URL 和页码分页）。
 ///
-/// 依赖 [jsEngineProvider] 的共享 JsEngine，JS eval 在工作线程执行不阻塞 UI。
+/// 通过 [jsGalleryRepositoryProvider] 经由 Repository → JsEngine 获取数据。
 ///
 /// Copied from [gallery].
 class GalleryFamily extends Family<AsyncValue<GalleryPageData>> {
   /// 图集列表 Provider（按 URL 和页码分页）。
   ///
-  /// 依赖 [jsEngineProvider] 的共享 JsEngine，JS eval 在工作线程执行不阻塞 UI。
+  /// 通过 [jsGalleryRepositoryProvider] 经由 Repository → JsEngine 获取数据。
   ///
   /// Copied from [gallery].
   const GalleryFamily();
 
   /// 图集列表 Provider（按 URL 和页码分页）。
   ///
-  /// 依赖 [jsEngineProvider] 的共享 JsEngine，JS eval 在工作线程执行不阻塞 UI。
+  /// 通过 [jsGalleryRepositoryProvider] 经由 Repository → JsEngine 获取数据。
   ///
   /// Copied from [gallery].
   GalleryProvider call({required String url, required int page}) {
@@ -81,13 +81,13 @@ class GalleryFamily extends Family<AsyncValue<GalleryPageData>> {
 
 /// 图集列表 Provider（按 URL 和页码分页）。
 ///
-/// 依赖 [jsEngineProvider] 的共享 JsEngine，JS eval 在工作线程执行不阻塞 UI。
+/// 通过 [jsGalleryRepositoryProvider] 经由 Repository → JsEngine 获取数据。
 ///
 /// Copied from [gallery].
 class GalleryProvider extends AutoDisposeFutureProvider<GalleryPageData> {
   /// 图集列表 Provider（按 URL 和页码分页）。
   ///
-  /// 依赖 [jsEngineProvider] 的共享 JsEngine，JS eval 在工作线程执行不阻塞 UI。
+  /// 通过 [jsGalleryRepositoryProvider] 经由 Repository → JsEngine 获取数据。
   ///
   /// Copied from [gallery].
   GalleryProvider({required String url, required int page})
