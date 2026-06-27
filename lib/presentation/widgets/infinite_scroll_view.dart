@@ -400,11 +400,6 @@ class _InfiniteScrollViewState extends State<InfiniteScrollView>
 
   /// paginated 模式：内部管理 RefreshController，列表数据由 itemBuilder 驱动。
   Widget _buildPaginated(Color accentColor, TextStyle? textStyle) {
-    final items = List.generate(
-      widget.itemCount ?? 0,
-      (i) => widget.itemBuilder!(context, i),
-    );
-
     final slivers = <Widget>[];
     // 头部组件（headerItems）
     if (widget.headerItems != null) {
@@ -422,9 +417,11 @@ class _InfiniteScrollViewState extends State<InfiniteScrollView>
         ),
       );
     } else {
-      // 列表布局
-      for (final item in items) {
-        slivers.add(SliverToBoxAdapter(child: item));
+      // 列表布局：逐项构建
+      for (var i = 0; i < (widget.itemCount ?? 0); i++) {
+        slivers.add(
+          SliverToBoxAdapter(child: widget.itemBuilder!(context, i)),
+        );
       }
     }
 
