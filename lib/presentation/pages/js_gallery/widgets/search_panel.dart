@@ -159,7 +159,7 @@ class _SearchResults extends ConsumerWidget {
 
     return InfiniteScrollView.builder(
       itemCount: items.length,
-      autoLoad: false,
+      // autoLoad: false,
       itemBuilder: (context, index) => GridItemCard(item: items[index]),
       onRefresh: () =>
           ref.read(searchPageAccumulatorProvider(keyword).notifier).refresh(),

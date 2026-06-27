@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:js_runtime/js_runtime.dart';
-import 'package:pinyin/pinyin.dart' show PinyinHelper;
 import 'package:rohos_app/core/error/app_exception.dart';
 import 'package:rohos_app/core/error/result.dart';
 import 'package:rohos_app/core/extensions/string.ext.dart';

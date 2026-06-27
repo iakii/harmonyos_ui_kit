@@ -40,6 +40,15 @@ class Client {
   get pluginInfo() {
     return JSON.stringify(this.info);
   }
+
+  async search(keywords, page = 1) {
+    // http://www.symzt.com/chis/$text/1.html
+    const keyword = await toPinYin(keywords ?? '')
+    console.log("search 请求的keyword：", keyword, keywords);
+    const url = `${this.info.website}/chis/${keyword}/${page}.html`;
+    return this.fetchGallery(url, page);
+  }
+
   async fetchGallery(path, page = 1) {
 
     let url = path;

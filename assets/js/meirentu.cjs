@@ -36,6 +36,19 @@ class Client {
   get pluginInfo() {
     return JSON.stringify(this.info);
   }
+
+
+  async search(keyword, page = 1) {
+    // http://www.symzt.com/chis/$text/1.html
+    console.log("search 请求的keyword：", keyword);
+    let url = `${this.info.website}/s/${keyword}.html`;
+    if(page > 1) {
+      url = `${this.info.website}/s/${keyword}-${page}.html`;
+    }
+    console.log("search 请求url：", url);
+    return this.fetchGallery(url, page);
+  }
+
   async fetchGallery(path, page = 1) {
 
     let url = path;

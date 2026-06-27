@@ -47,21 +47,21 @@ class Client {
   }
 
   async search(keyword, page = 1) {
-    // http://www.symzt.com/chis/$text/1.html
-    // const keyword = await toPinYin(keywords ?? '')
-    const url = `${this.info.website}/e/search/?name=news&show=title&tempid=1&keyboard=${keyword}`;
-    const response = await fetch(url).then((response) => {
-      console.log("search 请求url：",  response.url);
-      return response.text();
+    // POST 搜索表单，302 重定向后通过 res.url 获取结果页地址
+    const url = `${this.info.website}/e/search/`;
+    const body = `name=news&show=title&tempid=1&keyboard=${encodeURIComponent(keyword)}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body,
     });
-    console.log("search 请求的keyword：", JSON.stringify(response), url);
-
-    return this.fetchGallery(url, page);
+    console.log("search 重定向后 URL：", res.url);
+    return this.fetchGallery(res.url, page);
   }
 
   async fetchGallery(url, page = 1) {
     if (page != 1) {
-      url = `${url}/index_${page}.html`;
+      url = url.includes('/e/search/result/') ? url.includes('?') ? `${url}&page=${page}` : `${url}?page=${page}` : `${url}/index_${page}.html`;
     }
     console.log("getPage 请求的url：", url);
     const base = this.info.website;
@@ -144,11 +144,13 @@ class Client {
         })
         .filter(Boolean);
       const totalPages = await this._parsePageSize(html, dom);
-      return JSON.stringify({
+      const response = JSON.stringify({
         list: results,
         totalPage: totalPages,
         current: page,
       });
+      console.log("getPage result:", response, url);
+      return response;
     } catch (error) {
       console.log("获取页面失败：", error);
     }
@@ -227,7 +229,8 @@ class Client {
       .filter((el) => el.text === "尾页")
       .map((el) => {
         const href = el.attrs.find((a) => a[0] === "href")?.[1] || "";
-        const match = href.includes("/tags/")
+        console.log("尾页链接 href:", href);
+        const match = href.includes('/e/search/result') ? href.match(/page=(\d+)/): href.includes("/tags / ")
           ? href.match(/(\d+)\.html/)
           : href.match(/_(\d+)\.html/);
         return match ? parseInt(match[1], 10) : null;
