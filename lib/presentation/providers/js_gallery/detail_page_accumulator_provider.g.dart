@@ -7,7 +7,7 @@ part of 'detail_page_accumulator_provider.dart';
 // **************************************************************************
 
 String _$detailPageAccumulatorHash() =>
-    r'f1eb25310a8b9aae3c1a6012cc55e15a7f05150a';
+    r'01f7650a91880ab9ff2f113ffc3ae6a911987dca';
 
 /// Copied from Dart SDK
 class _SystemHash {

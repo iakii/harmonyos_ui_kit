@@ -22,8 +22,9 @@ class DetailWorkerPool {
   final Map<int, Completer<GalleryDetail>> _pending = {};
   bool _disposed = false;
 
-  /// 启动常驻 Isolate 并等待就绪。
+  /// 启动常驻 Isolate 并等待就绪。幂等，多次调用只初始化一次。
   Future<void> init() async {
+    if (_isolate != null) return;
     _receivePort = ReceivePort();
     _isolate = await Isolate.spawn(
       _poolEntryPoint,
@@ -31,11 +32,25 @@ class DetailWorkerPool {
       debugName: 'DetailWorkerPool',
     );
 
-    // 等待 worker 发回它的 SendPort（表示 JsRuntimeLib 初始化完成）
-    _sendPort = await _receivePort!.first.timeout(_initTimeout) as SendPort;
+    // ReceivePort 是单订阅 Stream，只能用一次 listen。
+    // 用 _sendPort 是否为 null 区分第一条（init）和后续消息（task result）。
+    final initCompleter = Completer<void>();
+    _receivePort!.listen(
+      (message) {
+        if (_sendPort == null) {
+          // 第一条消息：worker 发回的 SendPort（表示 JsRuntimeLib 就绪）
+          _sendPort = message as SendPort;
+          initCompleter.complete();
+        } else {
+          _onMessage(message);
+        }
+      },
+      onError: _onError,
+      cancelOnError: false,
+    );
 
-    // 持续监听 worker 返回结果
-    _receivePort!.listen(_onMessage, onError: _onError);
+    // 等待初始化完成，超时保护
+    await initCompleter.future.timeout(_initTimeout);
   }
 
   void _onMessage(dynamic message) {

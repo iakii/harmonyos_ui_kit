@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:rohos_app/data/datasources/remote/detail_worker_pool.dart';
 import 'package:rohos_app/domain/entities/detail_accumulator_state.dart';
@@ -32,13 +30,8 @@ class DetailPageAccumulator extends _$DetailPageAccumulator {
     final config = await ref.watch(jsConfigProvider.future);
     _cachedConfig = config;
 
-    // 确保 Worker 池已初始化
-    final pool = ref.watch(detailWorkerPoolProvider);
-    try {
-      await pool.init();
-    } catch (_) {
-      // init 已在首次调用时完成，后续调用忽略
-    }
+    // 确保 Worker 池已初始化（init 幂等，多次调用安全）
+    await ref.read(detailWorkerPoolProvider).init();
 
     return DetailAccumulatorState.empty();
   }
