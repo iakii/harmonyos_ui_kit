@@ -3,7 +3,7 @@
 > 审计日期：2026-06-27
 > 最后更新：2026-06-27
 > 审计范围：lib/ 全目录（含 core、domain、data、presentation 四层）
-> 处理进度：**19/21 项已完成**
+> 处理进度：**19/22 项已完成**
 
 ---
 
@@ -98,6 +98,29 @@
 
 ---
 
+## P4 — 新增审计（detail_page_accumulator_provider）
+
+### 17. `detail_page_accumulator_provider.dart` 代码质量 ⏳ 待处理
+
+**位置**：`lib/presentation/providers/js_gallery/detail_page_accumulator_provider.dart`
+
+| 问题 | 严重度 | 说明 |
+|---|---|---|
+| `build()` 未缓存 config | 🔴 高 | `loadNext()`/`refresh()` 每次都重复 `await ref.watch(jsConfigProvider.future)` |
+| `lastLoadedUrl!` 空安全 | 🔴 高 | 首次加载前调用 `loadNext()` 会因 `!` 抛出 NullError |
+| `throw Exception()` 非类型化 | 🔴 中 | 使用 `ParseException`/`NetworkException` 替代 |
+| `_loadSinglePage` 无超时 | 🟡 中 | JS 执行挂起时 await for 将永远阻塞 |
+| 空 `ref.onDispose` | 🟡 低 | 可删除噪音代码 |
+
+**改进方案**：
+- 在 `build()` 中将 `config` 缓存为类字段
+- `_buildNextPageUrl` 调用前检查 `lastLoadedUrl` 是否为 null
+- 将 `throw Exception()` 替换为 `ParseException`/`NetworkException`
+- 给 `receivePort` 添加 `timeout()` 保护
+- 删除空 `ref.onDispose`
+
+---
+
 ## 文件状态摘要（更新后）
 
 | 文件 | 状态 | 问题 |
@@ -114,6 +137,7 @@
 | `router.dart` | ✅ 已修复 | 类型安全 Route 参数类 |
 | `logger.dart` | ✅ 已改造 | Riverpod 注入 + 缓冲写入 |
 | `test/` | ❌ 缺失 | 零业务测试 |
+| `detail_page_accumulator_provider.dart` | ⚠️ 待优化 | 见 P4#17 |
 
 ---
 
