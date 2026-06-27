@@ -6,7 +6,7 @@ import 'package:rohos_app/domain/entities/site_config.dart' show SiteConfig;
 import 'package:rohos_app/presentation/providers/init/dio_provider.dart'
     show dioProvider;
 import 'package:rohos_app/core/utils/logger.dart';
-import 'package:rohos_app/core/storage/perfs.dart';
+import 'package:rohos_app/data/datasources/local/js_source_local_datasource.dart';
 
 // /https://gh-proxy.org/https://raw.githubusercontent.com/iakii/harmonyos_ui_kit/refs/heads/master/assets/js/config.json
 
@@ -28,7 +28,8 @@ class JsConfig extends _$JsConfig {
   Future<JsConfigData> build() async {
     final sites = await getSites();
     // 从 SharedPreferences 读取已保存的选择
-    final savedAssets = perfs.getString(perfs.KEY_JS);
+    final localSource = JsSourceLocalDataSource();
+    final savedAssets = localSource.getSavedSource();
     if (savedAssets != null && savedAssets.isNotEmpty) {
       try {
         final jsContent = await loadJsContent(savedAssets);
@@ -46,7 +47,7 @@ class JsConfig extends _$JsConfig {
 
   /// 切换选中的 JS 源，持久化并重新加载 JS 内容。
   Future<void> select(String assets) async {
-    await perfs.putString(perfs.KEY_JS, assets);
+    await JsSourceLocalDataSource().saveSource(assets);
 
     try {
       final jsContent = await loadJsContent(assets);
@@ -63,7 +64,7 @@ class JsConfig extends _$JsConfig {
 
   /// 清除选中的 JS 源。
   void clear() {
-    perfs.putString(perfs.KEY_JS, '');
+    JsSourceLocalDataSource().clearSource();
     state = AsyncValue.data(JsConfigData(state.requireValue.sites, '', ''));
   }
 
