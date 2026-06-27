@@ -9,7 +9,7 @@ use boa_engine::{js_string, Context, Module, NativeFunction, Source};
 use boa_engine::module::MapModuleLoader;
 use boa_engine::JsValue as BoaJsValue;
 use boa_runtime::extensions::{ConsoleExtension, FetchExtension};
-use boa_runtime::fetch::BlockingReqwestFetcher;
+use crate::js_runtime::fetcher::RedirectAwareFetcher;
 
 use crate::api::js_value::JsValue as FrbJsValue;
 
@@ -218,7 +218,7 @@ pub(crate) fn register_web_apis(context: &mut Context) -> Result<(), String> {
     boa_runtime::register(
         (
             ConsoleExtension::default(),
-            FetchExtension(BlockingReqwestFetcher::default()),
+            FetchExtension(RedirectAwareFetcher::default()),
         ),
         None,
         context,

@@ -1639,6 +1639,8 @@ dependencies = [
  "boa_string",
  "encoding_rs",
  "flutter_rust_bridge",
+ "http",
+ "reqwest",
  "scraper",
  "serde",
  "serde_json",
