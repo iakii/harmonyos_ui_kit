@@ -3,7 +3,7 @@
 > 审计日期：2026-06-27
 > 最后更新：2026-06-27
 > 审计范围：lib/ 全目录（含 core、domain、data、presentation 四层）
-> 处理进度：**19/22 项已完成**
+> 处理进度：**22/22 项已完成** 🎉
 
 ---
 
@@ -82,7 +82,11 @@
 
 ### 13. Isolate 反复创建销毁 ✅ 已处理
 
-**处理**：`js_gallery_repository_impl.dart` 删除未使用的 `getDetail()` 及 100+ 行 Isolate helper 代码。同步简化 `JsGalleryRepository` 接口。
+**处理**：
+- 新增 `DetailWorkerPool`（常驻 Isolate），`JsRuntimeLib` 只初始化一次
+- 任务复用 Isolate，每次创建/销毁 JsEngine 而非 spawn/kill Isolate
+- 内建 30s 超时保护，Completer 异步返回
+- 删除旧 `detail_worker.dart`
 
 ### 14. 零单元测试 ⏳ 待处理
 
@@ -100,7 +104,7 @@
 
 ## P4 — 新增审计（detail_page_accumulator_provider）
 
-### 17. `detail_page_accumulator_provider.dart` 代码质量 ⏳ 待处理
+### 17. `detail_page_accumulator_provider.dart` 代码质量 ✅ 已处理
 
 **位置**：`lib/presentation/providers/js_gallery/detail_page_accumulator_provider.dart`
 
