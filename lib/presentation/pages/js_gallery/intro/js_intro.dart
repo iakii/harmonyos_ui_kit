@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:rohos_app/core/extensions/numbric_ext.dart' show ExtensionNum;
 
 import 'package:rohos_app/domain/entities/detail_item.dart' show DetailItem;
+import 'package:rohos_app/router_args.dart';
 import 'package:rohos_app/presentation/providers/js_gallery/intro_provider.dart'
     show IntroData, jsIntroProvider;
 import 'package:rohos_app/presentation/widgets/loading.dart'
@@ -283,7 +284,7 @@ class _JsIntroPageState extends ConsumerState<JsIntroPage> {
         if (tag.href == null || tag.href!.isEmpty) return;
         context.push(
           '/js_gallery_list',
-          extra: {'title': tag.title ?? '', 'url': tag.href ?? ''},
+          extra: GalleryRouteArgs(title: tag.title ?? '', url: tag.href ?? ''),
         );
       },
       borderRadius: BorderRadius.circular(8),
@@ -379,7 +380,10 @@ class _JsIntroPageState extends ConsumerState<JsIntroPage> {
         if (chapter.href == null || chapter.href!.isEmpty) return;
         context.push(
           '/js_gallery_detail',
-          extra: {'title': chapter.title ?? '', 'url': chapter.href ?? ''},
+          extra: GalleryRouteArgs(
+            title: chapter.title ?? '',
+            url: chapter.href ?? '',
+          ),
         );
       },
     );

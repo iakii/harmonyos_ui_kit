@@ -13,6 +13,7 @@ import 'package:rohos_app/presentation/pages/rust_daily/rust_daily_page.dart'
 import 'package:rohos_app/presentation/pages/rust_daily/rust_daily_detail_page.dart'
     show RustDailyDetailPage;
 import 'package:rohos_app/presentation/pages/splash_page.dart';
+import 'package:rohos_app/router_args.dart';
 import 'presentation/pages/harmony.dart' show HarmonyOSPage;
 import 'presentation/pages/js_parse.dart' show JsParsePage;
 import 'presentation/pages/glass_kit.dart' show GlassKitPage;
@@ -58,7 +59,6 @@ final router = GoRouter(
           builder: (context, state) => const JsParsePage(),
         ),
         GoRoute(path: '/glass', builder: (context, state) => const GlassPage()),
-
         GoRoute(
           path: '/glass_kit',
           builder: (context, state) => const GlassKitPage(),
@@ -79,18 +79,18 @@ final router = GoRouter(
         ),
         GoRoute(
           path: '/js_gallery_detail',
-          builder: (context, state) => DetailPage(
-            url: (state.extra as Map<String, dynamic>)['url'] as String,
-            title:
-                (state.extra as Map<String, dynamic>)['title'] as String? ?? '',
-          ),
+          builder: (context, state) {
+            final args = state.extra as GalleryRouteArgs;
+            return DetailPage(url: args.url, title: args.title);
+          },
         ),
         GoRoute(
           path: '/js_gallery_list',
           builder: (context, state) {
+            final args = state.extra as GalleryRouteArgs;
             return GalleryContentPage(
-              url: (state.extra as Map<String, dynamic>)['url'] as String,
-              title: (state.extra as Map<String, dynamic>)['title'] as String,
+              url: args.url,
+              title: args.title,
               showAppBar: true,
             );
           },
@@ -98,10 +98,8 @@ final router = GoRouter(
         GoRoute(
           path: '/js_intro',
           builder: (context, state) {
-            return JsIntroPage(
-              url: (state.extra as Map<String, dynamic>)['url'] as String,
-              title: (state.extra as Map<String, dynamic>)['title'] as String,
-            );
+            final args = state.extra as GalleryRouteArgs;
+            return JsIntroPage(url: args.url, title: args.title);
           },
         ),
         GoRoute(
@@ -122,12 +120,9 @@ final router = GoRouter(
         if (state.extra == null) {
           return const RustDailyPage();
         }
-        final extra = state.extra as Map<String, dynamic>;
-        final type = extra['type'] as String?;
-        final url = extra['url'] as String?;
-        final title = extra['title'] as String? ?? '';
-        if (type == 'detail' && url != null) {
-          return RustDailyDetailPage(url: url, title: title);
+        final args = state.extra as RustDailyRouteArgs;
+        if (args.type == 'detail') {
+          return RustDailyDetailPage(url: args.url, title: args.title);
         }
         return const RustDailyPage();
       },

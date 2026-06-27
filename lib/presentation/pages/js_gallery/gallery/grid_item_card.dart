@@ -2,6 +2,7 @@ import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
+import 'package:rohos_app/router_args.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:rohos_app/domain/entities/gallery_item.dart';
 import 'package:rohos_app/presentation/providers/js_gallery/plugin_info_provider.dart'
@@ -89,10 +90,10 @@ class GridItemCard extends ConsumerWidget {
                                     tag.to == 'gallery'
                                         ? "/js_gallery_list"
                                         : '/js_gallery_detail',
-                                    extra: {
-                                      'title': tag.title ?? '',
-                                      'url': tag.href ?? '',
-                                    },
+                                    extra: GalleryRouteArgs(
+                                      title: tag.title ?? '',
+                                      url: tag.href ?? '',
+                                    ),
                                   );
                                 },
                                 child: Container(

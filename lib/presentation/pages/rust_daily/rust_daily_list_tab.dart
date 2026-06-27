@@ -10,6 +10,7 @@ import 'package:rohos_app/presentation/widgets/html/custom_widget_builder.dart'
     show customWidgetBuilder;
 import 'package:rohos_app/presentation/widgets/infinite_scroll_view.dart';
 import 'package:rohos_app/presentation/widgets/loading.dart';
+import 'package:rohos_app/router_args.dart';
 import 'package:rohos_app/router.dart' show router;
 
 /// 单个 Tab 的列表页。
@@ -184,11 +185,11 @@ class _RustDailyListTabState extends ConsumerState<RustDailyListTab>
                 onTapUrl: (url) {
                   router.push(
                     '/rust',
-                    extra: {
-                      'url': url,
-                      'type': 'detail',
-                      'title': widget.tab.label,
-                    },
+                    extra: RustDailyRouteArgs(
+                      url: url,
+                      type: 'detail',
+                      title: widget.tab.label,
+                    ),
                   );
                   return true;
                 },
