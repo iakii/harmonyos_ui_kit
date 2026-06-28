@@ -1,3 +1,7 @@
+import 'package:bot_toast/bot_toast.dart' show BotToast;
+import 'package:flutter/material.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+import 'package:fwfh_webview/fwfh_webview.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:rohos_app/core/utils/logger.dart';
 import 'package:rohos_app/domain/entities/gallery_accumulator_state.dart';
@@ -40,6 +44,45 @@ class GalleryPageAccumulator extends _$GalleryPageAccumulator {
       final pageData = await ref.read(
         galleryProvider(url: url, page: nextPage).future,
       );
+
+      if (pageData.needCaptcha == true) {
+        BotToast.showText(text: '需要验证码，请在浏览器中访问网站完成验证后再尝试');
+        // throw Exception('需要验证码');
+        // showHosToast(
+        //   // context:  ref.container.,
+        //   message: '需要验证码，请在浏览器中访问网站完成验证后再尝试',
+        // );
+        BotToast.showAnimationWidget(
+          toastBuilder: (cancelFunc) {
+            return SizedBox(
+              width: double.infinity,
+              height: 600,
+              child: Scaffold(
+                appBar: AppBar(
+                  title: const Text('需要验证码'),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        cancelFunc();
+                      },
+                    ),
+                  ],
+                ),
+                body: HtmlWidget(
+                  '''<a>111</a>
+                  <iframe src="https://www.baidu.com"></iframe>''',
+                  factoryBuilder: () => MyWidgetFactory(),
+                ),
+              ),
+            );
+          },
+          animationDuration: Duration.zero,
+          duration: const Duration(minutes: 5),
+        );
+        return;
+      }
+
       state = AsyncValue.data(
         GalleryAccumulatorState(
           items: [...current.items, ...pageData.list],
@@ -62,3 +105,5 @@ class GalleryPageAccumulator extends _$GalleryPageAccumulator {
     await loadNext();
   }
 }
+
+class MyWidgetFactory extends WidgetFactory with WebViewFactory {}

@@ -20,7 +20,7 @@ class SplashPage extends ConsumerWidget {
     ref.listen(rustLibInitProvider, (prev, next) {
       next.whenOrNull(
         data: (_) => WidgetsBinding.instance.addPostFrameCallback(
-          (_) => router.go('/js_gallery'),
+          (_) => router.go('/js_parse'),
         ),
         error: (Object error, StackTrace stackTrace) {},
       );

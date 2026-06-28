@@ -6,11 +6,13 @@ class GalleryPageData {
   final List<GalleryItem> list;
   final int totalPage;
   final int current;
+  final bool? needCaptcha;
 
   const GalleryPageData({
     required this.list,
     required this.totalPage,
     required this.current,
+    this.needCaptcha,
   });
 
   bool get hasMore => current < totalPage;
@@ -24,6 +26,7 @@ class GalleryPageData {
             [],
         totalPage: (json['totalPage'] as num?)?.toInt() ?? 1,
         current: (json['current'] as num?)?.toInt() ?? 1,
+        needCaptcha: json['needCaptcha'] as bool?,
       );
 }
 

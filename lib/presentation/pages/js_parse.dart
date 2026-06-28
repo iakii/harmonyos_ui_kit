@@ -5,6 +5,7 @@ import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:js_runtime/js_runtime.dart';
 import 'package:logger/logger.dart' show Logger;
+
 import 'package:signals/signals_flutter.dart';
 
 /// JS 解析页面 —— 展示 js_runtime 的 JavaScript 执行能力。
@@ -191,6 +192,47 @@ class _JsParsePageState extends ConsumerState<JsParsePage> {
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // ExtendedImage.network(
+            //   'https://img.xchina.io/photos/6a3d023474c78/00019.webp',
+
+            //   headers: {
+            //     ":authority": "img.xchina.io",
+            //     ":method": "GET",
+            //     ":path": "/photos/6a3d023474c78/00019.webp",
+            //     ":scheme": "https",
+            //     "accept":
+            //         "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            //     "accept-encoding": "gzip, deflate, br, zstd",
+            //     "accept-language": "zh-CN,zh;q=0.9",
+            //     "cache-control": "no-cache",
+            //     "cookie":
+            //         "cf_clearance=LLKmzg3iZrGLRnza_itPMOzKmiyHO4YvYSVLWvTnTKo-1782611847-1.2.1.1-KePOLItM3BhH_yZWDngaHEatUlGcr8hvLNJYs8dkMEpEpIkrYDECkni8LHOjuo.KqO6vV_H3rsH6ov5DUEzKq6CiyVI_3nUgMemZ.H3RHao.SIVeEZuibMCRfkZRtX.U.4htNTokkofqXF6ZDNhQS18O2KvhVe4trg5XJ.bBpCQu_j.OhxnFgsPeWhYHqrlvzYUspQbmEyv6E0fnifvFGHLcJa80UfYlCW5BBo._MQOP.KfD0PKOj.jbs7Lg5IZDpaTlo6jbJhSz0x8a5kAtxEf5Xf_MFTJVp3CRyTTlwzxvRTW6T12tbgpVyVBqNqPBA11Eh1J9v7gdHlzr0KaRcVzAjU3RxJjRJkLDe9QYrif00wuNzjzcJoQWxxdPA8nXGUrhZnvajHct5Jd2Ofu1jQ5qEX_eAHNj3z1BNcDKAA_d0RinnlgFqwkbD7sMM0_.AihE_zebR4ro3Qn7jtVIA0UrEk6ULZTishR7o3bcSOPaYt2uuGvCKW1FQ6hsfCtx; cf_chl_rc_ni=1",
+            //     "pragma": "no-cache",
+            //     "priority": "u=0, i",
+            //     "referer":
+            //         "https://img.xchina.io/photos/6a3d023474c78/00019_600x0.webp",
+            //     "sec-ch-ua":
+            //         "\"Google Chrome\";v=\"149\", \"Chromium\";v=\"149\", \"Not)A;Brand\";v=\"24\"",
+            //     "sec-ch-ua-arch": "\"x86\"",
+            //     "sec-ch-ua-bitness": "\"64\"",
+            //     "sec-ch-ua-full-version": "\"149.0.7827.201\"",
+            //     "sec-ch-ua-full-version-list":
+            //         "\"Google Chrome\";v=\"149.0.7827.201\", \"Chromium\";v=\"149.0.7827.201\", \"Not)A;Brand\";v=\"24.0.0.0\"",
+            //     "sec-ch-ua-mobile": "?0",
+            //     "sec-ch-ua-model": "\"\"",
+            //     "sec-ch-ua-platform": "\"Windows\"",
+            //     "sec-ch-ua-platform-version": "\"19.0.0\"",
+            //     "sec-fetch-dest": "document",
+            //     "sec-fetch-mode": "navigate",
+            //     "sec-fetch-site": "same-origin",
+            //     "sec-fetch-user": "?1",
+            //     "upgrade-insecure-requests": "1",
+            //     "user-agent":
+            //         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+            //   },
+            //   loadStateChanged: imageLoadState,
+            // ),
+
             // 版本信息
             if (version.value.isNotEmpty)
               Padding(
