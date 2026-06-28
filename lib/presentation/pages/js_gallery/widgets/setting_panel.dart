@@ -7,6 +7,8 @@ import 'package:rohos_app/presentation/providers/js_gallery/config_provider.dart
 import 'package:rohos_app/router.dart' show router;
 import 'package:styled_widget/styled_widget.dart';
 
+import '../../../widgets/staggered_grid_view/staggered_grid_view.dart';
+
 class SettingPanel extends HookConsumerWidget {
   const SettingPanel({super.key});
 
@@ -21,6 +23,10 @@ class SettingPanel extends HookConsumerWidget {
     final defaultItem = ref.watch(selectedSourceProvider);
     final defaultAssets = useState(defaultItem);
 
+    // ── 计算网格列数（约 256px 一列） ──
+    final crossAxisCount = (MediaQuery.sizeOf(context).width / 256)
+        .floor()
+        .clamp(2, 6);
     return SafeArea(
       child: Scaffold(
         appBar: HosAppBar(
@@ -29,54 +35,62 @@ class SettingPanel extends HookConsumerWidget {
           title: '设置',
           leading: SizedBox.shrink(),
         ),
-        body: ListView.separated(
-          padding: EdgeInsets.all(16),
+        body: StaggeredGridView.countBuilder(
+          padding: const EdgeInsets.all(12),
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
           itemCount: config == null ? 0 : config.sites.length,
           itemBuilder: (BuildContext context, int index) {
             final item = config!.sites[index];
-            return Row(
-                  children: [
-                    SizedBox(width: 12),
-                    Text(
-                          (item.title).substring(0, 1),
-                          style: TextStyle(color: Colors.white, fontSize: 18),
-                        )
-                        .fontFamily('HarmonyOs Sans SC')
-                        .center()
-                        .width(36)
-                        .height(36)
-                        .backgroundColor(theme.accentColor)
-                        .clipRRect(all: 12),
-                    SizedBox(width: 12),
-                    Text(item.title)
-                        .fontSize(14)
-                        .fontWeight(FontWeight.bold)
-                        .fontFamily('HarmonyOs Sans SC')
-                        .expanded(),
+            return SizedBox(
+              child:
+                  Row(
+                        children: [
+                          SizedBox(width: 12),
+                          Text(
+                                (item.title).substring(0, 1),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                ),
+                              )
+                              .fontFamily('HarmonyOs Sans SC')
+                              .center()
+                              .width(36)
+                              .height(36)
+                              .backgroundColor(theme.accentColor)
+                              .clipRRect(all: 12),
+                          SizedBox(width: 12),
+                          Text(item.title)
+                              .fontSize(14)
+                              .fontWeight(FontWeight.bold)
+                              .fontFamily('HarmonyOs Sans SC')
+                              .expanded(),
 
-                    HosRadio(
-                      selected: defaultAssets.value == item.assets,
-                      onChanged: () {
-                        defaultAssets.value = item.assets;
-                      },
-                    ),
-                    SizedBox(width: 12),
-                  ],
-                )
-                .padding(vertical: 8)
-                .ripple()
-                .backgroundColor(theme.surfaceColor)
-                .clipRRect(all: 12)
-                .gestures(
-                  onTap: () {
-                    defaultAssets.value = item.assets;
-                  },
-                );
+                          HosRadio(
+                            selected: defaultAssets.value == item.assets,
+                            onChanged: () {
+                              defaultAssets.value = item.assets;
+                            },
+                          ),
+                          SizedBox(width: 12),
+                        ],
+                      )
+                      .padding(all: 12)
+                      .ripple()
+                      .backgroundColor(theme.surfaceColor)
+                      .clipRRect(all: 12)
+                      .gestures(
+                        onTap: () {
+                          defaultAssets.value = item.assets;
+                        },
+                      ),
+            );
           },
-          separatorBuilder: (BuildContext context, int index) {
-            return SizedBox(height: 12);
-          },
+          crossAxisCount: crossAxisCount,
+          staggeredTileBuilder: (index) => const StaggeredTile.fit(1),
         ),
+
         bottomNavigationBar: SizedBox(
           height: 64,
           child: Padding(
