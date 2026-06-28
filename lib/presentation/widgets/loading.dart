@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart' show Colors;
+import 'package:flutter_svg/svg.dart' show SvgPicture;
 import 'package:harmonyos_ui/harmonyos_ui.dart';
-import 'package:hm_icon/hm_icon.dart';
 
 /// 3D 立体环绕 Loading 指示器。
 ///
@@ -192,7 +192,23 @@ Widget imageLoadState(ExtendedImageState state) {
     case LoadState.failed:
       return SizedBox(
         height: 200,
-        child: const Center(child: Icon(HMIcons.artGallery, size: 32)),
+        child: Center(
+          child: Column(
+            children: [
+              SvgPicture.asset('assets/svg/empty.svg', height: 156),
+              // 'https://upload.wikimedia.org/wikipedia/commons/f/fd/Ghostscript_Tiger.svg',
+              Text(
+                '图片加载失败',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'HarmonyOS_Sans_SC',
+                ),
+              ),
+            ],
+          ),
+        ),
       );
   }
 }
