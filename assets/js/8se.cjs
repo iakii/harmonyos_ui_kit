@@ -46,24 +46,26 @@ class Client {
       method: 'GET', // 或 'POST', 'PUT' 等
       origin: this.info.website, // 设置请求的源
       headers: {
-        // 'User-Agent':
-        //   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36',
-        // 'Referer': this.info.website,
-        // 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-        // // "Accept-encoding": "gzip, deflate",
-        // // 'Accept-Language': 'zh-CN,zh;q=0.9',
-        // "Host": this.info.website.replace(/^https?:\/\//, ''),
-
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-        // 'Accept-Encoding': 'gzip, deflate',
         'DNT': '1',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1'
       },
       credentials: 'same-origin' // 关键：允许跨域请求携带Cookie等凭据
-    }).then(r => r.text());
+    }).then((response) => response.text())
+    // .then(async (html) => {
+    //   console.log("请求到数据", html.length);
+    //   if (html.includes("https://challenges.cloudflare.com")) {
+    //     console.error("Cloudflare 反爬虫拦截，请在浏览器中打开网站并通过验证后再尝试。");
+    //     // await toast("Cloudflare 反爬虫拦截，请在浏览器中打开网站并通过验证后再尝试。", "error");
+    //   }
+    //   return html;
+    // }).catch((error) => {
+    //   console.error("请求失败：", error);
+    //   throw error;
+    // });
   }
 
 
@@ -79,6 +81,16 @@ class Client {
     const base = this.info.website;
     try {
       const html = await this._request(url);
+
+      if (html.includes("https://challenges.cloudflare.com")) {
+        return JSON.stringify({
+          list: [],
+          totalPage: 0,
+          needCaptcha: true,
+          current: page,
+        });
+      }
+
       const dom = await import("dom");
       console.log('请求到数据', html)
       // 遍历每个 a.list-img，从其 innerHtml 中提取 img 信息
