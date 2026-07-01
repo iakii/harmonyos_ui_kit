@@ -1,0 +1,27 @@
+[
+  {
+    "adapter": "flutter",
+    "label": "Launch windows",
+    "request": "launch",
+    "program": "lib/main.dart",
+    "deviceId": "windows"
+  },
+  {
+    "adapter": "flutter",
+    "label": "Run Flutter",
+    "request": "launch",
+    "program": "lib/main.dart",
+    "deviceId": "windows"
+  },
+  {
+    "adapter": "flutter",
+    "label": "Flutter Debug",
+    "request": "launch",
+    "program": "lib/main.dart",
+    "deviceId": "chrome",
+    "args": [
+      "--dart-define=ENV=dev"
+    ],
+    "hotReloadOnSave": true
+  }
+]

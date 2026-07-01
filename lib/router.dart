@@ -4,6 +4,7 @@ import 'package:rohos_app/presentation/pages/js_gallery/intro/js_intro.dart'
     show JsIntroPage;
 import 'package:rohos_app/presentation/pages/js_gallery/layout.dart'
     show GalleryLayout;
+import 'package:rohos_app/presentation/pages/js_layout.dart';
 import 'package:rohos_app/presentation/pages/loading_page.dart'
     show LoadingPage;
 import 'package:rohos_app/presentation/pages/dynamic_html_view_page.dart'
@@ -20,6 +21,7 @@ import 'presentation/pages/glass_kit.dart' show GlassKitPage;
 import 'presentation/pages/glass_page.dart' show GlassPage;
 import 'presentation/pages/immersive.dart' show ImmersivePage;
 import 'presentation/pages/icon_preview.dart' show IconPreviewPage;
+import 'presentation/pages/quickjs_page.dart' show QuickJSPage;
 import 'presentation/pages/js_gallery/gallery/gallery_page.dart'
     show GalleryPage;
 import 'presentation/pages/js_gallery/gallery/gallery_content_page.dart'
@@ -67,6 +69,11 @@ final router = GoRouter(
           path: '/icons',
           builder: (context, state) => const IconPreviewPage(),
         ),
+        GoRoute(
+          path: '/quickjs',
+          builder: (context, state) => const QuickJSPage(),
+        ),
+        GoRoute(path: '/layout', builder: (context, state) => const JsLayout()),
       ],
     ),
 

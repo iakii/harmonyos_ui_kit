@@ -55,7 +55,7 @@ class _AppLayoutState extends State<AppLayout> {
             _selectedIndex = i;
           });
 
-          final route = ['/', '/js_parse', '/rust', '/js_gallery', '/webF'][i];
+          final route = ['/', '/layout', '/rust', '/js_gallery', '/webF'][i];
           if (ModalRoute.of(context)?.settings.name != route) {
             context.go(route);
           }

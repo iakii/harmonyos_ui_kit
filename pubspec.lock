@@ -749,6 +749,13 @@ packages:
       relative: true
     source: path
     version: "0.0.1"
+  jsf:
+    dependency: "direct main"
+    description:
+      path: "../jsf"
+      relative: true
+    source: path
+    version: "1.0.1"
   json_annotation:
     dependency: transitive
     description:

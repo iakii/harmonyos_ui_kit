@@ -1,0 +1,9 @@
+{
+  "lsp": {
+    "dart": {
+      "binary": {
+        "path": "d:/Kai/.env/flutter_sdk/versions/ohos_flutter/bin/dart/dart.bat",
+      },
+    },
+  },
+}
