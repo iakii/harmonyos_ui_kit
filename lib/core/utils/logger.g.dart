@@ -6,7 +6,17 @@ part of 'logger.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$loggerHash() => r'6b445dd746664b88535f51173b1f44d140d659d3';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+/// Logger 实例的 Riverpod Provider。
+///
+/// 可通过此 Provider 注入 Logger，便于测试时替换为 mock 实现：
+/// ```dart
+/// ref.read(loggerProvider).d('message');
+/// ```
+
+@ProviderFor(logger)
+final loggerProvider = LoggerProvider._();
 
 /// Logger 实例的 Riverpod Provider。
 ///
@@ -14,21 +24,46 @@ String _$loggerHash() => r'6b445dd746664b88535f51173b1f44d140d659d3';
 /// ```dart
 /// ref.read(loggerProvider).d('message');
 /// ```
-///
-/// Copied from [logger].
-@ProviderFor(logger)
-final loggerProvider = AutoDisposeProvider<Logger>.internal(
-  logger,
-  name: r'loggerProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$loggerHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef LoggerRef = AutoDisposeProviderRef<Logger>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class LoggerProvider extends $FunctionalProvider<Logger, Logger, Logger>
+    with $Provider<Logger> {
+  /// Logger 实例的 Riverpod Provider。
+  ///
+  /// 可通过此 Provider 注入 Logger，便于测试时替换为 mock 实现：
+  /// ```dart
+  /// ref.read(loggerProvider).d('message');
+  /// ```
+  LoggerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'loggerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$loggerHash();
+
+  @$internal
+  @override
+  $ProviderElement<Logger> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  Logger create(Ref ref) {
+    return logger(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Logger value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Logger>(value),
+    );
+  }
+}
+
+String _$loggerHash() => r'6b445dd746664b88535f51173b1f44d140d659d3';

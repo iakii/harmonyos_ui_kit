@@ -10,7 +10,8 @@ import 'package:rohos_app/router.dart' show router;
 import 'package:rohos_app/presentation/widgets/html/custom_widget_builder.dart'
     show customWidgetBuilder;
 import 'package:rohos_app/presentation/widgets/loading.dart';
-import 'package:rohos_app/presentation/widgets/scrollbar.dart' show CustomScrollBehaviour;
+import 'package:rohos_app/presentation/widgets/scrollbar.dart'
+    show CustomScrollBehaviour;
 
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
@@ -36,7 +37,7 @@ class _DynamicHtml2ViewPageState extends State<DynamicHtml2ViewPage> {
     super.initState();
   }
 
-  initEngine() async {
+  Future<void> initEngine() async {
     final code = await rootBundle.loadString('assets/views/hadaka.js');
     _codeController.fullText = code;
     engine = JsEngine.create(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:rohos_app/presentation/providers/js_gallery/search_page_accumulator_provider.dart';
@@ -147,7 +148,7 @@ class _SearchResults extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final acc = ref.watch(searchPageAccumulatorProvider(keyword));
-    final state = acc.valueOrNull;
+    final state = acc.value;
     final items = state?.items ?? [];
     final hasMore = state?.hasMore ?? false;
     final hasError = state?.error != null && items.isEmpty;

@@ -1,4 +1,4 @@
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 /// 计数器状态管理 —— 演示 Riverpod StateNotifier 用法。
 ///

@@ -6,177 +6,102 @@ part of 'gallery_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$galleryHash() => r'ea217e8383a2ed696643e5421e0aa69027d53b7a';
-
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 /// 图集列表 Provider（按 URL 和页码分页）。
 ///
 /// 通过 [jsGalleryRepositoryProvider] 经由 Repository → JsEngine 获取数据。
-///
-/// Copied from [gallery].
+
 @ProviderFor(gallery)
-const galleryProvider = GalleryFamily();
+final galleryProvider = GalleryFamily._();
 
 /// 图集列表 Provider（按 URL 和页码分页）。
 ///
 /// 通过 [jsGalleryRepositoryProvider] 经由 Repository → JsEngine 获取数据。
-///
-/// Copied from [gallery].
-class GalleryFamily extends Family<AsyncValue<GalleryPageData>> {
+
+final class GalleryProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<GalleryPageData>,
+          GalleryPageData,
+          FutureOr<GalleryPageData>
+        >
+    with $FutureModifier<GalleryPageData>, $FutureProvider<GalleryPageData> {
   /// 图集列表 Provider（按 URL 和页码分页）。
   ///
   /// 通过 [jsGalleryRepositoryProvider] 经由 Repository → JsEngine 获取数据。
-  ///
-  /// Copied from [gallery].
-  const GalleryFamily();
+  GalleryProvider._({
+    required GalleryFamily super.from,
+    required ({String url, int page}) super.argument,
+  }) : super(
+         retry: null,
+         name: r'galleryProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
-  /// 图集列表 Provider（按 URL 和页码分页）。
-  ///
-  /// 通过 [jsGalleryRepositoryProvider] 经由 Repository → JsEngine 获取数据。
-  ///
-  /// Copied from [gallery].
-  GalleryProvider call({required String url, required int page}) {
-    return GalleryProvider(url: url, page: page);
+  @override
+  String debugGetCreateSourceHash() => _$galleryHash();
+
+  @override
+  String toString() {
+    return r'galleryProvider'
+        ''
+        '$argument';
   }
 
+  @$internal
   @override
-  GalleryProvider getProviderOverride(covariant GalleryProvider provider) {
-    return call(url: provider.url, page: provider.page);
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+  $FutureProviderElement<GalleryPageData> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'galleryProvider';
-}
-
-/// 图集列表 Provider（按 URL 和页码分页）。
-///
-/// 通过 [jsGalleryRepositoryProvider] 经由 Repository → JsEngine 获取数据。
-///
-/// Copied from [gallery].
-class GalleryProvider extends AutoDisposeFutureProvider<GalleryPageData> {
-  /// 图集列表 Provider（按 URL 和页码分页）。
-  ///
-  /// 通过 [jsGalleryRepositoryProvider] 经由 Repository → JsEngine 获取数据。
-  ///
-  /// Copied from [gallery].
-  GalleryProvider({required String url, required int page})
-    : this._internal(
-        (ref) => gallery(ref as GalleryRef, url: url, page: page),
-        from: galleryProvider,
-        name: r'galleryProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$galleryHash,
-        dependencies: GalleryFamily._dependencies,
-        allTransitiveDependencies: GalleryFamily._allTransitiveDependencies,
-        url: url,
-        page: page,
-      );
-
-  GalleryProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.url,
-    required this.page,
-  }) : super.internal();
-
-  final String url;
-  final int page;
-
-  @override
-  Override overrideWith(
-    FutureOr<GalleryPageData> Function(GalleryRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: GalleryProvider._internal(
-        (ref) => create(ref as GalleryRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        url: url,
-        page: page,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<GalleryPageData> createElement() {
-    return _GalleryProviderElement(this);
+  FutureOr<GalleryPageData> create(Ref ref) {
+    final argument = this.argument as ({String url, int page});
+    return gallery(ref, url: argument.url, page: argument.page);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is GalleryProvider && other.url == url && other.page == page;
+    return other is GalleryProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, url.hashCode);
-    hash = _SystemHash.combine(hash, page.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin GalleryRef on AutoDisposeFutureProviderRef<GalleryPageData> {
-  /// The parameter `url` of this provider.
-  String get url;
+String _$galleryHash() => r'ea217e8383a2ed696643e5421e0aa69027d53b7a';
 
-  /// The parameter `page` of this provider.
-  int get page;
-}
+/// 图集列表 Provider（按 URL 和页码分页）。
+///
+/// 通过 [jsGalleryRepositoryProvider] 经由 Repository → JsEngine 获取数据。
 
-class _GalleryProviderElement
-    extends AutoDisposeFutureProviderElement<GalleryPageData>
-    with GalleryRef {
-  _GalleryProviderElement(super.provider);
+final class GalleryFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<GalleryPageData>,
+          ({String url, int page})
+        > {
+  GalleryFamily._()
+    : super(
+        retry: null,
+        name: r'galleryProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// 图集列表 Provider（按 URL 和页码分页）。
+  ///
+  /// 通过 [jsGalleryRepositoryProvider] 经由 Repository → JsEngine 获取数据。
+
+  GalleryProvider call({required String url, required int page}) =>
+      GalleryProvider._(argument: (url: url, page: page), from: this);
 
   @override
-  String get url => (origin as GalleryProvider).url;
-  @override
-  int get page => (origin as GalleryProvider).page;
+  String toString() => r'galleryProvider';
 }
-
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

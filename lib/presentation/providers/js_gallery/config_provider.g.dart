@@ -6,21 +6,49 @@ part of 'config_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+
+@ProviderFor(JsConfig)
+final jsConfigProvider = JsConfigProvider._();
+
+final class JsConfigProvider
+    extends $AsyncNotifierProvider<JsConfig, JsConfigData> {
+  JsConfigProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'jsConfigProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$jsConfigHash();
+
+  @$internal
+  @override
+  JsConfig create() => JsConfig();
+}
+
 String _$jsConfigHash() => r'bac00126f3101982fbe689281ef8523f683497c3';
 
-/// See also [JsConfig].
-@ProviderFor(JsConfig)
-final jsConfigProvider =
-    AutoDisposeAsyncNotifierProvider<JsConfig, JsConfigData>.internal(
-      JsConfig.new,
-      name: r'jsConfigProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$jsConfigHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
-
-typedef _$JsConfig = AutoDisposeAsyncNotifier<JsConfigData>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$JsConfig extends $AsyncNotifier<JsConfigData> {
+  FutureOr<JsConfigData> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<JsConfigData>, JsConfigData>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<JsConfigData>, JsConfigData>,
+              AsyncValue<JsConfigData>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

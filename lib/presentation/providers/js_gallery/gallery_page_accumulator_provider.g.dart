@@ -6,37 +6,8 @@ part of 'gallery_page_accumulator_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$galleryPageAccumulatorHash() =>
-    r'209d9163781869fe150ac4d68059cb5fcdbd776e';
-
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-abstract class _$GalleryPageAccumulator
-    extends BuildlessAutoDisposeAsyncNotifier<GalleryAccumulatorState> {
-  late final String url;
-
-  FutureOr<GalleryAccumulatorState> build(String url);
-}
-
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 /// 图集分页累积 Provider（按 URL）。
 ///
 /// 封装分页累积逻辑：维护 items、currentPage、totalPage、isLoading 等状态，
@@ -45,10 +16,9 @@ abstract class _$GalleryPageAccumulator
 ///
 /// 当 url 变化时（例如切换菜单 Tab），Riverpod 自动调用 [build] 生成新实例，
 /// 状态自然清零，无需额外重置。
-///
-/// Copied from [GalleryPageAccumulator].
+
 @ProviderFor(GalleryPageAccumulator)
-const galleryPageAccumulatorProvider = GalleryPageAccumulatorFamily();
+final galleryPageAccumulatorProvider = GalleryPageAccumulatorFamily._();
 
 /// 图集分页累积 Provider（按 URL）。
 ///
@@ -58,71 +28,9 @@ const galleryPageAccumulatorProvider = GalleryPageAccumulatorFamily();
 ///
 /// 当 url 变化时（例如切换菜单 Tab），Riverpod 自动调用 [build] 生成新实例，
 /// 状态自然清零，无需额外重置。
-///
-/// Copied from [GalleryPageAccumulator].
-class GalleryPageAccumulatorFamily
-    extends Family<AsyncValue<GalleryAccumulatorState>> {
-  /// 图集分页累积 Provider（按 URL）。
-  ///
-  /// 封装分页累积逻辑：维护 items、currentPage、totalPage、isLoading 等状态，
-  /// 对外暴露 [loadNext] 和 [refresh] 两个操作。UI 通过 [ref.watch] 获取状态，
-  /// 不再需要在 Widget 中手动维护可变字段。
-  ///
-  /// 当 url 变化时（例如切换菜单 Tab），Riverpod 自动调用 [build] 生成新实例，
-  /// 状态自然清零，无需额外重置。
-  ///
-  /// Copied from [GalleryPageAccumulator].
-  const GalleryPageAccumulatorFamily();
-
-  /// 图集分页累积 Provider（按 URL）。
-  ///
-  /// 封装分页累积逻辑：维护 items、currentPage、totalPage、isLoading 等状态，
-  /// 对外暴露 [loadNext] 和 [refresh] 两个操作。UI 通过 [ref.watch] 获取状态，
-  /// 不再需要在 Widget 中手动维护可变字段。
-  ///
-  /// 当 url 变化时（例如切换菜单 Tab），Riverpod 自动调用 [build] 生成新实例，
-  /// 状态自然清零，无需额外重置。
-  ///
-  /// Copied from [GalleryPageAccumulator].
-  GalleryPageAccumulatorProvider call(String url) {
-    return GalleryPageAccumulatorProvider(url);
-  }
-
-  @override
-  GalleryPageAccumulatorProvider getProviderOverride(
-    covariant GalleryPageAccumulatorProvider provider,
-  ) {
-    return call(provider.url);
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'galleryPageAccumulatorProvider';
-}
-
-/// 图集分页累积 Provider（按 URL）。
-///
-/// 封装分页累积逻辑：维护 items、currentPage、totalPage、isLoading 等状态，
-/// 对外暴露 [loadNext] 和 [refresh] 两个操作。UI 通过 [ref.watch] 获取状态，
-/// 不再需要在 Widget 中手动维护可变字段。
-///
-/// 当 url 变化时（例如切换菜单 Tab），Riverpod 自动调用 [build] 生成新实例，
-/// 状态自然清零，无需额外重置。
-///
-/// Copied from [GalleryPageAccumulator].
-class GalleryPageAccumulatorProvider
+final class GalleryPageAccumulatorProvider
     extends
-        AutoDisposeAsyncNotifierProviderImpl<
+        $AsyncNotifierProvider<
           GalleryPageAccumulator,
           GalleryAccumulatorState
         > {
@@ -134,100 +42,124 @@ class GalleryPageAccumulatorProvider
   ///
   /// 当 url 变化时（例如切换菜单 Tab），Riverpod 自动调用 [build] 生成新实例，
   /// 状态自然清零，无需额外重置。
-  ///
-  /// Copied from [GalleryPageAccumulator].
-  GalleryPageAccumulatorProvider(String url)
-    : this._internal(
-        () => GalleryPageAccumulator()..url = url,
-        from: galleryPageAccumulatorProvider,
-        name: r'galleryPageAccumulatorProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$galleryPageAccumulatorHash,
-        dependencies: GalleryPageAccumulatorFamily._dependencies,
-        allTransitiveDependencies:
-            GalleryPageAccumulatorFamily._allTransitiveDependencies,
-        url: url,
-      );
-
-  GalleryPageAccumulatorProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.url,
-  }) : super.internal();
-
-  final String url;
+  GalleryPageAccumulatorProvider._({
+    required GalleryPageAccumulatorFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'galleryPageAccumulatorProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
-  FutureOr<GalleryAccumulatorState> runNotifierBuild(
-    covariant GalleryPageAccumulator notifier,
-  ) {
-    return notifier.build(url);
-  }
+  String debugGetCreateSourceHash() => _$galleryPageAccumulatorHash();
 
   @override
-  Override overrideWith(GalleryPageAccumulator Function() create) {
-    return ProviderOverride(
-      origin: this,
-      override: GalleryPageAccumulatorProvider._internal(
-        () => create()..url = url,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        url: url,
-      ),
-    );
+  String toString() {
+    return r'galleryPageAccumulatorProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  AutoDisposeAsyncNotifierProviderElement<
-    GalleryPageAccumulator,
-    GalleryAccumulatorState
-  >
-  createElement() {
-    return _GalleryPageAccumulatorProviderElement(this);
-  }
+  GalleryPageAccumulator create() => GalleryPageAccumulator();
 
   @override
   bool operator ==(Object other) {
-    return other is GalleryPageAccumulatorProvider && other.url == url;
+    return other is GalleryPageAccumulatorProvider &&
+        other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, url.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin GalleryPageAccumulatorRef
-    on AutoDisposeAsyncNotifierProviderRef<GalleryAccumulatorState> {
-  /// The parameter `url` of this provider.
-  String get url;
-}
+String _$galleryPageAccumulatorHash() =>
+    r'a20e4a26da36a51394658c357d2b5ed165e091c2';
 
-class _GalleryPageAccumulatorProviderElement
-    extends
-        AutoDisposeAsyncNotifierProviderElement<
+/// 图集分页累积 Provider（按 URL）。
+///
+/// 封装分页累积逻辑：维护 items、currentPage、totalPage、isLoading 等状态，
+/// 对外暴露 [loadNext] 和 [refresh] 两个操作。UI 通过 [ref.watch] 获取状态，
+/// 不再需要在 Widget 中手动维护可变字段。
+///
+/// 当 url 变化时（例如切换菜单 Tab），Riverpod 自动调用 [build] 生成新实例，
+/// 状态自然清零，无需额外重置。
+
+final class GalleryPageAccumulatorFamily extends $Family
+    with
+        $ClassFamilyOverride<
           GalleryPageAccumulator,
-          GalleryAccumulatorState
-        >
-    with GalleryPageAccumulatorRef {
-  _GalleryPageAccumulatorProviderElement(super.provider);
+          AsyncValue<GalleryAccumulatorState>,
+          GalleryAccumulatorState,
+          FutureOr<GalleryAccumulatorState>,
+          String
+        > {
+  GalleryPageAccumulatorFamily._()
+    : super(
+        retry: null,
+        name: r'galleryPageAccumulatorProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// 图集分页累积 Provider（按 URL）。
+  ///
+  /// 封装分页累积逻辑：维护 items、currentPage、totalPage、isLoading 等状态，
+  /// 对外暴露 [loadNext] 和 [refresh] 两个操作。UI 通过 [ref.watch] 获取状态，
+  /// 不再需要在 Widget 中手动维护可变字段。
+  ///
+  /// 当 url 变化时（例如切换菜单 Tab），Riverpod 自动调用 [build] 生成新实例，
+  /// 状态自然清零，无需额外重置。
+
+  GalleryPageAccumulatorProvider call(String url) =>
+      GalleryPageAccumulatorProvider._(argument: url, from: this);
 
   @override
-  String get url => (origin as GalleryPageAccumulatorProvider).url;
+  String toString() => r'galleryPageAccumulatorProvider';
 }
 
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+/// 图集分页累积 Provider（按 URL）。
+///
+/// 封装分页累积逻辑：维护 items、currentPage、totalPage、isLoading 等状态，
+/// 对外暴露 [loadNext] 和 [refresh] 两个操作。UI 通过 [ref.watch] 获取状态，
+/// 不再需要在 Widget 中手动维护可变字段。
+///
+/// 当 url 变化时（例如切换菜单 Tab），Riverpod 自动调用 [build] 生成新实例，
+/// 状态自然清零，无需额外重置。
+
+abstract class _$GalleryPageAccumulator
+    extends $AsyncNotifier<GalleryAccumulatorState> {
+  late final _$args = ref.$arg as String;
+  String get url => _$args;
+
+  FutureOr<GalleryAccumulatorState> build(String url);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref
+            as $Ref<
+              AsyncValue<GalleryAccumulatorState>,
+              GalleryAccumulatorState
+            >;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                AsyncValue<GalleryAccumulatorState>,
+                GalleryAccumulatorState
+              >,
+              AsyncValue<GalleryAccumulatorState>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
+  }
+}

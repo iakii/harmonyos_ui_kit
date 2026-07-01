@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:rohos_app/domain/entities/site_config.dart' show SiteConfig;
 import 'package:rohos_app/presentation/providers/init/dio_provider.dart'
@@ -18,7 +19,7 @@ const String baseUrl = kDebugMode
 
 /// 当前选中的 JS 源文件路径（同步），方便各处快速读取。
 final selectedSourceProvider = Provider<String?>((ref) {
-  return ref.watch(jsConfigProvider).valueOrNull?.name;
+  return ref.watch(jsConfigProvider).value?.name;
 });
 
 @riverpod

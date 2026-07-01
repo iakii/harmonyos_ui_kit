@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "C:\\Users\\Kai\\.ohos\\config\\default_ohos_0BZFwUGBy5aIVQkEV21cCnoCm5Hsue8DHJiEngq16u4=.cer",
+          "certpath": "C:\\Users\\Kai\\.ohos\\config\\default_ohos_Rh_PxbIRdkc5sJpsoBctJUCih8RXAwqTbm_OpGUTK-I=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001B2BC600FBB62942CD88384020EFFFB63EFFBAC107E5A104FF3BF611ABB65EB6A70813300AF24ED2",
-          "profile": "C:\\Users\\Kai\\.ohos\\config\\default_ohos_0BZFwUGBy5aIVQkEV21cCnoCm5Hsue8DHJiEngq16u4=.p7b",
+          "keyPassword": "0000001A40675068D6892EF679BECC1E1654178887155E01E3C302372D5E91E26F811F49A9B28C203783",
+          "profile": "C:\\Users\\Kai\\.ohos\\config\\default_ohos_Rh_PxbIRdkc5sJpsoBctJUCih8RXAwqTbm_OpGUTK-I=.p7b",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "C:\\Users\\Kai\\.ohos\\config\\default_ohos_0BZFwUGBy5aIVQkEV21cCnoCm5Hsue8DHJiEngq16u4=.p12",
-          "storePassword": "0000001BFF722093E220898E5FC0639A33A0A0A326E37AAE27C48F6AB37600AC455699A50892B4DC4DAA44"
+          "storeFile": "C:\\Users\\Kai\\.ohos\\config\\default_ohos_Rh_PxbIRdkc5sJpsoBctJUCih8RXAwqTbm_OpGUTK-I=.p12",
+          "storePassword": "0000001A3610A54A7FE201D29F3FA2A234037959469404C107055C7A3BBB396F87AD616C1CDC480AB7F4"
         }
       }
     ],

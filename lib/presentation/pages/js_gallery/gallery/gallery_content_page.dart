@@ -60,7 +60,7 @@ class _GalleryContentPageState extends ConsumerState<GalleryContentPage> {
     // ── 从 provider 获取累积状态 ──
     // url 变化时 Riverpod 自动创建新实例，状态自然归零
     final acc = ref.watch(galleryPageAccumulatorProvider(widget.url));
-    final state = acc.valueOrNull;
+    final state = acc.value;
     final items = state?.items ?? [];
     final hasMore = state?.hasMore ?? false;
     final hasError = state?.error != null && items.isEmpty;

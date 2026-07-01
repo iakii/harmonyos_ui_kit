@@ -1,4 +1,3 @@
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:rohos_app/core/error/result.dart';
 import 'package:rohos_app/domain/entities/gallery_detail.dart';
@@ -19,8 +18,5 @@ Future<GalleryPageData> gallery(
 
   final result = await repo.getPage(url: url, page: page);
 
-  return result.when(
-    success: (data) => data,
-    failure: (error) => throw error,
-  );
+  return result.when(success: (data) => data, failure: (error) => throw error);
 }

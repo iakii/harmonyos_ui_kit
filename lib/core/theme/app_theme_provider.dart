@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart';
 
@@ -18,6 +19,7 @@ final harmonyThemeDataProvider = Provider<HarmonyThemeData>((ref) {
   return switch (mode) {
     ThemeMode.light => HarmonyThemeData.light(),
     ThemeMode.dark => HarmonyThemeData.dark(),
-    ThemeMode.system => HarmonyThemeData.light(), // fallback，实际由 HarmonyOSApp 处理
+    ThemeMode.system =>
+      HarmonyThemeData.light(), // fallback，实际由 HarmonyOSApp 处理
   };
 });

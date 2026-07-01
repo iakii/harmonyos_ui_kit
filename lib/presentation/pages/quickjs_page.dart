@@ -241,126 +241,128 @@ export const PI = 3.14159;
 
   @override
   Widget build(BuildContext context) {
-    return Watch((context) {
-      final theme = HarmonyTheme.of(context);
+    return SignalBuilder(
+      builder: (context) {
+        final theme = HarmonyTheme.of(context);
 
-      return HosPage(
-        leading: const BackIcon(),
-        title: 'JSF Demo',
-        body: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            // ═══ Engine Status ════════════════════════════
-            _buildStatusBar(theme),
-            const SizedBox(height: 16),
+        return HosPage(
+          leading: const BackIcon(),
+          title: 'JSF Demo',
+          body: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              // ═══ Engine Status ════════════════════════════
+              _buildStatusBar(theme),
+              const SizedBox(height: 16),
 
-            // ═══ 1. Basic Evaluation ═════════════════════
-            _buildSection(
-              theme: theme,
-              title: '1. 基础求值',
-              subtitle: 'eval() 直接返回 Dart 类型（int/double/String/List/Map）',
-              controller: _basicController,
-              result: _basicResult,
-              onRun: () => _execute(
-                code: _basicController.text,
-                resultSignal: _basicResult,
+              // ═══ 1. Basic Evaluation ═════════════════════
+              _buildSection(
+                theme: theme,
+                title: '1. 基础求值',
+                subtitle: 'eval() 直接返回 Dart 类型（int/double/String/List/Map）',
+                controller: _basicController,
+                result: _basicResult,
+                onRun: () => _execute(
+                  code: _basicController.text,
+                  resultSignal: _basicResult,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            // ═══ 2. Type Conversion ══════════════════════
-            _buildSection(
-              theme: theme,
-              title: '2. 值与句柄',
-              subtitle: 'evalValue() 保留 JS 对象身份，通过 getPropertyValue() 访问属性',
-              controller: _typeController,
-              result: _typeResult,
-              onRun: () {
-                final code = _typeController.text;
-                final runtime = _js;
-                if (code.trim().isEmpty) return;
-                _isRunning.value = true;
-                _typeResult.value = null;
-                try {
-                  // 使用 evalValue 获取 JsValue 句柄演示
-                  final obj = runtime.evalValue(code);
-                  final count = obj.getPropertyValue('count');
-                  final name = obj.getPropertyValue('name');
-                  final items = obj.getPropertyValue('items');
-                  final result =
-                      '{count: ${count.toDart()}, name: ${name.toDart()}, items: ${items.toDart()}}';
-                  // 手动释放句柄
-                  items.dispose();
-                  name.dispose();
-                  count.dispose();
-                  obj.dispose();
-                  _typeResult.value = result;
-                } on JsException catch (e) {
-                  _typeResult.value = '⚠ $e';
-                } finally {
-                  _isRunning.value = false;
-                }
-              },
-            ),
-            const SizedBox(height: 12),
-
-            // ═══ 3. Dart Callback ════════════════════════
-            _buildSection(
-              theme: theme,
-              title: '3. Dart 回调',
-              subtitle: 'registerFunction() 将 Dart 函数注册到 JS 全局，JS 调用并获取返回值',
-              controller: _callbackController,
-              result: _callbackResult,
-              onRun: () => _execute(
-                code: _callbackController.text,
-                resultSignal: _callbackResult,
+              // ═══ 2. Type Conversion ══════════════════════
+              _buildSection(
+                theme: theme,
+                title: '2. 值与句柄',
+                subtitle: 'evalValue() 保留 JS 对象身份，通过 getPropertyValue() 访问属性',
+                controller: _typeController,
+                result: _typeResult,
+                onRun: () {
+                  final code = _typeController.text;
+                  final runtime = _js;
+                  if (code.trim().isEmpty) return;
+                  _isRunning.value = true;
+                  _typeResult.value = null;
+                  try {
+                    // 使用 evalValue 获取 JsValue 句柄演示
+                    final obj = runtime.evalValue(code);
+                    final count = obj.getPropertyValue('count');
+                    final name = obj.getPropertyValue('name');
+                    final items = obj.getPropertyValue('items');
+                    final result =
+                        '{count: ${count.toDart()}, name: ${name.toDart()}, items: ${items.toDart()}}';
+                    // 手动释放句柄
+                    items.dispose();
+                    name.dispose();
+                    count.dispose();
+                    obj.dispose();
+                    _typeResult.value = result;
+                  } on JsException catch (e) {
+                    _typeResult.value = '⚠ $e';
+                  } finally {
+                    _isRunning.value = false;
+                  }
+                },
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            // ═══ 4. ES Modules ═══════════════════════════
-            _buildSection(
-              theme: theme,
-              title: '4. ES 模块',
-              subtitle: 'registerModules() 注册内存模块，JS 端 import 使用',
-              controller: _moduleController,
-              result: _moduleResult,
-              onRun: () => _execute(
-                code: _moduleController.text,
-                resultSignal: _moduleResult,
+              // ═══ 3. Dart Callback ════════════════════════
+              _buildSection(
+                theme: theme,
+                title: '3. Dart 回调',
+                subtitle: 'registerFunction() 将 Dart 函数注册到 JS 全局，JS 调用并获取返回值',
+                controller: _callbackController,
+                result: _callbackResult,
+                onRun: () => _execute(
+                  code: _callbackController.text,
+                  resultSignal: _callbackResult,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            // ═══ 5. Promise / Async ══════════════════════
-            _buildSection(
-              theme: theme,
-              title: '5. Promise / Async',
-              subtitle: 'evalAsync() 自动 await Promise，返回 Future<dynamic>',
-              controller: _promiseController,
-              result: _promiseResult,
-              onRun: () => _executeAsync(
-                code: _promiseController.text,
-                resultSignal: _promiseResult,
+              // ═══ 4. ES Modules ═══════════════════════════
+              _buildSection(
+                theme: theme,
+                title: '4. ES 模块',
+                subtitle: 'registerModules() 注册内存模块，JS 端 import 使用',
+                controller: _moduleController,
+                result: _moduleResult,
+                onRun: () => _execute(
+                  code: _moduleController.text,
+                  resultSignal: _moduleResult,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            // ═══ 6. Error Handling ═══════════════════════
-            _buildErrorSection(theme),
-            const SizedBox(height: 12),
+              // ═══ 5. Promise / Async ══════════════════════
+              _buildSection(
+                theme: theme,
+                title: '5. Promise / Async',
+                subtitle: 'evalAsync() 自动 await Promise，返回 Future<dynamic>',
+                controller: _promiseController,
+                result: _promiseResult,
+                onRun: () => _executeAsync(
+                  code: _promiseController.text,
+                  resultSignal: _promiseResult,
+                ),
+              ),
+              const SizedBox(height: 12),
 
-            // ═══ 7. InitScript + Call ════════════════════
-            _buildScriptCallSection(theme),
-            const SizedBox(height: 12),
+              // ═══ 6. Error Handling ═══════════════════════
+              _buildErrorSection(theme),
+              const SizedBox(height: 12),
 
-            // ═══ 8. Global Variables ═════════════════════
-            _buildGlobalSection(theme),
-            const SizedBox(height: 64),
-          ],
-        ),
-      );
-    });
+              // ═══ 7. InitScript + Call ════════════════════
+              _buildScriptCallSection(theme),
+              const SizedBox(height: 12),
+
+              // ═══ 8. Global Variables ═════════════════════
+              _buildGlobalSection(theme),
+              const SizedBox(height: 64),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   // ─── Build Helpers ───────────────────────────────────────

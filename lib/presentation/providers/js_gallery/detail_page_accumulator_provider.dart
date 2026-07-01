@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:rohos_app/data/datasources/remote/detail_worker_pool.dart';
 import 'package:rohos_app/domain/entities/detail_accumulator_state.dart';
@@ -32,7 +33,8 @@ class DetailPageAccumulator extends _$DetailPageAccumulator {
     final current = state.requireValue;
     if (current.isLoading || !current.hasMore) return;
 
-    final nextUrl = current.nextPageUrl ??
+    final nextUrl =
+        current.nextPageUrl ??
         (current.lastLoadedUrl != null
             ? _buildNextPageUrl(current.lastLoadedUrl!, current.currentPage + 1)
             : url);
@@ -63,10 +65,12 @@ class DetailPageAccumulator extends _$DetailPageAccumulator {
     int? fallbackTotalPage,
   }) async {
     // 设置 loading 状态
-    final before = state.valueOrNull;
+    final before = state.value;
     state = AsyncValue.data(
-      (before ?? DetailAccumulatorState.empty())
-          .copyWith(isLoading: true, clearError: true),
+      (before ?? DetailAccumulatorState.empty()).copyWith(
+        isLoading: true,
+        clearError: true,
+      ),
     );
 
     try {
@@ -85,7 +89,7 @@ class DetailPageAccumulator extends _$DetailPageAccumulator {
         ),
       );
     } catch (e) {
-      final after = state.valueOrNull;
+      final after = state.value;
       if (after != null) {
         state = AsyncValue.data(after.copyWith(isLoading: false, error: e));
       }

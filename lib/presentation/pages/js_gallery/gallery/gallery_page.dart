@@ -36,9 +36,10 @@ class GalleryPage extends HookConsumerWidget {
     final configState = ref.watch(jsConfigProvider);
 
     // jsConfig 尚未就绪或未选择源 → 统一用 Scaffold 包裹
-    final isPending = configState.isLoading ||
-        configState.valueOrNull?.name == null ||
-        configState.valueOrNull!.name.isEmpty;
+    final isPending =
+        configState.isLoading ||
+        configState.value?.name == null ||
+        configState.value!.name.isEmpty;
 
     if (isPending) {
       final showLoading = configState.isLoading;
