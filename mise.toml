@@ -41,37 +41,54 @@ run = "flutter_rust_bridge_codegen generate"
 # 构建发布 - 各平台打包
 # ============================================================
 
-[tasks.android-release]
-description = "构建 Android Release APK (按 ABI 分包)"
-run = "flutter build apk --target-platform android-arm,android-arm64,android-x64 --split-per-abi"
 
-[tasks.android-build]
+[tasks.android]
 description = "使用 FastForge 构建 Android Debug APK"
 run = [
   "dart pub global activate fastforge",
-  "fastforge package --platform android --targets apk \\\n  --build-target-platform android-arm,android-arm64,android-x64 \\\n  --flutter-build-args=split-per-abi --skip-clean",
+  "fastforge package --platform android --targets apk --build-target-platform android-arm,android-arm64,android-x64 --flutter-build-args=split-per-abi --skip-clean",
 ]
 
-[tasks.window-release]
+[tasks.window]
 description = "使用 FastForge 构建 Windows EXE"
 run = [
   "dart pub global activate fastforge",
   "fastforge package --platform windows --targets exe --skip-clean",
 ]
 
-[tasks.linux-deb]
+[tasks.linux]
 description = "使用 FastForge 构建 Linux DEB"
 run = [
   "dart pub global activate fastforge",
   "fastforge package --platform linux --targets deb --skip-clean",
 ]
 
-[tasks.macos-release]
+[tasks.macos]
 description = "使用 FastForge 构建 macOS DMG"
 run = [
   "dart pub global activate fastforge",
   "fastforge package --platform macos --targets dmg --skip-clean",
 ]
+
+[tasks.ohos]
+description = "使用 FastForge 构建 Harmony OS HAP"
+run = [
+  "dart pub global activate fastforge",
+  "fastforge package --platform ohos --targets hap --build-target-platform ohos-arm64 --skip-clean --release --aot --target-platform=android-arm64",
+]
+
+[tasks.winzip]
+description = "打包Windows zip"
+run = ["flutter build windows --release -v"]
+
+[tasks.apk]
+description = "打包 Android Release APK (按 ABI 分包)"
+run = "flutter build apk --target-platform android-arm,android-arm64,android-x64 --split-per-abi"
+
+[tasks.hap]
+description = "打包Harmony OS应用"
+run = ["flutter build hap --release --target-platform ohos-arm64 -v"]
+
 
 # ============================================================
 # 环境配置
@@ -85,13 +102,14 @@ run = "rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-li
 description = "添加 OpenHarmony Rust 编译目标"
 run = "rustup target add aarch64-unknown-linux-ohos armv7-unknown-linux-ohos x86_64-unknown-linux-ohos"
 
+
 # ============================================================
 # 批量构建
 # ============================================================
 
 [tasks.build-all]
 description = "批量构建 Windows 和 Android"
-depends = ["window-release", "android-build"]
+depends = ["window", "android", "ohos", "macos", "linux"]
 
 [tasks.analyzer]
 description = "运行代码分析并生成报告"
@@ -100,16 +118,9 @@ run = [
   "dead_code_analyzer -p ./ -o ./reports --funcs -s html",
 ]
 
-
 [tasks.upgrade]
 description = "升级依赖"
 run = "flutter pub upgrade --major-versions"
-
-
-[tasks.pub-get]
-depends = ["clean-all"]
-description = "获取依赖"
-run = "flutter pub get"
 
 [tasks.clean-all]
 description = "清理所有缓存"
