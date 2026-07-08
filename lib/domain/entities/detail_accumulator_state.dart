@@ -42,15 +42,15 @@ class DetailAccumulatorState {
 
   /// 初始空状态。
   factory DetailAccumulatorState.empty() => const DetailAccumulatorState(
-        items: [],
-        currentPage: 0,
-        totalPage: null,
-        nextPageUrl: null,
-        lastLoadedUrl: null,
-        isLoading: false,
-        error: null,
-        hasLoaded: false,
-      );
+    items: [],
+    currentPage: 0,
+    totalPage: null,
+    nextPageUrl: null,
+    lastLoadedUrl: null,
+    isLoading: false,
+    error: null,
+    hasLoaded: false,
+  );
 
   /// 是否还有更多分页数据。
   /// items 为空时返回 true（尚未加载，需要尝试），
@@ -73,15 +73,14 @@ class DetailAccumulatorState {
     Object? error,
     bool? hasLoaded,
     bool clearError = false,
-  }) =>
-      DetailAccumulatorState(
-        items: items ?? this.items,
-        currentPage: currentPage ?? this.currentPage,
-        totalPage: totalPage ?? this.totalPage,
-        nextPageUrl: nextPageUrl ?? this.nextPageUrl,
-        lastLoadedUrl: lastLoadedUrl ?? this.lastLoadedUrl,
-        isLoading: isLoading ?? this.isLoading,
-        error: clearError ? null : (error ?? this.error),
-        hasLoaded: hasLoaded ?? this.hasLoaded,
-      );
+  }) => DetailAccumulatorState(
+    items: items ?? this.items,
+    currentPage: currentPage ?? this.currentPage,
+    totalPage: totalPage ?? this.totalPage,
+    nextPageUrl: nextPageUrl ?? this.nextPageUrl,
+    lastLoadedUrl: lastLoadedUrl ?? this.lastLoadedUrl,
+    isLoading: isLoading ?? this.isLoading,
+    error: clearError ? null : (error ?? this.error),
+    hasLoaded: hasLoaded ?? this.hasLoaded,
+  );
 }

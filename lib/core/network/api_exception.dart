@@ -6,27 +6,29 @@ AppException mapDioException(DioException e) {
   return switch (e.type) {
     DioExceptionType.connectionTimeout ||
     DioExceptionType.sendTimeout ||
-    DioExceptionType.receiveTimeout =>
-      TimeoutException(
-        '请求超时：${e.message}',
-        stackTrace: e.stackTrace,
-      ),
+    DioExceptionType.receiveTimeout => TimeoutException(
+      '请求超时：${e.message}',
+      stackTrace: e.stackTrace,
+    ),
 
     DioExceptionType.badResponse => _mapStatusCode(e),
 
-    DioExceptionType.cancel =>
-      NetworkException('请求已取消', stackTrace: e.stackTrace),
+    DioExceptionType.cancel => NetworkException(
+      '请求已取消',
+      stackTrace: e.stackTrace,
+    ),
 
-    DioExceptionType.connectionError =>
-      NetworkException('无网络连接', stackTrace: e.stackTrace),
+    DioExceptionType.connectionError => NetworkException(
+      '无网络连接',
+      stackTrace: e.stackTrace,
+    ),
 
     DioExceptionType.unknown ||
-    DioExceptionType.badCertificate =>
-      UnknownException(
-        '未知错误：${e.message}',
-        stackTrace: e.stackTrace,
-        originalError: e.error,
-      ),
+    DioExceptionType.badCertificate => UnknownException(
+      '未知错误：${e.message}',
+      stackTrace: e.stackTrace,
+      originalError: e.error,
+    ),
   };
 }
 
@@ -36,30 +38,30 @@ AppException _mapStatusCode(DioException e) {
 
   return switch (statusCode) {
     401 || 403 => AuthException(
-        message ?? '认证失败 (HTTP $statusCode)',
-        code: '$statusCode',
-        stackTrace: e.stackTrace,
-      ),
+      message ?? '认证失败 (HTTP $statusCode)',
+      code: '$statusCode',
+      stackTrace: e.stackTrace,
+    ),
     404 => NetworkException(
-        message ?? '资源不存在',
-        statusCode: 404,
-        stackTrace: e.stackTrace,
-      ),
+      message ?? '资源不存在',
+      statusCode: 404,
+      stackTrace: e.stackTrace,
+    ),
     422 || 400 => NetworkException(
-        message ?? '请求参数错误',
-        statusCode: statusCode,
-        stackTrace: e.stackTrace,
-      ),
+      message ?? '请求参数错误',
+      statusCode: statusCode,
+      stackTrace: e.stackTrace,
+    ),
     500 || 502 || 503 => NetworkException(
-        message ?? '服务器错误 (HTTP $statusCode)',
-        statusCode: statusCode,
-        stackTrace: e.stackTrace,
-      ),
+      message ?? '服务器错误 (HTTP $statusCode)',
+      statusCode: statusCode,
+      stackTrace: e.stackTrace,
+    ),
     _ => NetworkException(
-        message ?? 'HTTP 错误 $statusCode',
-        statusCode: statusCode,
-        stackTrace: e.stackTrace,
-      ),
+      message ?? 'HTTP 错误 $statusCode',
+      statusCode: statusCode,
+      stackTrace: e.stackTrace,
+    ),
   };
 }
 

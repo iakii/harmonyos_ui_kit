@@ -9,12 +9,18 @@ sealed class AppException implements Exception {
   final StackTrace? stackTrace;
 
   @override
-  String toString() => '$runtimeType: $message${code != null ? ' (code: $code)' : ''}';
+  String toString() =>
+      '$runtimeType: $message${code != null ? ' (code: $code)' : ''}';
 }
 
 /// 网络异常（HTTP 错误、无连接等）
 class NetworkException extends AppException {
-  const NetworkException(super.message, {super.code, super.stackTrace, this.statusCode});
+  const NetworkException(
+    super.message, {
+    super.code,
+    super.stackTrace,
+    this.statusCode,
+  });
 
   final int? statusCode;
 }
@@ -31,14 +37,24 @@ class TimeoutException extends AppException {
 
 /// 数据解析异常
 class ParseException extends AppException {
-  const ParseException(super.message, {super.code, super.stackTrace, this.rawData});
+  const ParseException(
+    super.message, {
+    super.code,
+    super.stackTrace,
+    this.rawData,
+  });
 
   final String? rawData;
 }
 
 /// 未知异常
 class UnknownException extends AppException {
-  const UnknownException(super.message, {super.code, super.stackTrace, this.originalError});
+  const UnknownException(
+    super.message, {
+    super.code,
+    super.stackTrace,
+    this.originalError,
+  });
 
   final Object? originalError;
 }

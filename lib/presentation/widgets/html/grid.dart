@@ -1,7 +1,8 @@
 import 'package:extended_image/extended_image.dart' show ExtendedImage;
 import 'package:flutter/material.dart';
 import 'package:harmonyos_ui/harmonyos_ui.dart' show showHosBottomSheet;
-import 'package:rohos_app/presentation/widgets/loading.dart' show imageLoadState;
+import 'package:rohos_app/presentation/widgets/loading.dart'
+    show imageLoadState;
 import 'package:styled_widget/styled_widget.dart' show StyledWidget;
 import 'package:html/dom.dart' as html;
 

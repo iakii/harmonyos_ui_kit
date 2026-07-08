@@ -11,7 +11,5 @@ abstract class RustDailyRepository {
   });
 
   /// 获取 Rust Daily 文章详情。
-  Future<Result<RustDailyPageData>> getDetail({
-    required String url,
-  });
+  Future<Result<RustDailyPageData>> getDetail({required String url});
 }

@@ -40,11 +40,13 @@ class IntroData {
       category: json['category'] as String? ?? '',
       status: json['status'] as String? ?? '',
       description: json['description'] as String? ?? '',
-      tags: (json['tags'] as List<dynamic>?)
+      tags:
+          (json['tags'] as List<dynamic>?)
               ?.map((e) => DetailItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      list: (json['list'] as List<dynamic>?)
+      list:
+          (json['list'] as List<dynamic>?)
               ?.map((e) => DetailItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],

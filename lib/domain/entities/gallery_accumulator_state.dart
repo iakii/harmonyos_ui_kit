@@ -35,13 +35,13 @@ class GalleryAccumulatorState {
 
   /// 初始空状态。
   factory GalleryAccumulatorState.empty() => const GalleryAccumulatorState(
-        items: [],
-        currentPage: 0,
-        totalPage: 0,
-        isLoading: false,
-        error: null,
-        hasLoaded: false,
-      );
+    items: [],
+    currentPage: 0,
+    totalPage: 0,
+    isLoading: false,
+    error: null,
+    hasLoaded: false,
+  );
 
   /// 是否还有更多页可加载。
   bool get hasMore => items.isEmpty || currentPage < totalPage;
@@ -54,13 +54,12 @@ class GalleryAccumulatorState {
     bool? isLoading,
     Object? error,
     bool? hasLoaded,
-  }) =>
-      GalleryAccumulatorState(
-        items: items ?? this.items,
-        currentPage: currentPage ?? this.currentPage,
-        totalPage: totalPage ?? this.totalPage,
-        isLoading: isLoading ?? this.isLoading,
-        error: error ?? this.error,
-        hasLoaded: hasLoaded ?? this.hasLoaded,
-      );
+  }) => GalleryAccumulatorState(
+    items: items ?? this.items,
+    currentPage: currentPage ?? this.currentPage,
+    totalPage: totalPage ?? this.totalPage,
+    isLoading: isLoading ?? this.isLoading,
+    error: error ?? this.error,
+    hasLoaded: hasLoaded ?? this.hasLoaded,
+  );
 }

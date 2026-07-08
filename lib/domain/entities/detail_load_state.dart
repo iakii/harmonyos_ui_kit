@@ -45,14 +45,13 @@ class DetailLoadState {
     int? totalPage,
     String? nextPageUrl,
     int current = 1,
-  }) =>
-      DetailLoadState(
-        items: items,
-        isLoading: false,
-        isComplete: true,
-        batchCount: batchCount,
-        totalPage: totalPage,
-        nextPageUrl: nextPageUrl,
-        current: current,
-      );
+  }) => DetailLoadState(
+    items: items,
+    isLoading: false,
+    isComplete: true,
+    batchCount: batchCount,
+    totalPage: totalPage,
+    nextPageUrl: nextPageUrl,
+    current: current,
+  );
 }

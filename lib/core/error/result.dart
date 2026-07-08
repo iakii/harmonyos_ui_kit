@@ -37,14 +37,26 @@ extension ResultExtension<T> on Result<T> {
   }
 
   /// 成功时返回 data，否则 null
-  T? get dataOrNull => switch (this) { Success(:final data) => data, _ => null };
+  T? get dataOrNull => switch (this) {
+    Success(:final data) => data,
+    _ => null,
+  };
 
   /// 失败时返回 error，否则 null
-  AppException? get errorOrNull => switch (this) { Failure(:final error) => error, _ => null };
+  AppException? get errorOrNull => switch (this) {
+    Failure(:final error) => error,
+    _ => null,
+  };
 
   /// 是否成功
-  bool get isSuccess => switch (this) { Success() => true, _ => false };
+  bool get isSuccess => switch (this) {
+    Success() => true,
+    _ => false,
+  };
 
   /// 是否失败
-  bool get isFailure => switch (this) { Failure() => true, _ => false };
+  bool get isFailure => switch (this) {
+    Failure() => true,
+    _ => false,
+  };
 }

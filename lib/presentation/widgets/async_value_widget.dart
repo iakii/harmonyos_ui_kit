@@ -59,12 +59,18 @@ class _DefaultErrorWidget extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: switch (exception) {
-          NetworkException(:final message) =>
-            HosErrorState(message: message, onRetry: () {}),
-          TimeoutException(:final message) =>
-            HosErrorState(message: message, onRetry: () {}),
-          AuthException(:final message) =>
-            HosErrorState(message: message, onRetry: null),
+          NetworkException(:final message) => HosErrorState(
+            message: message,
+            onRetry: () {},
+          ),
+          TimeoutException(:final message) => HosErrorState(
+            message: message,
+            onRetry: () {},
+          ),
+          AuthException(:final message) => HosErrorState(
+            message: message,
+            onRetry: null,
+          ),
           _ => HosErrorState(message: exception.message, onRetry: () {}),
         },
       ),

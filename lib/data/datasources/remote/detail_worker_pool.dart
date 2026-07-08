@@ -70,9 +70,7 @@ class DetailWorkerPool {
           );
           completer.complete(detail);
         } catch (e) {
-          completer.completeError(
-            Exception('解析详情数据失败: $e'),
-          );
+          completer.completeError(Exception('解析详情数据失败: $e'));
         }
       case 'error':
         completer.completeError(Exception(msg['error'] as String));
@@ -83,9 +81,7 @@ class DetailWorkerPool {
     // Worker Isolate 崩溃 — 通知所有等待的任务
     if (_disposed) return;
     for (final entry in _pending.entries) {
-      entry.value.completeError(
-        Exception('Worker 异常: $error'),
-      );
+      entry.value.completeError(Exception('Worker 异常: $error'));
     }
     _pending.clear();
     _disposed = true;
@@ -177,7 +173,8 @@ Future<void> _poolEntryPoint(SendPort mainSendPort) async {
       );
 
       final result = await engine.eval(
-        code: '''
+        code:
+            '''
       (async () => {
         const dom = await import('dom');
         const { default: client } = await import('client');

@@ -419,9 +419,7 @@ class _InfiniteScrollViewState extends State<InfiniteScrollView>
     } else {
       // 列表布局：逐项构建
       for (var i = 0; i < (widget.itemCount ?? 0); i++) {
-        slivers.add(
-          SliverToBoxAdapter(child: widget.itemBuilder!(context, i)),
-        );
+        slivers.add(SliverToBoxAdapter(child: widget.itemBuilder!(context, i)));
       }
     }
 

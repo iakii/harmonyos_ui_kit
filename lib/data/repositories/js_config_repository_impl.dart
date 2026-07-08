@@ -10,10 +10,7 @@ class JsConfigRepositoryImpl implements JsConfigRepository {
   final JsConfigRemoteDataSource _remoteDataSource;
   final JsSourceLocalDataSource _localDataSource;
 
-  const JsConfigRepositoryImpl(
-    this._remoteDataSource,
-    this._localDataSource,
-  );
+  const JsConfigRepositoryImpl(this._remoteDataSource, this._localDataSource);
 
   @override
   Future<List<SiteConfig>> getSites() => _remoteDataSource.getSites();

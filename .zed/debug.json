@@ -4,14 +4,15 @@
     "label": "Launch windows",
     "request": "launch",
     "program": "lib/main.dart",
-    "deviceId": "windows"
+    "deviceId": "windows",
+    "args": ["-v"],
   },
   {
     "adapter": "flutter",
     "label": "Run Flutter",
     "request": "launch",
     "program": "lib/main.dart",
-    "deviceId": "windows"
+    "deviceId": "windows",
   },
   {
     "adapter": "flutter",
@@ -19,9 +20,7 @@
     "request": "launch",
     "program": "lib/main.dart",
     "deviceId": "chrome",
-    "args": [
-      "--dart-define=ENV=dev"
-    ],
-    "hotReloadOnSave": true
-  }
+    "args": ["--dart-define=ENV=dev"],
+    "hotReloadOnSave": true,
+  },
 ]
