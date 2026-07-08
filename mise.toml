@@ -1,0 +1,128 @@
+[tools]
+flutter = "ohos"
+# ============================================================
+# 基础命令 - 依赖与代码管理
+# ============================================================
+
+[tasks.get]
+description = "安装项目依赖"
+depends = ["clean"]
+run = "flutter pub get --no-example"
+
+[tasks.clean]
+description = "清理 Flutter 项目"
+run = "flutter clean"
+
+[tasks.format]
+description = "格式化 Dart 代码"
+run = "dart format lib/"
+
+[tasks.runner]
+description = "运行 build_runner 监听模式"
+run = "dart run build_runner watch"
+
+# ============================================================
+# 代码生成
+# ============================================================
+
+[tasks.gen-go]
+description = "生成 Go 绑定代码"
+run = [
+  "dart run bindgo:run --config bindgo.yaml",
+  "dart run ffigen --config webrtc_ffi_config.yaml",
+  "dart run ffigen --config webdav_ffi_config.yaml",
+]
+
+[tasks.gen-rust]
+description = "生成 Rust Bridge 代码"
+run = "flutter_rust_bridge_codegen generate"
+
+# ============================================================
+# 构建发布 - 各平台打包
+# ============================================================
+
+[tasks.android-release]
+description = "构建 Android Release APK (按 ABI 分包)"
+run = "flutter build apk --target-platform android-arm,android-arm64,android-x64 --split-per-abi"
+
+[tasks.android-build]
+description = "使用 FastForge 构建 Android Debug APK"
+run = [
+  "dart pub global activate fastforge",
+  "fastforge package --platform android --targets apk \\\n  --build-target-platform android-arm,android-arm64,android-x64 \\\n  --flutter-build-args=split-per-abi --skip-clean",
+]
+
+[tasks.window-release]
+description = "使用 FastForge 构建 Windows EXE"
+run = [
+  "dart pub global activate fastforge",
+  "fastforge package --platform windows --targets exe --skip-clean",
+]
+
+[tasks.linux-deb]
+description = "使用 FastForge 构建 Linux DEB"
+run = [
+  "dart pub global activate fastforge",
+  "fastforge package --platform linux --targets deb --skip-clean",
+]
+
+[tasks.macos-release]
+description = "使用 FastForge 构建 macOS DMG"
+run = [
+  "dart pub global activate fastforge",
+  "fastforge package --platform macos --targets dmg --skip-clean",
+]
+
+# ============================================================
+# 环境配置
+# ============================================================
+
+[tasks.android-env]
+description = "添加 Android Rust 编译目标"
+run = "rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android"
+
+[tasks.harmony-env]
+description = "添加 OpenHarmony Rust 编译目标"
+run = "rustup target add aarch64-unknown-linux-ohos armv7-unknown-linux-ohos x86_64-unknown-linux-ohos"
+
+# ============================================================
+# 批量构建
+# ============================================================
+
+[tasks.build-all]
+description = "批量构建 Windows 和 Android"
+depends = ["window-release", "android-build"]
+
+[tasks.analyzer]
+description = "运行代码分析并生成报告"
+run = [
+  "dart pub global activate dead_code_analyzer",
+  "dead_code_analyzer -p ./ -o ./reports --funcs -s html",
+]
+
+
+[tasks.upgrade]
+description = "升级依赖"
+run = "flutter pub upgrade --major-versions"
+
+
+[tasks.pub-get]
+depends = ["clean-all"]
+description = "获取依赖"
+run = "flutter pub get"
+
+[tasks.clean-all]
+description = "清理所有缓存"
+run = [
+  "flutter clean",
+  "echo 项目缓存清理完毕",
+  "cd packages/harmonyos_ui&&flutter clean",
+  "echo 三方包 harmonyos_ui 清理完毕",
+  "cd packages/hm_icon&&flutter clean",
+  "echo 三方包 hm_icon 清理完毕",
+  "cd packages/js_runtime/cargokit/build_tool&&flutter clean",
+  "echo 三方包 js_runtime 清理完毕",
+  "cd packages/js_runtime/rust&&cargo clean",
+  "echo js_runtime rust target clean",
+  "echo 所有任务执行完毕",
+]

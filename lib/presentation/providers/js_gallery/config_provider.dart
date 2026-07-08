@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:rohos_app/domain/entities/site_config.dart' show SiteConfig;
@@ -13,9 +12,11 @@ import 'package:rohos_app/data/datasources/local/js_source_local_datasource.dart
 
 part 'config_provider.g.dart';
 
-const String baseUrl = kDebugMode
-    ? "http://192.168.2.228:6250/"
-    : "https://gh-proxy.org/https://raw.githubusercontent.com/iakii/harmonyos_ui_kit/refs/heads/master/";
+const String baseUrl =
+    // kDebugMode
+    //     ? "http://192.168.2.228:6250/"
+    //     :
+    "https://gh-proxy.org/https://raw.githubusercontent.com/iakii/harmonyos_ui_kit/refs/heads/master/";
 
 /// 当前选中的 JS 源文件路径（同步），方便各处快速读取。
 final selectedSourceProvider = Provider<String?>((ref) {
