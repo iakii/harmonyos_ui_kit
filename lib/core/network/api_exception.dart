@@ -29,6 +29,7 @@ AppException mapDioException(DioException e) {
       stackTrace: e.stackTrace,
       originalError: e.error,
     ),
+    DioExceptionType.transformTimeout => throw UnimplementedError(),
   };
 }
 

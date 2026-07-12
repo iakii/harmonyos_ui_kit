@@ -1,3 +1,6 @@
+/// This is copied from Cargokit (which is the official way to use it currently)
+/// Details: https://fzyzcjy.github.io/flutter_rust_bridge/manual/integrate/builtin
+
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -45,6 +48,10 @@ class Target {
       flutter: 'windows-x64',
     ),
     Target(
+      rust: 'aarch64-pc-windows-msvc',
+      flutter: 'windows-arm64',
+    ),
+    Target(
       rust: 'x86_64-unknown-linux-gnu',
       flutter: 'linux-x64',
     ),
@@ -52,11 +59,7 @@ class Target {
       rust: 'aarch64-unknown-linux-gnu',
       flutter: 'linux-arm64',
     ),
-    Target(
-      rust: 'aarch64-unknown-linux-ohos',
-      flutter: 'ohos-arm64',
-      ohos: 'arm64-v8a',
-    ),
+    Target(rust: 'riscv64gc-unknown-linux-gnu', flutter: 'linux-riscv64'),
     Target(
       rust: 'x86_64-apple-darwin',
       darwinPlatform: 'macosx',
@@ -81,6 +84,21 @@ class Target {
       rust: 'x86_64-apple-ios',
       darwinPlatform: 'iphonesimulator',
       darwinArch: 'x86_64',
+    ),
+    Target(
+      rust: 'aarch64-unknown-linux-ohos',
+      flutter: 'ohos-arm64',
+      ohos: 'arm64-v8a',
+    ),
+    Target(
+      rust: 'armv7-unknown-linux-ohos',
+      flutter: 'ohos-arm',
+      ohos: 'armeabi-v7a',
+    ),
+    Target(
+      rust: 'x86_64-unknown-linux-ohos',
+      flutter: 'ohos-x64',
+      ohos: 'x86_64',
     ),
   ];
 
@@ -108,27 +126,29 @@ class Target {
   }
 
   static List<Target> ohosTargets() {
-    return all
-        .where((element) => element.ohos != null)
-        .toList(growable: false);
+    return all.where((element) => element.ohos != null).toList(growable: false);
   }
 
   /// Returns buildable targets on current host platform ignoring Android targets.
   static List<Target> buildableTargets() {
-    if (Platform.isOhos){
-      final arch = runCommand('arch', []).stdout as String;
+    if (Platform.operatingSystem == 'ohos') {
+      final arch = (runCommand('arch', []).stdout as String).trim();
       if (arch.trim() == 'aarch64') {
         return [Target.forRustTriple('aarch64-unknown-linux-ohos')!];
-      } else {
-        return [Target.forRustTriple('x86_64-unknown-linux-ohos')!];
       }
+      if (arch == 'armv7') {
+        return [Target.forRustTriple('armv7-unknown-linux-ohos')!];
+      }
+      return [Target.forRustTriple('x86_64-unknown-linux-ohos')!];
     }
     if (Platform.isLinux) {
       // Right now we don't support cross-compiling on Linux. So we just return
       // the host target.
-      final arch = runCommand('arch', []).stdout as String;
-      if (arch.trim() == 'aarch64') {
+      final arch = (runCommand('arch', []).stdout as String).trim();
+      if (arch == 'aarch64') {
         return [Target.forRustTriple('aarch64-unknown-linux-gnu')!];
+      } else if (arch == 'riscv64') {
+        return [Target.forRustTriple('riscv64gc-unknown-linux-gnu')!];
       } else {
         return [Target.forRustTriple('x86_64-unknown-linux-gnu')!];
       }
@@ -151,8 +171,8 @@ class Target {
   final String? flutter;
   final String rust;
   final String? android;
-  final String? ohos;
   final int? androidMinSdkVersion;
   final String? darwinPlatform;
   final String? darwinArch;
+  final String? ohos;
 }
