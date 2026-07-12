@@ -97,8 +97,6 @@ class Client {
     });
   }
 
-
-
   async fetchDetails(url, page = 1) {
     console.log("getDetail 请求的url：", url);
     if (page != 1) url = `${url.replace(".html", `_${page}.html`)}`;
@@ -113,7 +111,7 @@ class Client {
       console.log("slide x:", JSON.stringify(x))
       const img = JSON.parse(dom.querySelector(x.innerHtml, "img"));
       console.log("slide img:", img);
-      const src = img?.attrs?.find((a) => a[0] === "src")?.[1] || "";
+      const src = img?.attrs?.find((a) => a[0] === "data_src")?.[1] || "";
       const a = JSON.parse(dom.querySelector(x.innerHtml, "a"));
       const href = a?.attrs?.find((a) => a[0] === "href")?.[1] || "";
       const title = img?.attrs?.find((a) => a[0] === "alt")?.[1] || "";
