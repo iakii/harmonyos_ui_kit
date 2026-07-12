@@ -135,5 +135,6 @@ run = [
   "echo 三方包 js_runtime 清理完毕",
   "cd packages/js_runtime/rust&&cargo clean",
   "echo js_runtime rust target clean",
+  "cd packages/js_runtime/ohos&&rm -rf build&& rm -rf .cxx",
   "echo 所有任务执行完毕",
 ]
