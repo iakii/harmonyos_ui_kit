@@ -1,0 +1,31 @@
+# 同样为 x86_64 平台进行设置
+[target.aarch64-unknown-linux-ohos]
+ar = "D:/Kai/.env/.ohos_conf/scripts/aarch64-unknown-linux-ohos-ar.cmd"
+linker = "D:/Kai/.env/.ohos_conf/scripts/aarch64-unknown-linux-ohos-clang.cmd"
+
+#
+[target.x86_64-unknown-linux-ohos]
+ar = "D:/Kai/.env/.ohos_conf/scripts/x86_64-unknown-linux-ohos-ar.cmd"
+linker = "D:/Kai/.env/.ohos_conf/scripts/x86_64-unknown-linux-ohos-clang.cmd"
+
+[env]
+# 告诉 cc-rs 在为 aarch64-ohos 编译 C 代码时使用你的脚本
+AR_aarch64_unknown_linux_ohos = "D:/Kai/.env/.ohos_conf/scripts/aarch64-unknown-linux-ohos-ar.cmd"
+# 最好也为 C++ 设置一个，以防有 crate 需要编译 C++
+CC_aarch64_unknown_linux_ohos = "D:/Kai/.env/.ohos_conf/scripts/aarch64-unknown-linux-ohos-clang.cmd"
+CXX_aarch64_unknown_linux_ohos = "D:/Kai/.env/.ohos_conf/scripts/aarch64-unknown-linux-ohos-clang++.cmd"
+
+
+
+# openssl-sys 需要 _LIB_DIR / _INCLUDE_DIR 分开的格式
+AARCH64_UNKNOWN_LINUX_OHOS_OPENSSL_LIB_DIR="D:/Kai/.env/.ohos_conf/ohos-openssl/prelude/arm64-v8a/lib"
+AARCH64_UNKNOWN_LINUX_OHOS_OPENSSL_INCLUDE_DIR="D:/Kai/.env/.ohos_conf/ohos-openssl/prelude/arm64-v8a/include"
+
+AARCH64_UNKNOWN_LINUX_OHOS_OPENSSL_DIR="D:/Kai/.env/.ohos_conf/ohos-openssl/prelude/arm64-v8a/"
+ARMV7_UNKNOWN_LINUX_OHOS_OPENSSL_DIR="D:/Kai/.env/.ohos_conf/ohos-openssl/prelude/armeabi-v7a/"
+X86_64_UNKNOWN_LINUX_OHOS_OPENSSL_DIR="D:/Kai/.env/.ohos_conf/ohos-openssl/prelude/x86_64/"
+
+# 同样为 x86_64 平台进行设置
+CC_x86_64_unknown_linux_ohos = "D:/Kai/.env/.ohos_conf/scripts/x86_64-unknown-linux-ohos-clang.cmd"
+AR_x86_64_unknown_linux_ohos = "D:/Kai/.env/.ohos_conf/scripts/x86_64-unknown-linux-ohos-ar.cmd"
+CXX_x86_64_unknown_linux_ohos = "D:/Kai/.env/.ohos_conf/scripts/x86_64-unknown-linux-ohos-clang++.cmd"
