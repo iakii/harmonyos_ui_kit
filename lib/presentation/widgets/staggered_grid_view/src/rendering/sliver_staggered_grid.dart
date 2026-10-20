@@ -235,9 +235,8 @@ class RenderSliverStaggeredGrid extends RenderSliverVariableSizeBoxAdaptor {
   /// The [configuration] and [childManager] arguments must not be null.
   RenderSliverStaggeredGrid({
     required super.childManager,
-    required SliverStaggeredGridDelegate gridDelegate,
-  }) : _gridDelegate = gridDelegate,
-       _pageSizeToViewportOffsets =
+    required this._gridDelegate,
+  }) : _pageSizeToViewportOffsets =
            HashMap<double, SplayTreeMap<int, _ViewportOffsets?>>();
 
   @override

@@ -126,16 +126,13 @@ class RenderStaggeredGrid extends RenderBox
   /// Creates a [RenderStaggeredGrid].
   RenderStaggeredGrid({
     List<RenderBox>? children,
-    required StaggeredGridDelegate delegate,
+    required this._delegate,
     required double mainAxisSpacing,
     required double crossAxisSpacing,
-    required AxisDirection axisDirection,
-    required TextDirection textDirection,
+    required this._axisDirection,
+    required this._textDirection,
   }) : assert(mainAxisSpacing >= 0),
        assert(crossAxisSpacing >= 0),
-       _axisDirection = axisDirection,
-       _textDirection = textDirection,
-       _delegate = delegate,
        _mainAxisSpacing = mainAxisSpacing,
        _crossAxisSpacing = crossAxisSpacing {
     addAll(children);

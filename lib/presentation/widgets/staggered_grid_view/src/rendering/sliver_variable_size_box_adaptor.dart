@@ -169,10 +169,8 @@ abstract class RenderSliverVariableSizeBoxAdaptor extends RenderSliver
         RenderSliverHelpers {
   /// Creates a sliver with multiple box children.
   ///
-  /// The [childManager] argument must not be null.
-  RenderSliverVariableSizeBoxAdaptor({
-    required RenderSliverVariableSizeBoxChildManager childManager,
-  }) : _childManager = childManager;
+  /// The [_childManager] argument must not be null.
+  RenderSliverVariableSizeBoxAdaptor({required this._childManager});
 
   @override
   void setupParentData(RenderObject child) {
