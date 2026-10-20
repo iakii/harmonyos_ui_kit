@@ -9,6 +9,8 @@ topics:
   - player
   - background
 
+publish_to: "none"
+
 environment:
   sdk: ^3.6.0
   flutter: ">=3.27.0"
@@ -20,13 +22,13 @@ dependencies:
   just_audio_web: ^0.4.15
   # just_audio_web:
   #   path: ../just_audio_web
-  audio_session: 
+  audio_session:
     git:
       url: "https://gitcode.com/CPF-Flutter/flutter_audio_session.git"
       ref: br_v0.2.2_ohos
   rxdart: '>=0.26.0 <0.29.0'
   path: ^1.8.0
-  path_provider: 
+  path_provider:
     git:
       url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
       path: "packages/path_provider/path_provider"

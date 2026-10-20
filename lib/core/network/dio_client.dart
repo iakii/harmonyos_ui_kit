@@ -44,7 +44,7 @@ class DioClient {
       _authInterceptor,
       AppLogInterceptor(),
       ErrorInterceptor(),
-      if (additionalInterceptors != null) ...additionalInterceptors,
+      ...?additionalInterceptors,
     ]);
   }
 

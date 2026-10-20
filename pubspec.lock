@@ -259,6 +259,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.9"
+  cupertino_ui:
+    dependency: transitive
+    description:
+      name: cupertino_ui
+      sha256: e9dfe7fac704028f8928cbe4028a0be5e8a709498e8daf8247de99e99a32aef3
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.2"
   dart_style:
     dependency: transitive
     description:
@@ -271,10 +279,10 @@ packages:
     dependency: "direct main"
     description:
       name: day
-      sha256: "1e7068deb2f825a8b705d01d1116cc485ddc32531b43dc8c4bf58c5a1b87cd48"
+      sha256: ec9e222240acf6c78b3fbaa37a70be1b16586c3b0b0bc728b89a9d62888389be
       url: "https://pub.dev"
     source: hosted
-    version: "0.8.0"
+    version: "1.1.0"
   dbus:
     dependency: transitive
     description:
@@ -547,10 +555,10 @@ packages:
     dependency: "direct main"
     description:
       name: go_router
-      sha256: d7a3576cb312649eaa51f2356450aed686085fb58fcdebda5b359aa951eef7ea
+      sha256: "8b05bc90a4f8f8d579db351e2bd6bac566813e12953494dc2a9d7461e7c6dbe7"
       url: "https://pub.dev"
     source: hosted
-    version: "17.5.0"
+    version: "18.1.0"
   graphs:
     dependency: transitive
     description:
@@ -609,10 +617,10 @@ packages:
     dependency: "direct main"
     description:
       name: html
-      sha256: "6d1264f2dffa1b1101c25a91dff0dc2daee4c18e87cd8538729773c073dbf602"
+      sha256: "43b67b8f43321ab066817dfac5619596c98bb1b61624e77203bb4351785f9699"
       url: "https://pub.dev"
     source: hosted
-    version: "0.15.6"
+    version: "0.15.7"
   http:
     dependency: "direct main"
     description:
@@ -784,10 +792,10 @@ packages:
     dependency: "direct main"
     description:
       name: lifecycle
-      sha256: e33aac028f1521edf052132f12a6b04058e1b013e36cff3a9941e254a591caef
+      sha256: "98002e74445a11a812765bf9665000930101e9d6cae0c881b68ecaa384e65d97"
       url: "https://pub.dev"
     source: hosted
-    version: "0.10.0"
+    version: "1.0.0"
   linked_scroll_controller:
     dependency: transitive
     description:
@@ -852,6 +860,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.13.0"
+  material_ui:
+    dependency: transitive
+    description:
+      name: material_ui
+      sha256: fbfb53cab6c4629438feeade5f3d305f72944bc9d9f25786b19106d32b80ec45
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
   meta:
     dependency: transitive
     description:
