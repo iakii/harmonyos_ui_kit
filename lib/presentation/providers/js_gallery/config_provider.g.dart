@@ -39,7 +39,7 @@ abstract class _$JsConfig extends $AsyncNotifier<JsConfigData> {
   FutureOr<JsConfigData> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<JsConfigData>, JsConfigData>;
     final element =
         ref.element
@@ -49,6 +49,6 @@ abstract class _$JsConfig extends $AsyncNotifier<JsConfigData> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

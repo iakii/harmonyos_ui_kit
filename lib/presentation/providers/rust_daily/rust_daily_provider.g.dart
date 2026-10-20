@@ -137,7 +137,7 @@ abstract class _$RustDaily extends $Notifier<RustDailyPageData> {
   RustDailyPageData build(RustDailyParams params);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<RustDailyPageData, RustDailyPageData>;
     final element =
         ref.element
@@ -147,6 +147,6 @@ abstract class _$RustDaily extends $Notifier<RustDailyPageData> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

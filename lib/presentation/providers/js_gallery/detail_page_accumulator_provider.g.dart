@@ -96,7 +96,7 @@ abstract class _$DetailPageAccumulator
   FutureOr<DetailAccumulatorState> build(String url);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<AsyncValue<DetailAccumulatorState>, DetailAccumulatorState>;
@@ -111,6 +111,6 @@ abstract class _$DetailPageAccumulator
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

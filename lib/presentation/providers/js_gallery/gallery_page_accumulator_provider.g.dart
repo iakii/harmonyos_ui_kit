@@ -142,7 +142,7 @@ abstract class _$GalleryPageAccumulator
   FutureOr<GalleryAccumulatorState> build(String url);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -160,6 +160,6 @@ abstract class _$GalleryPageAccumulator
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

@@ -85,7 +85,7 @@ abstract class _$JsIntro extends $Notifier<IntroData> {
   IntroData build(String url);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<IntroData, IntroData>;
     final element =
         ref.element
@@ -95,6 +95,6 @@ abstract class _$JsIntro extends $Notifier<IntroData> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
